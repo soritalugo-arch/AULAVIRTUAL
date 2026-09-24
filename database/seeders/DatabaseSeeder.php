@@ -2,10 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\Estudiante;
-use App\Models\Profesor;
-use App\Models\Rol;
-use App\Models\Usuario;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,41 +9,66 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
+    public const EMAIL_ADMIN = 'rectora@aula.edu';
+    public const EMAIL_PROFESOR = 'profesor@aula.edu';
+    public const EMAIL_ESTUDIANTE = 'estudiante@aula.edu';
+    public const EMAIL_DEUDA = 'deuda@aula.edu';
+    public const EMAIL_EGRESADA = 'egresada@aula.edu';
+    public const EMAIL_CONFLICTO = 'conflicto@aula.edu';
+    public const EMAIL_INASISTENTE = 'inasistente@aula.edu';
+    public const EMAIL_ALERTA = 'alerta@aula.edu';
+    public const EMAIL_REPITIENTE = 'repitiente@aula.edu';
+    public const EMAIL_PUNTUAL = 'puntual@aula.edu';
+
+    public const CONTRASENA_DE_EMAIL = [
+        self::EMAIL_ADMIN => 'Rectora2026',
+        self::EMAIL_PROFESOR => 'Profesor2026',
+        self::EMAIL_ESTUDIANTE => 'Alejandro2026',
+        self::EMAIL_DEUDA => 'Gabriela2026',
+        self::EMAIL_EGRESADA => 'Valentina2026',
+        self::EMAIL_CONFLICTO => 'Luis2026',
+        self::EMAIL_INASISTENTE => 'Carlos2026',
+        self::EMAIL_ALERTA => 'Andreina2026',
+        self::EMAIL_REPITIENTE => 'Diego2026',
+        self::EMAIL_PUNTUAL => 'Sofia2026',
+    ];
+
+    public const CURSOS_CONFLICTO = [
+        'Fundamentos de Programación',
+        'Inglés Técnico',
+    ];
+
+    public const CURSOS_LLENOS = [
+        'Fundamentos de Programación',
+        'Contabilidad I',
+        'Diseño Editorial',
+        'Marketing Digital I',
+        'Ecoturismo',
+        'Enfermería Básica',
+        'Electrónica Básica',
+        'Matemática Básica',
+    ];
+
+    public const CARRERA_EGRESADA = 'Diseño Gráfico';
+
     public function run(): void
     {
-        $adminRol = Rol::create(['nombre' => 'admin']);
-        $profesorRol = Rol::create(['nombre' => 'profesor']);
-        $estudianteRol = Rol::create(['nombre' => 'estudiante']);
-
-        $admin = Usuario::factory()->create([
-            'nombres' => 'Rectora',
-            'apellidos' => 'Aula',
-            'email' => 'rectora@aula.edu',
-        ]);
-        $admin->roles()->attach($adminRol->id_rol);
-
-        $profesor = Usuario::factory()->create([
-            'nombres' => 'Profesor',
-            'apellidos' => 'Demo',
-            'email' => 'profesor@aula.edu',
-        ]);
-        $profesor->roles()->attach($profesorRol->id_rol);
-        Profesor::create(['id_usuario' => $profesor->id_usuario]);
-
-        $estudiante = Usuario::factory()->create([
-            'nombres' => 'Estudiante',
-            'apellidos' => 'Demo',
-            'email' => 'estudiante@aula.edu',
-        ]);
-        $estudiante->roles()->attach($estudianteRol->id_rol);
-        Estudiante::create([
-            'id_usuario' => $estudiante->id_usuario,
-            'fecha_nacimiento' => '2000-01-15',
-            'cedula' => '12345678',
-            'deuda' => false,
+        $this->call([
+            RolSeeder::class,
+            CuatrimestreSeeder::class,
+            CarreraSeeder::class,
+            CursoSeeder::class,
+            CursoCarreraSeeder::class,
+            CursoCuatrimestreSeeder::class,
+            UsuarioSeeder::class,
+            ProfesorSeeder::class,
+            EstudianteSeeder::class,
+            CursoProfesorSeeder::class,
+            HorarioSeeder::class,
+            InscripcionSeeder::class,
+            ListaEsperaSeeder::class,
+            CalificacionSeeder::class,
+            AsistenciaSeeder::class,
         ]);
     }
 }
