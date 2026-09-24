@@ -19,4 +19,9 @@ class Horario extends Model
         'hora_inicio',
         'hora_fin'
     ];
+
+    public function curso()
+    {
+        return $this->belongsTo(Curso::class, 'id_curso');
+    }
 }

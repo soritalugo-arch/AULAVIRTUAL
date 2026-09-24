@@ -20,4 +20,24 @@ class Asistencia extends Model
         'fecha',
         'presente'
     ];
+
+    protected $casts = [
+        'fecha' => 'date',
+        'presente' => 'boolean'
+    ];
+
+    public function estudiante()
+    {
+        return $this->belongsTo(Estudiante::class, 'id_estudiante');
+    }
+
+    public function curso()
+    {
+        return $this->belongsTo(Curso::class, 'id_curso');
+    }
+
+    public function cuatrimestre()
+    {
+        return $this->belongsTo(Cuatrimestre::class, 'id_cuatrimestre');
+    }
 }

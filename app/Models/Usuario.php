@@ -23,8 +23,22 @@ class Usuario extends Authenticatable
         'password'
     ];
 
+    protected $casts = [
+        'password' => 'hashed'
+    ];
+
     public function roles()
     {
         return $this->belongsToMany(Rol::class, 'rol_usuario', 'usuario_id', 'rol_id');
+    }
+
+    public function profesor()
+    {
+        return $this->hasOne(Profesor::class, 'id_usuario');
+    }
+
+    public function estudiante()
+    {
+        return $this->hasOne(Estudiante::class, 'id_usuario');
     }
 }
