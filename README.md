@@ -1,58 +1,164 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# AulaVirtual
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Plataforma académica para la gestión de una institución universitaria: autenticación por roles, inscripción de cursos por cuatrimestre, calificaciones, asistencia y reportes.
 
-## About Laravel
+## Requisitos
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+| Herramienta  | Versión mínima |
+|--------------|----------------|
+| PHP          | ^8.3           |
+| Composer     | 2.x            |
+| Node.js + npm| 20.x / 10.x    |
+| PostgreSQL   | 14+            |
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+El proyecto usa el stack oficial de Laravel 13: Blade + Tailwind CSS (Vite) y Eloquent sobre PostgreSQL.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## Instalación
 
-## Learning Laravel
+1. Clonar el repositorio y entrar a la carpeta:
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+   ```sh
+   git clone <url-del-repo> aulavirtual
+   cd aulavirtual
+   ```
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+2. Instalar dependencias de PHP y JavaScript:
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+   ```sh
+   composer install
+   npm install
+   ```
 
-## Agentic Development
+3. Configurar el archivo de entorno:
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+   ```sh
+   cp .env.example .env
+   php artisan key:generate
+   ```
 
-```bash
-composer require laravel/boost --dev
+   Ajustar en `.env` los siguientes valores:
 
-php artisan boost:install
+   ```env
+   APP_NAME=AulaVirtual
+   APP_URL=http://localhost:8000
+
+   APP_LOCALE=es
+   APP_FALLBACK_LOCALE=es
+   APP_FAKER_LOCALE=es_VE
+
+   DB_CONNECTION=pgsql
+   DB_HOST=127.0.0.1
+   DB_PORT=5432
+   DB_DATABASE=aulavirtual
+   DB_USERNAME=postgres
+   DB_PASSWORD=<tu-contraseña>
+
+   SESSION_DRIVER=database
+   MAIL_MAILER=log
+   ```
+
+   Notas:
+   - Usar **un solo nombre de base de datos en minúsculas** (p. ej. `aulavirtual`) para que el archivo sea portable en todo el equipo.
+   - `APP_FAKER_LOCALE=es_VE` genera nombres, cédulas y teléfonos venezolanos en el seeder.
+   - `SESSION_DRIVER=database` y `MAIL_MAILER=log` ya vienen por defecto y no deben cambiarse.
+
+4. Crear la base de datos en PostgreSQL:
+
+   ```sh
+   psql -U postgres -c "CREATE DATABASE aulavirtual;"
+   ```
+
+5. Ejecutar migraciones y seeders:
+
+   ```sh
+   php artisan migrate:fresh --seed
+   ```
+
+6. Compilar los assets frontend:
+
+   ```sh
+   npm run build
+   # o, durante desarrollo:
+   npm run dev
+   ```
+
+7. Levantar el servidor:
+
+   ```sh
+   php artisan serve
+   ```
+
+   El proyecto queda disponible en <http://localhost:8000>.
+
+## Datos de prueba
+
+`php artisan migrate:fresh --seed` puebla la base con:
+
+| Recurso              | Cantidad |
+|----------------------|----------|
+| Roles                | 3 (admin, profesor, estudiante) |
+| Cuatrimestres        | 3 (Q1 cerrado, Q2 actual, Q3 próximo) |
+| Carreras             | 8          |
+| Cursos               | 45         |
+| Horarios             | 45 (8 slots por día) |
+| Profesores           | 25         |
+| Estudiantes          | 600        |
+| Usuarios             | 626        |
+| Inscripciones        | 955        |
+| Calificaciones       | 1080       |
+| Listas de espera     | 30         |
+| Registros de asistencia | 12960   |
+
+Aproximadamente el 10% de los estudiantes (61) tienen deuda pendiente (`deuda = true`).
+
+### Cuentas de inicio de sesión
+
+| Rol      | Email             | Contraseña   |
+|----------|-------------------|--------------|
+| Admin    | rectora@aula.edu  | Rectora2026  |
+| Profesor | profesor@aula.edu | Profesor2026 |
+| Estudiante | estudiante@aula.edu | Alejandro2026 |
+
+El resto de usuarios (especiales y aleatorios) usan la contraseña `password`.
+
+### Casos de prueba embebidos
+
+Los seeders ya dejan datos listos para validar las reglas de negocio:
+
+| Email              | Caso                                                        |
+|--------------------|-------------------------------------------------------------|
+| conflicto@aula.edu | Inscrito en 2 cursos con la misma hora (slot 0)             |
+| profesor@aula.edu  | El profesor que dicta esos 2 cursos solapados               |
+| deuda@aula.edu     | Estudiante con deuda sin inscribir este cuatrimestre        |
+| egresada@aula.edu  | Aprobó los 6 cursos de Diseño Gráfico en Q1 (certificable)  |
+| repitiente@aula.edu| Nota 4 en Base de Datos I en Q1, la repite en Q2            |
+| inasistente@aula.edu | 5 de 12 fallas (41.7 %) en un curso                        |
+| alerta@aula.edu    | 3 de 12 fallas (25 %) en un curso                           |
+| puntual@aula.edu   | Asistencia perfecta                                         |
+
+Además, 8 cursos están con cupo lleno (Fundamentos de Programación, Contabilidad I, Diseño Editorial, Marketing Digital I, Ecoturismo, Enfermería Básica, Electrónica Básica y Matemática Básica) y tienen listas de espera generadas.
+
+## Paneles por rol
+
+| Rol      | Ruta        | Acceso                    |
+|----------|-------------|---------------------------|
+| Admin    | `/admin`    | Gestión académica, reportes |
+| Profesor | `/profesor` | Cursos, calificaciones, asistencia |
+| Estudiante | `/estudiante` | Inscripción, horario, notas |
+
+Las rutas exigen autenticación y el rol correcto a través del middleware `role` (`EnsureRole`). Si un estudiante accede a `/admin` recibe un `403 Forbidden`.
+
+## Tests, lint y utilidades
+
+```sh
+composer test          # Ejecuta la suite de PHPUnit
+./vendor/bin/pint      # Formatea el código con Laravel Pint
+php artisan route:list # Lista las rutas registradas
+php artisan db:seed    # Re-ejecuta solo los seeders
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Convenciones del equipo
 
-## Contributing
-
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
-
-## Code of Conduct
-
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- **Rutas**: un archivo por módulo (`routes/inscripcion.php`, `routes/calificacion.php`, etc.) incluido desde `routes/web.php`.
+- **Seeders**: `DatabaseSeeder` está congelado. Cambios de datos en el futuro se hacen con migraciones, no editando seeders.
+- **Base**: el layout base está en `resources/views/layouts/app.blade.php`, con menú por rol y el hook `@yield('menu_extra')` para los módulos.
