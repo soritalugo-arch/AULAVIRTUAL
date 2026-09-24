@@ -11,7 +11,14 @@ class Rol extends Model
 
     protected $table = 'rol';
 
+    protected $primaryKey = 'id_rol';
+
     protected $fillable = [
         'nombre'
     ];
+
+    public function usuarios()
+    {
+        return $this->belongsToMany(Usuario::class, 'rol_usuario', 'rol_id', 'usuario_id');
+    }
 }

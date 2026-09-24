@@ -11,6 +11,8 @@ class Usuario extends Model
 
     protected $table = 'usuario';
 
+    protected $primaryKey = 'id_usuario';
+
     protected $fillable = [
         'nombres',
         'apellidos',
@@ -18,4 +20,9 @@ class Usuario extends Model
         'email',
         'password'
     ];
+
+    public function roles()
+    {
+        return $this->belongsToMany(Rol::class, 'rol_usuario', 'usuario_id', 'rol_id');
+    }
 }
