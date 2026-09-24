@@ -17,4 +17,24 @@ class Cuatrimestre extends Model
         'fecha_inicio',
         'fecha_fin'
     ];
+
+    protected $casts = [
+        'fecha_inicio' => 'date',
+        'fecha_fin' => 'date'
+    ];
+
+    public function cursos()
+    {
+        return $this->belongsToMany(Curso::class, 'curso_cuatrimestre', 'cuatrimestre_id', 'curso_id');
+    }
+
+    public function calificaciones()
+    {
+        return $this->hasMany(Calificacion::class, 'id_cuatrimestre');
+    }
+
+    public function asistencias()
+    {
+        return $this->hasMany(Asistencia::class, 'id_cuatrimestre');
+    }
 }

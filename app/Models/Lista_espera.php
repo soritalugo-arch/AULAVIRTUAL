@@ -17,4 +17,14 @@ class Lista_espera extends Model
         'id_curso',
         'id_estudiante'
     ];
+
+    public function curso()
+    {
+        return $this->belongsTo(Curso::class, 'id_curso');
+    }
+
+    public function estudiante()
+    {
+        return $this->belongsTo(Estudiante::class, 'id_estudiante');
+    }
 }

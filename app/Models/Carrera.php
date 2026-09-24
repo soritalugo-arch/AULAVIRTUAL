@@ -17,4 +17,13 @@ class Carrera extends Model
         'nombre',
         'duracion'
     ];
+
+    protected $casts = [
+        'duracion' => 'integer'
+    ];
+
+    public function cursos()
+    {
+        return $this->belongsToMany(Curso::class, 'curso_carrera', 'carrera_id', 'curso_id');
+    }
 }

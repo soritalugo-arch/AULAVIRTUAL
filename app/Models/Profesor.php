@@ -20,4 +20,14 @@ class Profesor extends Model
     protected $fillable = [
         'id_usuario'
     ];
+
+    public function usuario()
+    {
+        return $this->belongsTo(Usuario::class, 'id_usuario');
+    }
+
+    public function cursos()
+    {
+        return $this->belongsToMany(Curso::class, 'curso_profesor', 'profesor_id', 'curso_id');
+    }
 }
