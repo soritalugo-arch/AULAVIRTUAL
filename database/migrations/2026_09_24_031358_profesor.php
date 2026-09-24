@@ -11,7 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::create('profesor', function (Blueprint $table) {
+            $table->foreignId('id_usuario')->primary()->constrained('usuario')->onDelete('cascade');
+            
+            $table->timestamps();
+        });
     }
 
     /**

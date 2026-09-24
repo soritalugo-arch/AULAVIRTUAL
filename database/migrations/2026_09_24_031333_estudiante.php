@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('estudiante', function (Blueprint $table) {
-            $table->id('id_estudiante');
-            $table->foreignId('id_usuario')->constrained('usuario');
+            $table->foreignId('id_usuario')->primary()->constrained('usuario')->onDelete('cascade');
+            $table->date('fecha_nacimiento');
+            $table->string('cedula', 9);
+            $table->boolean('deuda')->default(false);
             $table->timestamps();
         });
     }
