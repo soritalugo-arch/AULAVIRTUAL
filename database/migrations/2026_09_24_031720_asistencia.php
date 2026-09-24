@@ -11,10 +11,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Shema::create('asistencia', function (Blueprint $table) {
+        Schema::create('asistencia', function (Blueprint $table) {
             $table->id('id_asistencia');
             $table->foreignId('id_estudiante')->constrained('estudiante')->onDelete('cascade');
-            $table->foreignId('id_curso')->constrained('curso')->onDelete('cascade');
+            $table->foreign(['id_cuatrimestre','id_curso'])->onDelete('cascade')->references(['cuatrimestre_id','curso_id'])->on('curso_cuatrimestre');
             $table->date('fecha');
             $table->boolean('presente'); 
             $table->timestamps();

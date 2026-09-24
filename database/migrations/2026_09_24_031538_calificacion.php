@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('calificacion', function (Blueprint $table) {
             $table->id('id_calificacion');
             $table->foreignId('id_estudiante')->constrained('estudiante')->onDelete('cascade');
+            $table->foreign(['id_cuatrimestre','id_curso'])->onDelete('cascade')->references(['cuatrimestre_id','curso_id'])->on('curso_cuatrimestre');
             $table->integer('nota')->unsigned();
             $table->string('observaciones')->nullable();
             $table->timestamps();
