@@ -14,8 +14,14 @@ Route::middleware('guest')->group(function () {
 
 Route::post('logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-Route::middleware('auth')->group(function () {
-    Route::get('/admin', fn () => response('<h1>Panel admin</h1>'))->name('admin.dashboard');
-    Route::get('/profesor', fn () => response('<h1>Panel profesor</h1>'))->name('profesor.dashboard');
-    Route::get('/estudiante', fn () => response('<h1>Panel estudiante</h1>'))->name('estudiante.dashboard');
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin', fn () => view('admin.dashboard'))->name('admin.dashboard');
+});
+
+Route::middleware(['auth', 'role:profesor'])->group(function () {
+    Route::get('/profesor', fn () => view('profesor.dashboard'))->name('profesor.dashboard');
+});
+
+Route::middleware(['auth', 'role:estudiante'])->group(function () {
+    Route::get('/estudiante', fn () => view('estudiante.dashboard'))->name('estudiante.dashboard');
 });
