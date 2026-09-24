@@ -11,14 +11,15 @@ use Illuminate\Database\Eloquent\Factories\Factory;
 class UsuarioFactory extends Factory
 {
     protected static ?string $password;
+
     public function definition(): array
     {
         return [
-            'nombres' => $this->faker->name(),
-            'apellidos' => $this->faker->lastName(),
-            'telefono' => $this->faker->phoneNumber(),
-            'email' => $this->faker->unique()->safeEmail(),
-            'password' => bcrypt('password'),
+            'nombres' => fake()->firstName(),
+            'apellidos' => fake()->lastName(),
+            'telefono' => fake()->numerify('0412#######'),
+            'email' => fake()->unique()->safeEmail(),
+            'password' => static::$password ??= bcrypt('password'),
         ];
     }
 }
