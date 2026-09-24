@@ -11,15 +11,15 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('curso_cuatrimestre', function (Blueprint $table) {
+        Schema::create('curso_carrera', function (Blueprint $table) {
             $table->unsignedBigInteger('curso_id');
-            $table->unsignedBigInteger('cuatrimestre_id');
+            $table->unsignedBigInteger('carrera_id');
             $table->timestamps();
 
              // Definir las claves foráneas
-            $table->foreign('curso_id')->references('id')->on('curso')->onDelete('cascade');
-            $table->foreign('cuatrimestre_id')->references('id')->on('cuatrimestre')->onDelete('cascade');
-            $table->primary(['curso_id', 'cuatrimestre_id']); // Definir la clave primaria compuesta
+            $table->foreign('curso_id')->references('id_curso')->on('curso')->onDelete('cascade');
+            $table->foreign('carrera_id')->references('id_carrera')->on('carrera')->onDelete('cascade');
+            $table->primary(['curso_id', 'carrera_id']); // Definir la clave primaria compuesta
         });
     }
 

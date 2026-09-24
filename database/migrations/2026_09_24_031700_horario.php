@@ -11,9 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::crete('horario', function (Blueprint $table) {
+        Schema::create('horario', function (Blueprint $table) {
             $table->id('id_horario');
-            $table->foreignId('id_curso')->constrained('curso')->onDelete('cascade');
+            $table->foreignId('id_curso')->constrained('curso', 'id_curso')->onDelete('cascade');
             $table->string('dia_semana');
             $table->time('hora_inicio');
             $table->time('hora_fin');

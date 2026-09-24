@@ -18,8 +18,8 @@ return new class extends Migration
             $table->timestamps();
 
             // Definir las claves foráneas
-            $table->foreign('rol_id')->references('id')->on('roles')->onDelete('cascade');
-            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('cascade');
+            $table->foreign('rol_id')->references('id_rol')->on('rol')->onDelete('cascade');
+            $table->foreign('usuario_id')->references('id_usuario')->on('usuario')->onDelete('cascade');
 
             $table->primary(['rol_id', 'usuario_id']); // Definir la clave primaria compuesta
         });
