@@ -12,6 +12,17 @@ return new class extends Migration
     public function up(): void
     {
         //
+        Schema::create('rol_usuario', function (Blueprint $table) {
+            $table->unsignedBigInteger('rol_id');
+            $table->unsignedBigInteger('usuario_id');
+            $table->timestamps();
+
+            // Definir las claves foráneas
+            $table->foreign('rol_id')->references('id')->on('roles')->onDelete('cascade');
+            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('cascade');
+
+            $table->primary(['rol_id', 'usuario_id']); // Definir la clave primaria compuesta
+        });
     }
 
     /**
