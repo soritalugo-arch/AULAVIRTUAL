@@ -11,7 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::create('cuatrimestre', function (Blueprint $table) {
+            $table->id('id_cuatrimestre');
+            $table->date('fecha_inicio');
+            $table->date('fecha_fin');
+            $table->timestamps();
+        });
     }
 
     /**

@@ -11,7 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::create('lista_espera', function (Blueprint $table) {
+            $table->id('idlista_espera');
+            $table->foreignId('id_curso')->constrained('curso')->onDelete('cascade');
+            $table->foreignId('id_estudiante')->constrained('estudiante')->onDelete('cascade');
+            $table->timestamps();
+        });
     }
 
     /**

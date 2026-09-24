@@ -11,7 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+       Schema::create('carrera', function (Blueprint $table) {
+            $table->id('id_carrera');
+            $table->string('nombre');
+            $table->integer('duracion')->unsigned();
+            $table->timestamps();
+        });
     }
 
     /**
