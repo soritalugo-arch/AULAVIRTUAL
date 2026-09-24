@@ -17,7 +17,7 @@ class UsuarioFactory extends Factory
         return [
             'nombres' => fake()->firstName(),
             'apellidos' => fake()->lastName(),
-            'telefono' => fake()->numerify('0412#######'),
+            'telefono' => fake()->randomElement(['0412','0414','0416','0422','0424','0426']).fake()->numerify('#######'),
             'email' => fake()->unique()->safeEmail(),
             'password' => static::$password ??= bcrypt('password'),
         ];
