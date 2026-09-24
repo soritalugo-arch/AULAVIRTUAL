@@ -4,7 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Calificaion extends Model
+class Calificacion extends Model
 {
-    //
+    use HasFactory;
+
+    protected $table = 'calificacion';
+
+    protected $fillable = [
+        'nota',
+        'observaciones'
+    ];
 }
