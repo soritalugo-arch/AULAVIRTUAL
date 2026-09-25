@@ -9,16 +9,16 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    public const EMAIL_ADMIN = 'rectora@aula.edu';
-    public const EMAIL_PROFESOR = 'profesor@aula.edu';
-    public const EMAIL_ESTUDIANTE = 'estudiante@aula.edu';
-    public const EMAIL_DEUDA = 'deuda@aula.edu';
-    public const EMAIL_EGRESADA = 'egresada@aula.edu';
-    public const EMAIL_CONFLICTO = 'conflicto@aula.edu';
-    public const EMAIL_INASISTENTE = 'inasistente@aula.edu';
-    public const EMAIL_ALERTA = 'alerta@aula.edu';
-    public const EMAIL_REPITIENTE = 'repitiente@aula.edu';
-    public const EMAIL_PUNTUAL = 'puntual@aula.edu';
+    public const EMAIL_ADMIN = 'maria.rodriguez-rectora@aula.edu';
+    public const EMAIL_PROFESOR = 'jose.salazar-profesor@aula.edu';
+    public const EMAIL_ESTUDIANTE = 'alejandro.gonzalez-estudiante@aula.edu';
+    public const EMAIL_DEUDA = 'gabriela.castillo-deuda@aula.edu';
+    public const EMAIL_EGRESADA = 'valentina.rojas-egresada@aula.edu';
+    public const EMAIL_CONFLICTO = 'luis.marcano-conflicto@aula.edu';
+    public const EMAIL_INASISTENTE = 'carlos.fuentes-inasistente@aula.edu';
+    public const EMAIL_ALERTA = 'andreina.quintero-alerta@aula.edu';
+    public const EMAIL_REPITIENTE = 'diego.tovar-repitiente@aula.edu';
+    public const EMAIL_PUNTUAL = 'sofia.mendez-puntual@aula.edu';
 
     public const CONTRASENA_DE_EMAIL = [
         self::EMAIL_ADMIN => 'Rectora2026',

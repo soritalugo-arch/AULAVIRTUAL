@@ -59,7 +59,7 @@ El proyecto usa el stack oficial de Laravel 13: Blade + Tailwind CSS (Vite) y El
 
    Notas:
    - Usar **un solo nombre de base de datos en minúsculas** (p. ej. `aulavirtual`) para que el archivo sea portable en todo el equipo.
-   - `APP_FAKER_LOCALE=es_VE` genera nombres, cédulas y teléfonos venezolanos en el seeder.
+   - `APP_FAKER_LOCALE=es_VE` genera nombres, cédulas y teléfonos venezolanos en el seeder (los teléfonos usan las extensiones `0412`, `0414`, `0416`, `0422`, `0424` y `0426`).
    - `SESSION_DRIVER=database` y `MAIL_MAILER=log` ya vienen por defecto y no deben cambiarse.
 
 4. Crear la base de datos en PostgreSQL:
@@ -113,28 +113,28 @@ Aproximadamente el 10% de los estudiantes (61) tienen deuda pendiente (`deuda = 
 
 ### Cuentas de inicio de sesión
 
-| Rol      | Email             | Contraseña   |
-|----------|-------------------|--------------|
-| Admin    | rectora@aula.edu  | Rectora2026  |
-| Profesor | profesor@aula.edu | Profesor2026 |
-| Estudiante | estudiante@aula.edu | Alejandro2026 |
+| Rol      | Email                                    | Contraseña   |
+|----------|------------------------------------------|--------------|
+| Admin    | maria.rodriguez-rectora@aula.edu         | Rectora2026  |
+| Profesor | jose.salazar-profesor@aula.edu           | Profesor2026 |
+| Estudiante | alejandro.gonzalez-estudiante@aula.edu | Alejandro2026 |
 
-El resto de usuarios (especiales y aleatorios) usan la contraseña `password`.
+El resto de usuarios generados aleatoriamente usan la contraseña `password`.
 
 ### Casos de prueba embebidos
 
 Los seeders ya dejan datos listos para validar las reglas de negocio:
 
-| Email              | Caso                                                        |
-|--------------------|-------------------------------------------------------------|
-| conflicto@aula.edu | Inscrito en 2 cursos con la misma hora (slot 0)             |
-| profesor@aula.edu  | El profesor que dicta esos 2 cursos solapados               |
-| deuda@aula.edu     | Estudiante con deuda sin inscribir este cuatrimestre        |
-| egresada@aula.edu  | Aprobó los 6 cursos de Diseño Gráfico en Q1 (certificable)  |
-| repitiente@aula.edu| Nota 4 en Base de Datos I en Q1, la repite en Q2            |
-| inasistente@aula.edu | 5 de 12 fallas (41.7 %) en un curso                        |
-| alerta@aula.edu    | 3 de 12 fallas (25 %) en un curso                           |
-| puntual@aula.edu   | Asistencia perfecta                                         |
+| Email                              | Caso                                                        |
+|------------------------------------|-------------------------------------------------------------|
+| luis.marcano-conflicto@aula.edu    | Inscrito en 2 cursos con la misma hora (slot 0)             |
+| jose.salazar-profesor@aula.edu     | El profesor que dicta esos 2 cursos solapados               |
+| gabriela.castillo-deuda@aula.edu   | Estudiante con deuda sin inscribir este cuatrimestre        |
+| valentina.rojas-egresada@aula.edu  | Aprobó los 6 cursos de Diseño Gráfico en Q1 (certificable)  |
+| diego.tovar-repitiente@aula.edu    | Nota 4 en Base de Datos I en Q1, la repite en Q2            |
+| carlos.fuentes-inasistente@aula.edu | 5 de 12 fallas (41.7 %) en un curso                        |
+| andreina.quintero-alerta@aula.edu  | 3 de 12 fallas (25 %) en un curso                           |
+| sofia.mendez-puntual@aula.edu      | Asistencia perfecta                                         |
 
 Además, 8 cursos están con cupo lleno (Fundamentos de Programación, Contabilidad I, Diseño Editorial, Marketing Digital I, Ecoturismo, Enfermería Básica, Electrónica Básica y Matemática Básica) y tienen listas de espera generadas.
 
