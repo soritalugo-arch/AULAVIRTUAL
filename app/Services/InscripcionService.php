@@ -19,22 +19,40 @@ class InscripcionService
     {
         return DB::transaction(function () use ($estudiante, $curso) {
 
+            // Bloquear la fila del curso: serializa las inscripciones concurrentes
+            // y evita que dos estudiantes ocupen el último cupo al mismo tiempo.
+            $curso = Curso::query()->whereKey($curso->id_curso)->lockForUpdate()->first();
+
+            if (! $curso) {
+                throw new Exception('El curso no existe.');
+            }
+
             // 1. Bloqueo por deuda pendiente
             if ((bool) $estudiante->deuda === true) {
                 throw new Exception("El estudiante posee deudas pendientes y no puede inscribirse.");
             }
 
-            // 2. Conflicto de horario del estudiante
+            // 2. Ya está inscrito en el curso
+            if ($this->yaInscrito($estudiante, $curso)) {
+                throw new Exception("El estudiante ya está inscrito en esta asignatura.");
+            }
+
+            // 3. Ya está en la lista de espera del curso
+            if ($this->yaEnListaEspera($estudiante, $curso)) {
+                throw new Exception("El estudiante ya está en la lista de espera de esta asignatura.");
+            }
+
+            // 4. Conflicto de horario del estudiante
             if ($this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
                 throw new Exception("Existe un conflicto de horario con otra asignatura del estudiante.");
             }
 
-            // 3. Conflicto de horario del profesor
+            // 5. Conflicto de horario del profesor
             if ($this->tieneConflictoHorarioProfesor($curso)) {
                 throw new Exception("Existe un conflicto de horario para el profesor asignado a la asignatura.");
             }
 
-            // 4. Control de cupo
+            // 6. Control de cupo (con el curso bloqueado, el conteo es seguro)
             $inscritosActuales = Inscripcion::where('id_curso', $curso->id_curso)->count();
 
             if ($inscritosActuales >= $curso->limite_estudiantes) {
@@ -65,9 +83,15 @@ class InscripcionService
     public function desinscribir(Estudiante $estudiante, Curso $curso)
     {
         return DB::transaction(function () use ($estudiante, $curso) {
+            $curso = Curso::query()->whereKey($curso->id_curso)->lockForUpdate()->first();
+
+            if (! $curso) {
+                return;
+            }
+
             $inscripcion = Inscripcion::where('id_estudiante', $estudiante->id_usuario)
-            ->where('id_curso', $curso->id_curso)
-            ->first();
+                ->where('id_curso', $curso->id_curso)
+                ->first();
 
             if ($inscripcion) {
                 $inscripcion->delete();
@@ -79,31 +103,83 @@ class InscripcionService
     }
 
     /**
-     * Promover al primer estudiante de la lista de espera (FIFO).
+     * Promover desde la lista de espera (FIFO).
+     *
+     * Salta a los estudiantes que ya no son elegibles (deuda, ya inscritos
+     * o con conflicto de horario) y los retira de la lista hasta encontrar
+     * al primer candidato válido.
      */
     public function promoverDeListaEspera(Curso $curso)
     {
-        $siguienteEnLista = Lista_espera::where('id_curso', $curso->id_curso)
-        ->orderBy('created_at', 'asc')
-        ->first();
+        $curso = Curso::query()->whereKey($curso->id_curso)->lockForUpdate()->first();
 
-        if ($siguienteEnLista) {
-            $estudiante = $siguienteEnLista->estudiante;
+        if (! $curso) {
+            return;
+        }
 
-            if (!$estudiante->deuda && !$this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
-                Inscripcion::create([
-                    'id_estudiante'     => $estudiante->id_usuario,
-                    'id_curso'          => $curso->id_curso,
-                    'fecha_inscripcion' => now(),
-                ]);
+        while (true) {
+            $primero = Lista_espera::where('id_curso', $curso->id_curso)
+                ->orderBy('created_at', 'asc')
+                ->orderBy('idlista_espera', 'asc')
+                ->first();
 
-                $siguienteEnLista->delete();
+            if (! $primero) {
+                return;
             }
+
+            // Si ya no hay cupo, se detiene
+            $inscritosActuales = Inscripcion::where('id_curso', $curso->id_curso)->count();
+
+            if ($inscritosActuales >= $curso->limite_estudiantes) {
+                return;
+            }
+
+            $estudiante = $primero->estudiante;
+
+            // No es elegible: se retira de la lista y se evalúa al siguiente
+            if ($estudiante->deuda || $this->yaInscrito($estudiante, $curso) || $this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
+                $primero->delete();
+                continue;
+            }
+
+            Inscripcion::create([
+                'id_estudiante'     => $estudiante->id_usuario,
+                'id_curso'          => $curso->id_curso,
+                'fecha_inscripcion' => now(),
+            ]);
+
+            $primero->delete();
+
+            return;
         }
     }
 
     /**
-     * Auxiliares para validación de choque de horarios
+     * ¿El estudiante ya está inscrito en el curso?
+     */
+    private function yaInscrito(Estudiante $estudiante, Curso $curso): bool
+    {
+        return Inscripcion::where('id_estudiante', $estudiante->id_usuario)
+            ->where('id_curso', $curso->id_curso)
+            ->exists();
+    }
+
+    /**
+     * ¿El estudiante ya está en la lista de espera del curso?
+     */
+    private function yaEnListaEspera(Estudiante $estudiante, Curso $curso): bool
+    {
+        return Lista_espera::where('id_estudiante', $estudiante->id_usuario)
+            ->where('id_curso', $curso->id_curso)
+            ->exists();
+    }
+
+    /**
+     * Auxiliares para validación de choque de horarios.
+     *
+     * Dos clases chocan si se solapan de verdad: una termina DESPUÉS de que
+     * la otra empieza y una empieza ANTES de que la otra termina.
+     * Clases consecutivas (08:00-10:00 y 10:00-12:00) NO son conflicto.
      */
     private function tieneConflictoHorarioEstudiante(Estudiante $estudiante, Curso $nuevoCurso): bool
     {
@@ -116,15 +192,17 @@ class InscripcionService
         // Obtener IDs de cursos donde el estudiante ya está inscrito
         $cursosInscritosIds = $estudiante->inscripciones()->pluck('id_curso');
 
+        if ($cursosInscritosIds->isEmpty()) {
+            return false;
+        }
+
         foreach ($horariosNuevoCurso as $horarioNuevo) {
             $existeConflicto = DB::table('horario')
-            ->whereIn('id_curso', $cursosInscritosIds)
-            ->where('dia_semana', $horarioNuevo->dia_semana)
-            ->where(function ($q) use ($horarioNuevo) {
-                $q->whereBetween('hora_inicio', [$horarioNuevo->hora_inicio, $horarioNuevo->hora_fin])
-                ->orWhereBetween('hora_fin', [$horarioNuevo->hora_inicio, $horarioNuevo->hora_fin]);
-            })
-            ->exists();
+                ->whereIn('id_curso', $cursosInscritosIds)
+                ->where('dia_semana', $horarioNuevo->dia_semana)
+                ->where('hora_inicio', '<', $horarioNuevo->hora_fin)
+                ->where('hora_fin', '>', $horarioNuevo->hora_inicio)
+                ->exists();
 
             if ($existeConflicto) {
                 return true;
@@ -145,15 +223,13 @@ class InscripcionService
 
         foreach ($horariosCurso as $horario) {
             $conflicto = DB::table('horario')
-            ->join('curso_profesor', 'horario.id_curso', '=', 'curso_profesor.curso_id')
-            ->whereIn('curso_profesor.profesor_id', $profesoresIds)
-            ->where('horario.id_curso', '!=', $curso->id_curso)
-            ->where('horario.dia_semana', $horario->dia_semana)
-            ->where(function ($q) use ($horario) {
-                $q->whereBetween('horario.hora_inicio', [$horario->hora_inicio, $horario->hora_fin])
-                ->orWhereBetween('horario.hora_fin', [$horario->hora_inicio, $horario->hora_fin]);
-            })
-            ->exists();
+                ->join('curso_profesor', 'horario.id_curso', '=', 'curso_profesor.curso_id')
+                ->whereIn('curso_profesor.profesor_id', $profesoresIds)
+                ->where('horario.id_curso', '!=', $curso->id_curso)
+                ->where('horario.dia_semana', $horario->dia_semana)
+                ->where('horario.hora_inicio', '<', $horario->hora_fin)
+                ->where('horario.hora_fin', '>', $horario->hora_inicio)
+                ->exists();
 
             if ($conflicto) {
                 return true;
