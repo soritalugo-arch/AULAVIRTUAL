@@ -210,6 +210,11 @@
         font-size: 53px;
     }
 
+    .module-icon svg {
+        width: 76px;
+        height: 57px;
+    }
+
 
     /* ================================
        INFORMACIÓN DEL MÓDULO
@@ -309,6 +314,15 @@
         font-size: 28px;
 
         color: #6382dc;
+    }
+
+    .academic-title svg {
+        width: 30px;
+        height: 30px;
+
+        color: #6382dc;
+
+        flex-shrink: 0;
     }
 
     .academic-title h2 {
@@ -485,9 +499,11 @@
     /* LISTA DE ESPERA */
 
     .waiting {
-        color: #202020;
+        color: #4a618f;
 
         font-size: 13px;
+
+        font-weight: 600;
 
         white-space: nowrap;
     }
@@ -506,11 +522,17 @@
     }
 
     .btn-enroll {
-        min-width: 143px;
+        min-width: 150px;
 
-        height: 36px;
+        height: 38px;
 
         padding: 0 17px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 7px;
 
         border-radius: 20px;
 
@@ -541,16 +563,22 @@
     }
 
     .btn-enroll i {
-        margin-right: 7px;
+        margin-right: 0;
     }
 
 
     .btn-remove {
-        min-width: 160px;
+        min-width: 150px;
 
-        height: 36px;
+        height: 38px;
 
         padding: 0 17px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 7px;
 
         border-radius: 20px;
 
@@ -581,16 +609,24 @@
     }
 
     .btn-remove i {
-        margin-right: 7px;
+        margin-right: 0;
     }
 
 
     /* Botón secundario "Salir de lista" */
 
     .btn-exit-list {
-        height: 36px;
+        min-width: 150px;
 
-        padding: 0 16px;
+        height: 38px;
+
+        padding: 0 14px;
+
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+
+        gap: 7px;
 
         border-radius: 20px;
 
@@ -604,7 +640,7 @@
 
         font-weight: 600;
 
-        font-size: 12px;
+        font-size: 13px;
 
         white-space: nowrap;
 
@@ -616,7 +652,7 @@
     }
 
     .btn-exit-list i {
-        margin-right: 6px;
+        margin-right: 0;
     }
 
 
@@ -778,7 +814,21 @@
     <section class="module-card">
 
         <div class="module-icon">
-            <i class="fa-solid fa-graduation-cap"></i>
+            <svg viewBox="0 0 140 105" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <defs>
+                    <linearGradient id="graduationGradient" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stop-color="#4c5bc3"/>
+                        <stop offset="100%" stop-color="#6e94ee"/>
+                    </linearGradient>
+                </defs>
+                <polygon points="70,4 136,34 70,65 4,34" fill="url(#graduationGradient)" />
+                <circle cx="70" cy="34" r="3" fill="white" />
+                <path d="M26 49 L26 72 Q26 78 32 81 L64 96 Q70 99 76 96 L108 81 Q114 78 114 72 L114 49 L70 69 Z" fill="url(#graduationGradient)" />
+                <path d="M26 49 L70 70 L114 49" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.9" />
+                <path d="M125 35 L125 61" fill="none" stroke="#5a73d2" stroke-width="4" stroke-linecap="round" />
+                <circle cx="125" cy="67" r="7" fill="#607ddc" />
+                <path d="M125 73 L125 91" fill="none" stroke="#607ddc" stroke-width="4" stroke-linecap="round" />
+            </svg>
         </div>
 
         <div class="module-info">
@@ -818,7 +868,10 @@
     <section class="academic-card">
 
         <div class="academic-title">
-            <i class="fa-regular fa-book-open"></i>
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M20 12C15.5 8.5 10 8 4 9V30C10 29 15.5 29.5 20 32C24.5 29.5 30 29 36 30V9C30 8 24.5 8.5 20 12Z" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" />
+                <path d="M20 12V32" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
             <h2>Oferta Académica</h2>
         </div>
 
