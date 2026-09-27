@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Events\CursoPorComenzar;
+use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
 use App\Models\Inscripcion;
@@ -27,32 +28,42 @@ class InscripcionService
                 throw new Exception('El curso no existe.');
             }
 
-            // 1. Bloqueo por deuda pendiente
+            // 1. La asignatura debe pertenecer a la carrera del estudiante
+            if (! $this->cursoEsDeLaCarreraDelEstudiante($estudiante, $curso)) {
+                throw new Exception('La asignatura no pertenece a la carrera del estudiante.');
+            }
+
+            // 2. La asignatura debe ofrecerse en el cuatrimestre vigente
+            if (! $this->cursoEsDelCuatrimestreVigente($curso)) {
+                throw new Exception('La asignatura no está disponible en el cuatrimestre vigente.');
+            }
+
+            // 3. Bloqueo por deuda pendiente
             if ((bool) $estudiante->deuda === true) {
                 throw new Exception('El estudiante posee deudas pendientes y no puede inscribirse.');
             }
 
-            // 2. Ya está inscrito en el curso
+            // 4. Ya está inscrito en el curso
             if ($this->yaInscrito($estudiante, $curso)) {
                 throw new Exception('El estudiante ya está inscrito en esta asignatura.');
             }
 
-            // 3. Ya está en la lista de espera del curso
+            // 5. Ya está en la lista de espera del curso
             if ($this->yaEnListaEspera($estudiante, $curso)) {
                 throw new Exception('El estudiante ya está en la lista de espera de esta asignatura.');
             }
 
-            // 4. Conflicto de horario del estudiante
+            // 6. Conflicto de horario del estudiante
             if ($this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
                 throw new Exception('Existe un conflicto de horario con otra asignatura del estudiante.');
             }
 
-            // 5. Conflicto de horario del profesor
+            // 7. Conflicto de horario del profesor
             if ($this->tieneConflictoHorarioProfesor($curso)) {
                 throw new Exception('Existe un conflicto de horario para el profesor asignado a la asignatura.');
             }
 
-            // 6. Control de cupo (con el curso bloqueado, el conteo es seguro)
+            // 8. Control de cupo (con el curso bloqueado, el conteo es seguro)
             $inscritosActuales = Inscripcion::where('id_curso', $curso->id_curso)->count();
 
             if ($inscritosActuales >= $curso->limite_estudiantes) {
@@ -174,6 +185,34 @@ class InscripcionService
         return Lista_espera::where('id_estudiante', $estudiante->id_usuario)
             ->where('id_curso', $curso->id_curso)
             ->exists();
+    }
+
+    /**
+     * ¿La asignatura pertenece a la carrera del estudiante?
+     */
+    private function cursoEsDeLaCarreraDelEstudiante(Estudiante $estudiante, Curso $curso): bool
+    {
+        if (! $estudiante->id_carrera) {
+            return false;
+        }
+
+        return $curso->carreras()->whereKey($estudiante->id_carrera)->exists();
+    }
+
+    /**
+     * ¿La asignatura se ofrece en el cuatrimestre vigente?
+     */
+    private function cursoEsDelCuatrimestreVigente(Curso $curso): bool
+    {
+        $vigente = Cuatrimestre::where('fecha_inicio', '<=', now())
+            ->where('fecha_fin', '>=', now())
+            ->first();
+
+        if (! $vigente) {
+            return false;
+        }
+
+        return $curso->cuatrimestres()->whereKey($vigente->id_cuatrimestre)->exists();
     }
 
     /**
