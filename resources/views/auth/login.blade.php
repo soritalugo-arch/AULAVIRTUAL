@@ -128,9 +128,9 @@
             position: relative;
             z-index: 2;
 
-            width: min(72vw, 640px);
+            width: min(70vw, 560px);
 
-            padding: 40px 56px 54px;
+            padding: 36px 48px 46px;
 
             background: rgba(255, 255, 255, 0.86);
 
@@ -174,11 +174,11 @@
         ===================================================== */
 
         .title {
-            margin-bottom: 36px;
+            margin-bottom: 28px;
 
             font-family: "Playfair Display", Georgia, serif;
 
-            font-size: clamp(48px, 6vw, 76px);
+            font-size: clamp(32px, 4.6vw, 44px);
             font-weight: 500;
 
             line-height: 1;
@@ -257,11 +257,11 @@
         ===================================================== */
 
         .form-label {
-            margin-bottom: 14px;
+            margin-bottom: 24px;
 
             color: #435b9f;
 
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 600;
 
             line-height: 1;
@@ -467,13 +467,13 @@
         @media (max-width: 900px) {
 
             .login-card {
-                width: min(88vw, 640px);
+                width: min(88vw, 560px);
 
-                padding: 40px 44px 50px;
+                padding: 36px 40px 44px;
             }
 
             .title {
-                font-size: 46px;
+                font-size: 38px;
             }
 
             .login-form {
@@ -503,14 +503,15 @@
             }
 
             .title {
-                margin-bottom: 38px;
+                margin-bottom: 24px;
 
-                font-size: 42px;
+                font-size: 32px;
                 letter-spacing: -1.5px;
             }
 
             .form-label {
-                font-size: 21px;
+                font-size: 18px;
+                margin-bottom: 18px;
             }
 
             .input-wrapper {
@@ -538,7 +539,7 @@
             .login-button {
                 height: 82px;
 
-                margin-top: 43px;
+                margin-top: 32px;
 
                 font-size: 21px;
             }
