@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Events\CursoPorComenzar;
-use App\Models\Estudiante;
 use App\Models\Curso;
+use App\Models\Estudiante;
 use App\Models\Inscripcion;
 use App\Models\Lista_espera;
-use Illuminate\Support\Facades\DB;
 use Exception;
+use Illuminate\Support\Facades\DB;
 
 class InscripcionService
 {
@@ -29,27 +29,27 @@ class InscripcionService
 
             // 1. Bloqueo por deuda pendiente
             if ((bool) $estudiante->deuda === true) {
-                throw new Exception("El estudiante posee deudas pendientes y no puede inscribirse.");
+                throw new Exception('El estudiante posee deudas pendientes y no puede inscribirse.');
             }
 
             // 2. Ya está inscrito en el curso
             if ($this->yaInscrito($estudiante, $curso)) {
-                throw new Exception("El estudiante ya está inscrito en esta asignatura.");
+                throw new Exception('El estudiante ya está inscrito en esta asignatura.');
             }
 
             // 3. Ya está en la lista de espera del curso
             if ($this->yaEnListaEspera($estudiante, $curso)) {
-                throw new Exception("El estudiante ya está en la lista de espera de esta asignatura.");
+                throw new Exception('El estudiante ya está en la lista de espera de esta asignatura.');
             }
 
             // 4. Conflicto de horario del estudiante
             if ($this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
-                throw new Exception("Existe un conflicto de horario con otra asignatura del estudiante.");
+                throw new Exception('Existe un conflicto de horario con otra asignatura del estudiante.');
             }
 
             // 5. Conflicto de horario del profesor
             if ($this->tieneConflictoHorarioProfesor($curso)) {
-                throw new Exception("Existe un conflicto de horario para el profesor asignado a la asignatura.");
+                throw new Exception('Existe un conflicto de horario para el profesor asignado a la asignatura.');
             }
 
             // 6. Control de cupo (con el curso bloqueado, el conteo es seguro)
@@ -58,14 +58,14 @@ class InscripcionService
             if ($inscritosActuales >= $curso->limite_estudiantes) {
                 return Lista_espera::create([
                     'id_estudiante' => $estudiante->id_usuario,
-                    'id_curso'      => $curso->id_curso,
+                    'id_curso' => $curso->id_curso,
                 ]);
             }
 
             // Registrar inscripción
             $inscripcion = Inscripcion::create([
-                'id_estudiante'     => $estudiante->id_usuario,
-                'id_curso'          => $curso->id_curso,
+                'id_estudiante' => $estudiante->id_usuario,
+                'id_curso' => $curso->id_curso,
                 'fecha_inscripcion' => now(),
             ]);
 
@@ -105,9 +105,9 @@ class InscripcionService
     /**
      * Promover desde la lista de espera (FIFO).
      *
-     * Salta a los estudiantes que ya no son elegibles (deuda, ya inscritos
-     * o con conflicto de horario) y los retira de la lista hasta encontrar
-     * al primer candidato válido.
+     * Salta a los no aptos (deuda o conflicto de horario) conservando su
+     * puesto, elimina a los ya inscritos (fila redundante) y promueve al
+     * primer candidato válido.
      */
     public function promoverDeListaEspera(Curso $curso)
     {
@@ -117,38 +117,40 @@ class InscripcionService
             return;
         }
 
-        while (true) {
-            $primero = Lista_espera::where('id_curso', $curso->id_curso)
-                ->orderBy('created_at', 'asc')
-                ->orderBy('idlista_espera', 'asc')
-                ->first();
+        // Si el cupo sigue lleno, no se promueve nadie
+        $inscritosActuales = Inscripcion::where('id_curso', $curso->id_curso)->count();
 
-            if (! $primero) {
-                return;
+        if ($inscritosActuales >= $curso->limite_estudiantes) {
+            return;
+        }
+
+        $enCola = Lista_espera::where('id_curso', $curso->id_curso)
+            ->orderBy('created_at', 'asc')
+            ->orderBy('idlista_espera', 'asc')
+            ->get();
+
+        foreach ($enCola as $item) {
+            $estudiante = $item->estudiante;
+
+            // Fila redundante: ya está inscrito → se elimina
+            if ($this->yaInscrito($estudiante, $curso)) {
+                $item->delete();
+
+                continue;
             }
 
-            // Si ya no hay cupo, se detiene
-            $inscritosActuales = Inscripcion::where('id_curso', $curso->id_curso)->count();
-
-            if ($inscritosActuales >= $curso->limite_estudiantes) {
-                return;
-            }
-
-            $estudiante = $primero->estudiante;
-
-            // No es elegible: se retira de la lista y se evalúa al siguiente
-            if ($estudiante->deuda || $this->yaInscrito($estudiante, $curso) || $this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
-                $primero->delete();
+            // No apto hoy (deuda o conflicto): se salta y conserva su puesto
+            if ($estudiante->deuda || $this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
                 continue;
             }
 
             Inscripcion::create([
-                'id_estudiante'     => $estudiante->id_usuario,
-                'id_curso'          => $curso->id_curso,
+                'id_estudiante' => $estudiante->id_usuario,
+                'id_curso' => $curso->id_curso,
                 'fecha_inscripcion' => now(),
             ]);
 
-            $primero->delete();
+            $item->delete();
 
             return;
         }

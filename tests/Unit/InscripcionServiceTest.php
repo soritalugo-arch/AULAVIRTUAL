@@ -1,75 +1,76 @@
 <?php
 
-use App\Models\Usuario;
-use App\Models\Estudiante;
 use App\Models\Curso;
+use App\Models\Estudiante;
 use App\Models\Horario;
 use App\Models\Lista_espera;
+use App\Models\Usuario;
 use App\Services\InscripcionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
-uses(Tests\TestCase::class, RefreshDatabase::class);
+uses(TestCase::class, RefreshDatabase::class);
 
 // Función auxiliar corregida para la creación de usuarios y estudiantes
 function crearEstudiantePrueba(string $nombre, string $email, bool $deuda = false): Estudiante
 {
     $usuario = Usuario::create([
-        'nombres'   => $nombre,
+        'nombres' => $nombre,
         'apellidos' => 'Pérez',
-        'telefono'  => '04141234567',
-        'email'     => $email,
-        'password'  => bcrypt('password'),
+        'telefono' => '04141234567',
+        'email' => $email,
+        'password' => bcrypt('password'),
     ]);
 
     return Estudiante::create([
-        'id_usuario'       => $usuario->getKey(),
-                              'cedula'           => (string) rand(10000000, 99999999),
-                              'fecha_nacimiento' => '2000-01-01',
-                              'deuda'            => $deuda,
+        'id_usuario' => $usuario->getKey(),
+        'cedula' => (string) rand(10000000, 99999999),
+        'fecha_nacimiento' => '2000-01-01',
+        'deuda' => $deuda,
     ]);
 }
 
 test('no permite inscripcion si el estudiante tiene deuda', function () {
-    $service = new InscripcionService();
+    $service = new InscripcionService;
     $estudiante = crearEstudiantePrueba('Carlos', 'deudor@test.com', true);
 
     $curso = Curso::create([
-        'nombre'             => 'Matemáticas',
+        'nombre' => 'Matemáticas',
         'limite_estudiantes' => 30,
     ]);
 
     expect(fn () => $service->inscribir($estudiante, $curso))
-    ->toThrow(Exception::class, 'El estudiante posee deudas pendientes y no puede inscribirse.');
+        ->toThrow(Exception::class, 'El estudiante posee deudas pendientes y no puede inscribirse.');
 });
 
 test('no permite inscripcion por conflicto de horario en el estudiante', function () {
-    $service = new InscripcionService();
+    $service = new InscripcionService;
     $estudiante = crearEstudiantePrueba('Maria', 'maria@test.com');
 
     $curso1 = Curso::create(['nombre' => 'Física I', 'limite_estudiantes' => 30]);
     Horario::create([
-        'id_curso'   => $curso1->getKey(),
-                    'dia_semana' => 'Lunes',
-                    'hora_inicio'=> '08:00:00',
-                    'hora_fin'   => '10:00:00',
+        'id_curso' => $curso1->getKey(),
+        'dia_semana' => 'Lunes',
+        'hora_inicio' => '08:00:00',
+        'hora_fin' => '10:00:00',
     ]);
 
     $curso2 = Curso::create(['nombre' => 'Química I', 'limite_estudiantes' => 30]);
     Horario::create([
-        'id_curso'   => $curso2->getKey(),
-                    'dia_semana' => 'Lunes',
-                    'hora_inicio'=> '09:00:00',
-                    'hora_fin'   => '11:00:00',
+        'id_curso' => $curso2->getKey(),
+        'dia_semana' => 'Lunes',
+        'hora_inicio' => '09:00:00',
+        'hora_fin' => '11:00:00',
     ]);
 
     $service->inscribir($estudiante, $curso1);
 
     expect(fn () => $service->inscribir($estudiante, $curso2))
-    ->toThrow(Exception::class, 'Existe un conflicto de horario con otra asignatura del estudiante.');
+        ->toThrow(Exception::class, 'Existe un conflicto de horario con otra asignatura del estudiante.');
 });
 
 test('envia a lista de espera cuando el cupo esta lleno', function () {
-    $service = new InscripcionService();
+    $service = new InscripcionService;
     $curso = Curso::create(['nombre' => 'Programación', 'limite_estudiantes' => 1]);
 
     $estudiante1 = crearEstudiantePrueba('Alumno 1', 'a1@test.com');
@@ -81,12 +82,12 @@ test('envia a lista de espera cuando el cupo esta lleno', function () {
     expect($resultadoEspera)->toBeInstanceOf(Lista_espera::class);
     $this->assertDatabaseHas('lista_espera', [
         'id_estudiante' => $estudiante2->getKey(),
-                             'id_curso'      => $curso->getKey(),
+        'id_curso' => $curso->getKey(),
     ]);
 });
 
 test('promueve desde la lista de espera al desinscribir a un estudiante', function () {
-    $service = new InscripcionService();
+    $service = new InscripcionService;
     $curso = Curso::create(['nombre' => 'Bases de Datos', 'limite_estudiantes' => 1]);
 
     $estudiante1 = crearEstudiantePrueba('Alumno 1', 'est1@test.com');
@@ -99,21 +100,21 @@ test('promueve desde la lista de espera al desinscribir a un estudiante', functi
 
     $this->assertDatabaseHas('inscripcion', [
         'id_estudiante' => $estudiante2->getKey(),
-                             'id_curso'      => $curso->getKey(),
+        'id_curso' => $curso->getKey(),
     ]);
 
     $this->assertDatabaseMissing('lista_espera', [
         'id_estudiante' => $estudiante2->getKey(),
-                                 'id_curso'      => $curso->getKey(),
+        'id_curso' => $curso->getKey(),
     ]);
 });
 
 test('no permite inscribirse dos veces en el mismo curso', function () {
-    $service = new InscripcionService();
+    $service = new InscripcionService;
     $estudiante = crearEstudiantePrueba('Ana', 'ana@test.com');
 
     $curso = Curso::create([
-        'nombre'             => 'Historia',
+        'nombre' => 'Historia',
         'limite_estudiantes' => 30,
     ]);
 
@@ -124,7 +125,7 @@ test('no permite inscribirse dos veces en el mismo curso', function () {
 });
 
 test('no permite entrar dos veces a la lista de espera del mismo curso', function () {
-    $service = new InscripcionService();
+    $service = new InscripcionService;
     $curso = Curso::create(['nombre' => 'Curso Lleno', 'limite_estudiantes' => 1]);
 
     $titular = crearEstudiantePrueba('Titular', 'titular@test.com');
@@ -141,23 +142,23 @@ test('no permite entrar dos veces a la lista de espera del mismo curso', functio
 });
 
 test('no considera conflicto cuando una clase termina y otra empieza a la misma hora', function () {
-    $service = new InscripcionService();
+    $service = new InscripcionService;
     $estudiante = crearEstudiantePrueba('Luis', 'luis@test.com');
 
     $curso1 = Curso::create(['nombre' => 'Matemática I', 'limite_estudiantes' => 30]);
     Horario::create([
-        'id_curso'    => $curso1->getKey(),
-        'dia_semana'  => 'Lunes',
+        'id_curso' => $curso1->getKey(),
+        'dia_semana' => 'Lunes',
         'hora_inicio' => '08:00:00',
-        'hora_fin'    => '10:00:00',
+        'hora_fin' => '10:00:00',
     ]);
 
     $curso2 = Curso::create(['nombre' => 'Matemática II', 'limite_estudiantes' => 30]);
     Horario::create([
-        'id_curso'    => $curso2->getKey(),
-        'dia_semana'  => 'Lunes',
+        'id_curso' => $curso2->getKey(),
+        'dia_semana' => 'Lunes',
         'hora_inicio' => '10:00:00',
-        'hora_fin'    => '12:00:00',
+        'hora_fin' => '12:00:00',
     ]);
 
     $service->inscribir($estudiante, $curso1);
@@ -167,27 +168,27 @@ test('no considera conflicto cuando una clase termina y otra empieza a la misma 
     $this->assertNotNull($inscripcion);
     $this->assertDatabaseHas('inscripcion', [
         'id_estudiante' => $estudiante->getKey(),
-        'id_curso'      => $curso2->getKey(),
+        'id_curso' => $curso2->getKey(),
     ]);
 });
 
 test('promocion salta al de la lista de espera con conflicto de horario y promueve al siguiente', function () {
-    $service = new InscripcionService();
+    $service = new InscripcionService;
 
     // Curso con cupo 1 y horario los miércoles
     $curso = Curso::create(['nombre' => 'SQL Avanzado', 'limite_estudiantes' => 1]);
     Horario::create([
-        'id_curso'    => $curso->getKey(),
-        'dia_semana'  => 'Miercoles',
+        'id_curso' => $curso->getKey(),
+        'dia_semana' => 'Miercoles',
         'hora_inicio' => '08:00:00',
-        'hora_fin'    => '10:00:00',
+        'hora_fin' => '10:00:00',
     ]);
 
     $titular = crearEstudiantePrueba('Titular', 'titular2@test.com');
     $service->inscribir($titular, $curso);
 
     $enEspera = crearEstudiantePrueba('Espera Conflicto', 'espera_conflicto@test.com');
-    $otro     = crearEstudiantePrueba('Otro Alumno', 'otro@test.com');
+    $otro = crearEstudiantePrueba('Otro Alumno', 'otro@test.com');
 
     $service->inscribir($enEspera, $curso); // 1º en lista
     $service->inscribir($otro, $curso);     // 2º en lista
@@ -195,10 +196,10 @@ test('promocion salta al de la lista de espera con conflicto de horario y promue
     // El primero en espera se inscribe en un curso que choca con SQL Avanzado
     $cursoChoque = Curso::create(['nombre' => 'Física Avanzada', 'limite_estudiantes' => 30]);
     Horario::create([
-        'id_curso'    => $cursoChoque->getKey(),
-        'dia_semana'  => 'Miercoles',
+        'id_curso' => $cursoChoque->getKey(),
+        'dia_semana' => 'Miercoles',
         'hora_inicio' => '09:00:00',
-        'hora_fin'    => '11:00:00',
+        'hora_fin' => '11:00:00',
     ]);
     $service->inscribir($enEspera, $cursoChoque);
 
@@ -207,24 +208,24 @@ test('promocion salta al de la lista de espera con conflicto de horario y promue
 
     $this->assertDatabaseHas('inscripcion', [
         'id_estudiante' => $otro->getKey(),
-        'id_curso'      => $curso->getKey(),
+        'id_curso' => $curso->getKey(),
     ]);
 
-    $this->assertDatabaseMissing('lista_espera', [
+    $this->assertDatabaseHas('lista_espera', [
         'id_estudiante' => $enEspera->getKey(),
-        'id_curso'      => $curso->getKey(),
+        'id_curso' => $curso->getKey(),
     ]);
 });
 
-test('promocion descarta de la lista a quien quedó con deuda y promueve al siguiente', function () {
-    $service = new InscripcionService();
+test('promocion conserva en la lista a quien quedo con deuda y promueve al siguiente', function () {
+    $service = new InscripcionService;
     $curso = Curso::create(['nombre' => 'Contabilidad', 'limite_estudiantes' => 1]);
 
     $titular = crearEstudiantePrueba('Titular', 'titular3@test.com');
     $service->inscribir($titular, $curso);
 
     $deudor = crearEstudiantePrueba('Deudor Posterior', 'deudor_post@test.com');
-    $libre  = crearEstudiantePrueba('Alumno Libre', 'libre@test.com');
+    $libre = crearEstudiantePrueba('Alumno Libre', 'libre@test.com');
 
     $service->inscribir($deudor, $curso); // 1º en lista (aún sin deuda)
     $service->inscribir($libre, $curso);  // 2º en lista
@@ -237,11 +238,11 @@ test('promocion descarta de la lista a quien quedó con deuda y promueve al sigu
 
     $this->assertDatabaseHas('inscripcion', [
         'id_estudiante' => $libre->getKey(),
-        'id_curso'      => $curso->getKey(),
+        'id_curso' => $curso->getKey(),
     ]);
 
-    $this->assertDatabaseMissing('lista_espera', [
+    $this->assertDatabaseHas('lista_espera', [
         'id_estudiante' => $deudor->getKey(),
-        'id_curso'      => $curso->getKey(),
+        'id_curso' => $curso->getKey(),
     ]);
 });
