@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Carrera;
 use App\Models\Curso;
 use App\Models\Estudiante;
 use App\Models\Usuario;
@@ -53,6 +54,7 @@ class InscripcionSeeder extends Seeder
         $aleatorios = $estudiantes->reject(fn ($id) => in_array($id, $fijos, true))->values()->all();
 
         self::$carreraDeEstudiante = $this->carreraDeEstudiante($idPorEmail, $aleatorios);
+        $this->persistirCarreras();
 
         $filas = [];
 
@@ -143,6 +145,34 @@ class InscripcionSeeder extends Seeder
         }
 
         return $mapa;
+    }
+
+    /**
+     * Persiste en la tabla `estudiante` la carrera de cada estudiante,
+     * para poder filtrar la oferta académica por carrera.
+     */
+    private function persistirCarreras(): void
+    {
+        $carreraId = Carrera::pluck('id_carrera', 'nombre');
+
+        foreach (self::$carreraDeEstudiante as $sid => $nombreCarrera) {
+            DB::table('estudiante')
+                ->where('id_usuario', $sid)
+                ->update(['id_carrera' => $carreraId[$nombreCarrera] ?? null]);
+        }
+
+        // Estudiantes con deuda no entran en el mapa de inscripción: se les asigna carrera por turno.
+        $idsSinCarrera = DB::table('estudiante')
+            ->whereNull('id_carrera')
+            ->orderBy('id_usuario')
+            ->pluck('id_usuario');
+
+        foreach ($idsSinCarrera as $i => $sid) {
+            $nombreCarrera = CarreraSeeder::CARRERAS[$i % 8]['nombre'];
+            DB::table('estudiante')
+                ->where('id_usuario', $sid)
+                ->update(['id_carrera' => $carreraId[$nombreCarrera]]);
+        }
     }
 
     private function registrar(int $sid, Curso $curso, array &$cap, array &$filas, bool $ignorarSolape = false): bool

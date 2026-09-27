@@ -24,11 +24,16 @@ class InscripcionController extends Controller
      */
     public function index()
     {
-        // Obtener el estudiante autenticado
-        $estudiante = Estudiante::where('id_usuario', Auth::id())->firstOrFail();
+        // Obtener el estudiante autenticado con su carrera
+        $estudiante = Estudiante::with('carrera')->where('id_usuario', Auth::id())->firstOrFail();
+        $carrera = $estudiante->carrera;
 
-        // Cursos disponibles
-        $cursos = Curso::with(['horarios', 'profesores'])->get();
+        // Oferta académica filtrada por la carrera del estudiante
+        $cursos = $carrera
+            ? Curso::with(['horarios', 'profesores'])
+                ->whereHas('carreras', fn ($q) => $q->whereKey($carrera->id_carrera))
+                ->get()
+            : collect();
 
         // Cursos donde el estudiante ya está inscrito
         $misInscripcionesIds = $estudiante->inscripciones()->pluck('id_curso')->toArray();

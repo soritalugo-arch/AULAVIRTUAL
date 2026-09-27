@@ -21,7 +21,8 @@ class Estudiante extends Model
         'id_usuario',
         'fecha_nacimiento',
         'cedula',
-        'deuda'
+        'deuda',
+        'id_carrera'
     ];
 
     protected $casts = [
@@ -32,6 +33,11 @@ class Estudiante extends Model
     public function usuario()
     {
         return $this->belongsTo(Usuario::class, 'id_usuario');
+    }
+
+    public function carrera()
+    {
+        return $this->belongsTo(Carrera::class, 'id_carrera');
     }
 
     public function inscripciones()

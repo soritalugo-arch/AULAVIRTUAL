@@ -8,6 +8,9 @@
 <div class="bg-white rounded-lg shadow p-6">
 <h1 class="text-xl font-semibold text-gray-800">Módulo de Matriculación</h1>
 <p class="text-gray-600 mt-1">Gestiona la inscripción y retiro de tus asignaturas.</p>
+@if($estudiante->carrera)
+<p class="text-sm text-gray-500 mt-1">Carrera: <span class="font-semibold text-gray-700">{{ $estudiante->carrera->nombre }}</span></p>
+@endif
 </div>
 
 <!-- Mensajes de estado -->
@@ -88,7 +91,7 @@ Matricular
 @empty
 <tr>
 <td colspan="3" class="px-6 py-4 text-center text-sm text-gray-500">
-No hay asignaturas disponibles en este momento.
+No hay asignaturas disponibles para tu carrera en este momento.
 </td>
 </tr>
 @endforelse
