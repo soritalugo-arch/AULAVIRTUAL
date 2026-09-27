@@ -128,10 +128,9 @@
             position: relative;
             z-index: 2;
 
-            width: min(76vw, 950px);
-            min-height: 900px;
+            width: min(72vw, 640px);
 
-            padding: 48px 68px 70px;
+            padding: 40px 56px 54px;
 
             background: rgba(255, 255, 255, 0.86);
 
@@ -175,7 +174,7 @@
         ===================================================== */
 
         .title {
-            margin-bottom: 52px;
+            margin-bottom: 36px;
 
             font-family: "Playfair Display", Georgia, serif;
 
@@ -208,7 +207,7 @@
 
         .login-form {
             width: 100%;
-            max-width: 810px;
+            max-width: 560px;
 
             display: flex;
             flex-direction: column;
@@ -225,7 +224,7 @@
 
 
         .form-group + .form-group {
-            margin-top: 43px;
+            margin-top: 32px;
         }
 
 
@@ -258,35 +257,14 @@
         ===================================================== */
 
         .form-label {
-            margin-bottom: 17px;
-
-            display: flex;
-            align-items: center;
-
-            gap: 20px;
+            margin-bottom: 14px;
 
             color: #435b9f;
 
-            font-size: 27px;
+            font-size: 22px;
             font-weight: 600;
 
             line-height: 1;
-        }
-
-
-        .label-icon {
-            width: 38px;
-            height: 38px;
-
-            flex-shrink: 0;
-
-            color: #4c66aa;
-        }
-
-
-        .label-icon svg {
-            width: 100%;
-            height: 100%;
         }
 
 
@@ -298,7 +276,7 @@
             position: relative;
 
             width: 100%;
-            height: 98px;
+            height: 76px;
         }
 
 
@@ -306,7 +284,7 @@
             width: 100%;
             height: 100%;
 
-            padding: 0 78px 0 120px;
+            padding: 0 70px 0 96px;
 
             border: 2px solid #b7cdfb;
 
@@ -319,7 +297,7 @@
             color: #405a9c;
 
             font-family: "DM Sans", sans-serif;
-            font-size: 25px;
+            font-size: 19px;
             font-weight: 400;
 
             transition:
@@ -418,9 +396,9 @@
 
         .login-button {
             width: 100%;
-            height: 108px;
+            height: 82px;
 
-            margin-top: 57px;
+            margin-top: 40px;
 
             border: none;
 
@@ -438,7 +416,7 @@
 
             font-family: "DM Sans", sans-serif;
 
-            font-size: 29px;
+            font-size: 22px;
             font-weight: 600;
 
             cursor: pointer;
@@ -489,14 +467,13 @@
         @media (max-width: 900px) {
 
             .login-card {
-                width: 90vw;
-                min-height: auto;
+                width: min(88vw, 640px);
 
-                padding: 45px 40px 55px;
+                padding: 40px 44px 50px;
             }
 
             .title {
-                font-size: 58px;
+                font-size: 46px;
             }
 
             .login-form {
@@ -534,12 +511,6 @@
 
             .form-label {
                 font-size: 21px;
-                gap: 13px;
-            }
-
-            .label-icon {
-                width: 30px;
-                height: 30px;
             }
 
             .input-wrapper {
@@ -731,34 +702,6 @@
 
                 <label class="form-label" for="email">
 
-                    <span class="label-icon">
-
-                        <svg viewBox="0 0 40 40"
-                             fill="none"
-                             xmlns="http://www.w3.org/2000/svg">
-
-                            <rect
-                                x="4"
-                                y="8"
-                                width="32"
-                                height="24"
-                                rx="3"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                            />
-
-                            <path
-                                d="M5 11L20 23L35 11"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                            />
-
-                        </svg>
-
-                    </span>
-
                     <span>Email</span>
 
                 </label>
@@ -819,49 +762,6 @@
             <div class="form-group">
 
                 <label class="form-label" for="password">
-
-                    <span class="label-icon">
-
-                        <svg viewBox="0 0 40 40"
-                             fill="none"
-                             xmlns="http://www.w3.org/2000/svg">
-
-                            <rect
-                                x="9"
-                                y="17"
-                                width="22"
-                                height="18"
-                                rx="3"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                            />
-
-                            <path
-                                d="M13 17V12
-                                   C13 7.5 16 5 20 5
-                                   C24 5 27 7.5 27 12V17"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                                stroke-linecap="round"
-                            />
-
-                            <circle
-                                cx="20"
-                                cy="25"
-                                r="2"
-                                fill="currentColor"
-                            />
-
-                            <path
-                                d="M20 27V30"
-                                stroke="currentColor"
-                                stroke-width="2.5"
-                                stroke-linecap="round"
-                            />
-
-                        </svg>
-
-                    </span>
 
                     <span>Contraseña</span>
 
