@@ -9,8 +9,8 @@ Route::get('/', fn () => redirect()->route('login'));
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('login', [AuthController::class, 'login'])
-    ->name('login.submit')
-    ->middleware('throttle:login');
+        ->name('login.submit')
+        ->middleware('throttle:login');
 });
 
 Route::post('logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -30,4 +30,5 @@ Route::middleware(['auth', 'role:estudiante'])->group(function () {
     Route::get('/estudiante/matriculacion', [InscripcionController::class, 'index'])->name('estudiante.matriculacion');
     Route::post('/estudiante/inscribir', [InscripcionController::class, 'inscribir'])->name('estudiante.inscribir');
     Route::post('/estudiante/desinscribir', [InscripcionController::class, 'desinscribir'])->name('estudiante.desinscribir');
+    Route::post('/estudiante/quitar-lista', [InscripcionController::class, 'quitarListaEspera'])->name('estudiante.quitarListaEspera');
 });

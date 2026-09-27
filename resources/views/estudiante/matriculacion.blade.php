@@ -54,7 +54,7 @@
 <thead class="bg-gray-50">
 <tr>
 <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Asignatura</th>
-<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Límite Cupos</th>
+<th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cupos</th>
 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
 </tr>
 </thead>
@@ -65,10 +65,24 @@
 {{ $curso->nombre }}
 </td>
 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-{{ $curso->limite_estudiantes }} estudiantes
+@php $cursoLleno = $curso->inscripciones_count >= $curso->limite_estudiantes; @endphp
+{{ $curso->inscripciones_count }} / {{ $curso->limite_estudiantes }} estudiantes
+@if($cursoLleno)
+<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">Lleno</span>
+@endif
 </td>
 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-@if(in_array($curso->id_curso, $misInscripcionesIds))
+@if(in_array($curso->id_curso, $misListaEsperaIds))
+<!-- En lista de espera: botón para salir -->
+<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-800 mr-2">En lista de espera</span>
+<form action="{{ route('estudiante.quitarListaEspera') }}" method="POST" class="inline">
+@csrf
+<input type="hidden" name="id_curso" value="{{ $curso->id_curso }}">
+<button type="submit" class="px-3 py-1 bg-gray-600 hover:bg-gray-700 text-white text-xs font-semibold rounded transition">
+Salir de lista
+</button>
+</form>
+@elseif(in_array($curso->id_curso, $misInscripcionesIds))
 <!-- Botón Desmatricular -->
 <form action="{{ route('estudiante.desinscribir') }}" method="POST" class="inline">
 @csrf
@@ -84,7 +98,7 @@ Desmatricular
 <input type="hidden" name="id_curso" value="{{ $curso->id_curso }}">
 <button type="submit"
 class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
-{{ $estudiante->deuda ? 'disabled' : '' }}>
+{{ ($estudiante->deuda || $cursoLleno) ? 'disabled' : '' }}>
 Matricular
 </button>
 </form>

@@ -314,3 +314,29 @@ test('promocion conserva en la lista a quien quedo con deuda y promueve al sigui
         'id_curso' => $curso->getKey(),
     ]);
 });
+
+test('quita de la lista de espera al estudiante que se retira voluntariamente', function () {
+    $service = new InscripcionService;
+    $carrera = crearCarreraPrueba();
+    $curso = enOfertaDe(Curso::create(['nombre' => 'Redes I', 'limite_estudiantes' => 1]), $carrera);
+
+    $titular = crearEstudiantePrueba('Titular', 'titular_le@test.com', false, $carrera);
+    $service->inscribir($titular, $curso);
+
+    $enEspera = crearEstudiantePrueba('En Espera', 'espera_le@test.com', false, $carrera);
+    $service->inscribir($enEspera, $curso);
+
+    $this->assertDatabaseHas('lista_espera', [
+        'id_estudiante' => $enEspera->getKey(),
+        'id_curso' => $curso->getKey(),
+    ]);
+
+    expect($service->quitarDeListaEspera($enEspera, $curso))->toBeTrue();
+    $this->assertDatabaseMissing('lista_espera', [
+        'id_estudiante' => $enEspera->getKey(),
+        'id_curso' => $curso->getKey(),
+    ]);
+
+    // Idempotente: una segunda llamada no falla ni borra nada nuevo
+    expect($service->quitarDeListaEspera($enEspera, $curso))->toBeFalse();
+});

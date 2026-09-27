@@ -168,6 +168,27 @@ class InscripcionService
     }
 
     /**
+     * Quitar a un estudiante de la lista de espera de un curso.
+     *
+     * Operación idempotente: devuelve true si eliminó una fila y false si
+     * el estudiante no estaba en la lista.
+     */
+    public function quitarDeListaEspera(Estudiante $estudiante, Curso $curso): bool
+    {
+        return DB::transaction(function () use ($estudiante, $curso) {
+            $curso = Curso::query()->whereKey($curso->id_curso)->lockForUpdate()->first();
+
+            if (! $curso) {
+                return false;
+            }
+
+            return (bool) Lista_espera::where('id_estudiante', $estudiante->id_usuario)
+                ->where('id_curso', $curso->id_curso)
+                ->delete();
+        });
+    }
+
+    /**
      * ¿El estudiante ya está inscrito en el curso?
      */
     private function yaInscrito(Estudiante $estudiante, Curso $curso): bool
