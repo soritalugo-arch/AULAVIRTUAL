@@ -11,6 +11,9 @@
 @if($estudiante->carrera)
 <p class="text-sm text-gray-500 mt-1">Carrera: <span class="font-semibold text-gray-700">{{ $estudiante->carrera->nombre }}</span></p>
 @endif
+@if($cuatrimestreVigente)
+<p class="text-sm text-gray-500 mt-1">Período vigente: <span class="font-semibold text-gray-700">{{ $cuatrimestreVigente->fecha_inicio->format('d/m/Y') }} al {{ $cuatrimestreVigente->fecha_fin->format('d/m/Y') }}</span></p>
+@endif
 </div>
 
 <!-- Mensajes de estado -->

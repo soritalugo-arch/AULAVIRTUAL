@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
 use App\Services\InscripcionService;
@@ -28,17 +29,23 @@ class InscripcionController extends Controller
         $estudiante = Estudiante::with('carrera')->where('id_usuario', Auth::id())->firstOrFail();
         $carrera = $estudiante->carrera;
 
-        // Oferta académica filtrada por la carrera del estudiante
-        $cursos = $carrera
+        // Cuatrimestre vigente (período cuya fecha actual cae dentro de su rango)
+        $cuatrimestreVigente = Cuatrimestre::where('fecha_inicio', '<=', now())
+            ->where('fecha_fin', '>=', now())
+            ->first();
+
+        // Oferta académica filtrada por la carrera del estudiante y el cuatrimestre vigente
+        $cursos = $carrera && $cuatrimestreVigente
             ? Curso::with(['horarios', 'profesores'])
                 ->whereHas('carreras', fn ($q) => $q->whereKey($carrera->id_carrera))
+                ->whereHas('cuatrimestres', fn ($q) => $q->whereKey($cuatrimestreVigente->id_cuatrimestre))
                 ->get()
             : collect();
 
         // Cursos donde el estudiante ya está inscrito
         $misInscripcionesIds = $estudiante->inscripciones()->pluck('id_curso')->toArray();
 
-        return view('estudiante.matriculacion', compact('estudiante', 'cursos', 'misInscripcionesIds'));
+        return view('estudiante.matriculacion', compact('estudiante', 'cursos', 'misInscripcionesIds', 'cuatrimestreVigente'));
     }
 
     /**
