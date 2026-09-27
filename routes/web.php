@@ -4,7 +4,9 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Estudiante\InscripcionController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => redirect()->route('login'));
+Route::get('/', fn () => auth()->user()
+    ? redirect()->route(AuthController::nombreRutaHome(auth()->user()))
+    : redirect()->route('login'));
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');

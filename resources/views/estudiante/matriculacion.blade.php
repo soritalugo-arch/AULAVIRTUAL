@@ -98,7 +98,7 @@ Desmatricular
 <input type="hidden" name="id_curso" value="{{ $curso->id_curso }}">
 <button type="submit"
 class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded transition disabled:opacity-50 disabled:cursor-not-allowed"
-{{ ($estudiante->deuda || $cursoLleno) ? 'disabled' : '' }}>
+{{ $estudiante->deuda ? 'disabled' : '' }}>
 Matricular
 </button>
 </form>

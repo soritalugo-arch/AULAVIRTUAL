@@ -339,4 +339,20 @@ test('quita de la lista de espera al estudiante que se retira voluntariamente', 
 
     // Idempotente: una segunda llamada no falla ni borra nada nuevo
     expect($service->quitarDeListaEspera($enEspera, $curso))->toBeFalse();
+
+    // Mientras tanto otro estudiante entra a la cola
+    $otro = crearEstudiantePrueba('Otro Espera', 'otro_espera@test.com', false, $carrera);
+    $service->inscribir($otro, $curso);
+
+    // Salir permite volver a entrar: una nueva inscripción re-encola al final
+    $reentrada = $service->inscribir($enEspera, $curso);
+
+    expect($reentrada)->toBeInstanceOf(Lista_espera::class);
+    $this->assertDatabaseHas('lista_espera', [
+        'id_estudiante' => $enEspera->getKey(),
+        'id_curso' => $curso->getKey(),
+    ]);
+    expect($reentrada->idlista_espera)->toBeGreaterThan(
+        Lista_espera::where('id_estudiante', $otro->getKey())->value('idlista_espera'),
+    );
 });

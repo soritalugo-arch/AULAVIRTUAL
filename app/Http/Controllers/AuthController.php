@@ -23,7 +23,7 @@ class AuthController extends Controller
         if (Auth::attempt($request->only('email', 'password'))) {
             $request->session()->regenerate();
 
-            return redirect()->intended($this->homePara(Auth::user()));
+            return redirect()->intended(route(self::nombreRutaHome(Auth::user())));
         }
 
         throw ValidationException::withMessages([
@@ -41,16 +41,19 @@ class AuthController extends Controller
         return redirect()->route('login');
     }
 
-    private function homePara($user)
+    /**
+     * Nombre de la ruta del panel según el rol del usuario.
+     */
+    public static function nombreRutaHome($user): string
     {
         if ($user->roles->contains('nombre', 'admin')) {
-            return route('admin.dashboard');
+            return 'admin.dashboard';
         }
 
         if ($user->roles->contains('nombre', 'profesor')) {
-            return route('profesor.dashboard');
+            return 'profesor.dashboard';
         }
 
-        return route('estudiante.dashboard');
+        return 'estudiante.dashboard';
     }
 }
