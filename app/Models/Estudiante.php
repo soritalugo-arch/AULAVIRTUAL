@@ -18,6 +18,7 @@ class Estudiante extends Model
     protected $keyType = 'int';
 
     protected $fillable = [
+        'id_usuario',
         'fecha_nacimiento',
         'cedula',
         'deuda'
