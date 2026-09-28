@@ -1393,12 +1393,29 @@
                 Fecha de la clase:
             </label>
 
+            @php
+                $normDia = function ($v) {
+                    return strtr(strtolower(trim($v)), [
+                        'á' => 'a', 'é' => 'e', 'í' => 'i', 'ó' => 'o', 'ú' => 'u',
+                        'Á' => 'a', 'É' => 'e', 'Í' => 'i', 'Ó' => 'o', 'Ú' => 'u',
+                    ]);
+                };
+                $mapaDias  = ['domingo' => 0, 'lunes' => 1, 'martes' => 2, 'miercoles' => 3, 'jueves' => 4, 'viernes' => 5, 'sabado' => 6];
+                $diasClase = $horarios
+                    ->map(fn($h) => $mapaDias[$normDia($h->dia_semana)] ?? null)
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->implode(',');
+            @endphp
+
             <div class="cal" data-cal
                  data-url="{{ route('profesor.asistencia', $curso->id_curso) }}"
                  data-cuatrimestre="{{ $cuatrimestre->id_cuatrimestre }}"
                  data-fecha="{{ $fecha }}"
                  data-min="{{ $cuatrimestre->fecha_inicio->toDateString() }}"
-                 data-max="{{ $cuatrimestre->fecha_fin->toDateString() }}">
+                 data-max="{{ $cuatrimestre->fecha_fin->toDateString() }}"
+                 data-dias="{{ $diasClase }}">
 
                 <button type="button" class="cal-trigger" id="fecha-clase" data-cal-toggle>
                     <i class="fa-solid fa-calendar-day"></i>
@@ -1428,7 +1445,7 @@
                             <i class="fa-solid fa-arrow-rotate-left"></i>
                             Hoy
                         </button>
-                        <span class="cal-hint">Elige un día para cargarlo</span>
+                        <span class="cal-hint" data-cal-hint>Elige un día para cargarlo</span>
                     </div>
                 </div>
 
@@ -1664,12 +1681,17 @@
             var prev    = cal.querySelector('[data-cal-prev]');
             var next    = cal.querySelector('[data-cal-next]');
             var todayBtn = cal.querySelector('[data-cal-today]');
+            var hint    = cal.querySelector('[data-cal-hint]');
 
             var baseUrl = cal.getAttribute('data-url');
             var cuatr  = cal.getAttribute('data-cuatrimestre');
             var fecha  = cal.getAttribute('data-fecha') || '';
             var minD   = toDate(cal.getAttribute('data-min'));
             var maxD   = toDate(cal.getAttribute('data-max'));
+
+            /* Días de la semana en que el curso tiene clases. getDay(): 0=Dom..6=Sáb (igual que Carbon dayOfWeek) */
+            var diasRaw  = (cal.getAttribute('data-dias') || '').trim();
+            var diasClase = diasRaw ? diasRaw.split(',').map(function (n) { return parseInt(n, 10); }) : [];
 
             var DIAS    = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
             var MESES   = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
@@ -1716,9 +1738,11 @@
                 }
 
                 for (var d = 1; d <= days; d++) {
-                    var dd  = new Date(y, m, d);
-                    var dis = dd < minD || dd > maxD;
-                    var cls = 'cal-cell';
+                    var dd      = new Date(y, m, d);
+                    var dentro  = dd >= minD && dd <= maxD;
+                    var esClase = !diasClase.length || diasClase.indexOf(dd.getDay()) !== -1;
+                    var dis     = !dentro || !esClase;
+                    var cls     = 'cal-cell';
 
                     if (selected && iso(dd) === iso(selected)) cls += ' is-selected';
                     if (iso(dd) === iso(t)) cls += ' is-today';
@@ -1743,8 +1767,16 @@
                 viewY = base.getFullYear();
                 viewM = base.getMonth();
                 render(viewY, viewM);
-                todayBtn.disabled = today() < minD || today() > maxD;
+                todayBtn.disabled = hoyNoValido();
+                if (hint && diasClase.length) hint.textContent = 'Solo se permiten días de clase';
                 cal.classList.add('is-open');
+            }
+
+            function hoyNoValido() {
+                var t = today();
+                if (t < minD || t > maxD) return true;
+                if (diasClase.length && diasClase.indexOf(t.getDay()) === -1) return true;
+                return false;
             }
 
             cal.querySelector('.cal-trigger').addEventListener('click', function (e) {
@@ -1776,8 +1808,8 @@
             });
 
             todayBtn.addEventListener('click', function () {
+                if (hoyNoValido()) return;
                 var t = today();
-                if (t < minD || t > maxD) return;
                 location.href = baseUrl + '?cuatrimestre=' + cuatr + '&fecha=' + iso(t);
             });
 
