@@ -527,15 +527,20 @@
     .grade-input {
         width: 78px;
 
-        height: 34px;
+        height: 38px;
 
         padding: 0 8px;
 
-        border: 1px solid #ccd5e3;
+        border: 1px solid #c6d3ee;
 
-        border-radius: 8px;
+        border-radius: 15px;
 
-        background: white;
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #f2f6ff
+            );
 
         color: #172f55;
 
@@ -545,16 +550,24 @@
 
         outline: none;
 
+        box-shadow:
+            inset 0 1px 2px rgba(86, 122, 190, 0.08),
+            0 1px 1px rgba(255, 255, 255, 0.8);
+
         transition:
             border-color 0.15s ease,
-            box-shadow 0.15s ease;
+            box-shadow 0.15s ease,
+            background 0.15s ease;
     }
 
     .grade-input:focus {
         border-color: #5686ef;
 
+        background: #ffffff;
+
         box-shadow:
-            0 0 0 2px rgba(86, 134, 239, 0.12);
+            0 0 0 3px rgba(86, 134, 239, 0.14),
+            inset 0 1px 2px rgba(86, 122, 190, 0.05);
     }
 
     /* INPUT DE OBSERVACIÓN */
@@ -562,13 +575,20 @@
     .observation {
         width: 100%;
 
-        height: 34px;
+        height: 38px;
 
-        padding: 0 12px;
+        padding: 0 14px;
 
-        border: 1px solid #ccd5e3;
+        border: 1px solid #c6d3ee;
 
-        border-radius: 8px;
+        border-radius: 15px;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #f2f6ff
+            );
 
         outline: none;
 
@@ -576,9 +596,14 @@
 
         font-size: 13px;
 
+        box-shadow:
+            inset 0 1px 2px rgba(86, 122, 190, 0.08),
+            0 1px 1px rgba(255, 255, 255, 0.8);
+
         transition:
             border-color 0.15s ease,
-            box-shadow 0.15s ease;
+            box-shadow 0.15s ease,
+            background 0.15s ease;
     }
 
     .observation::placeholder {
@@ -588,8 +613,11 @@
     .observation:focus {
         border-color: #5686ef;
 
+        background: #ffffff;
+
         box-shadow:
-            0 0 0 2px rgba(86, 134, 239, 0.10);
+            0 0 0 3px rgba(86, 134, 239, 0.14),
+            inset 0 1px 2px rgba(86, 122, 190, 0.05);
     }
 
 
