@@ -291,7 +291,7 @@
 
         stroke: #5b72d5;
 
-        stroke-width: 46;
+        stroke-width: 42;
 
         stroke-linejoin: round;
         stroke-linecap: round;
@@ -303,7 +303,7 @@
 
         stroke: #5b72d5;
 
-        stroke-width: 44;
+        stroke-width: 40;
 
         stroke-linecap: round;
         stroke-linejoin: round;
@@ -315,7 +315,7 @@
 
         stroke: #5b72d5;
 
-        stroke-width: 44;
+        stroke-width: 40;
 
         stroke-linejoin: round;
         stroke-linecap: round;
@@ -327,7 +327,7 @@
 
         stroke: #4e67cb;
 
-        stroke-width: 38;
+        stroke-width: 35;
 
         stroke-linecap: round;
         stroke-linejoin: round;
