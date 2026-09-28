@@ -279,8 +279,8 @@
     }
 
     .module-icon svg {
-        width: 88px;
-        height: 58px;
+        width: 100px;
+        height: 67px;
     }
 
     /* Icono: libro abierto con verificación */
@@ -327,7 +327,7 @@
 
         stroke: #4e67cb;
 
-        stroke-width: 58;
+        stroke-width: 38;
 
         stroke-linecap: round;
         stroke-linejoin: round;
@@ -916,8 +916,8 @@
         }
 
         .module-icon svg {
-            width: 62px;
-            height: 41px;
+            width: 70px;
+            height: 47px;
         }
 
         .module-info h1 {
@@ -1068,7 +1068,7 @@
                       d="M604 214 L705 214 L705 335 L604 335 C592 335 585 327 585 316 L585 234 C585 222 592 214 604 214 Z" />
 
                 <!-- Marca de verificación -->
-                <path class="check" d="M626 274 L654 302 L751 201" />
+                <path class="check" d="M624 272 L655 303 L690 236" />
 
                 <!-- Líneas de la página derecha -->
                 <line class="book-line" x1="561" y1="430" x2="774" y2="430" />
