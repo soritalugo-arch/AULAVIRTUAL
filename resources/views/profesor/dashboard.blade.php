@@ -4,7 +4,7 @@
 
 @section('menu_extra')
     <li>
-        <a href="{{ route('profesor.cursos') }}" class="hover:text-blue-700">Mis Cursos</a>
+        <a href="{{ route('profesor.cursos') }}" class="nav-link">Mis Cursos</a>
     </li>
 @endsection
 
