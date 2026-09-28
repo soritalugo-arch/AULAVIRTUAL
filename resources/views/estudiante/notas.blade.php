@@ -151,10 +151,47 @@
                 #dce8ff,
                 #edf3ff
             );
+    }
 
-        color: #6284df;
+    .grades-icon svg {
+        width: 112px;
+        height: 112px;
+    }
 
-        font-size: 51px;
+    /* Logo: boleta de calificaciones con sello (mismo diseño que Matriculación) */
+
+    .grades-icon .icon-background {
+
+        fill: #e1eaff;
+    }
+
+    .grades-icon .document {
+
+        fill: #6b82e5;
+    }
+
+    .grades-icon .document-fold {
+
+        fill: #526bd2;
+    }
+
+    .grades-icon .document-line {
+
+        fill: #eef3ff;
+    }
+
+    .grades-icon .seal {
+
+        fill: #eef3ff;
+    }
+
+    .grades-icon .seal-text {
+
+        fill: #526bd2;
+
+        font-family: "DM Sans", Arial, sans-serif;
+
+        font-weight: 700;
     }
 
     .grades-title h1 {
@@ -659,6 +696,11 @@
             font-size: 38px;
         }
 
+        .grades-icon svg {
+            width: 80px;
+            height: 80px;
+        }
+
         .grades-title h1 {
             font-size: 28px;
         }
@@ -766,7 +808,32 @@
         <div class="grades-header">
 
             <div class="grades-icon">
-                <i class="fa-solid fa-file-lines"></i>
+                <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+
+                    <!-- Fondo circular -->
+                    <circle class="icon-background" cx="512" cy="512" r="465" />
+
+                    <!-- Boleta de calificaciones -->
+                    <path class="document"
+                          d="M293 272 C293 250 311 232 333 232 H560 L672 344 V690 C672 713 654 731 631 731 H333 C311 731 293 713 293 690 Z" />
+
+                    <!-- Esquina doblada -->
+                    <path class="document-fold"
+                          d="M560 232 V319 C560 337 575 352 593 352 H672 Z" />
+
+                    <!-- Línea superior -->
+                    <rect class="document-line" x="360" y="335" width="225" height="38" rx="19" />
+
+                    <!-- Asignaturas de la boleta -->
+                    <rect class="document-line" x="344" y="448" width="300" height="34" rx="17" />
+                    <rect class="document-line" x="344" y="520" width="240" height="34" rx="17" />
+                    <rect class="document-line" x="344" y="592" width="180" height="34" rx="17" />
+
+                    <!-- Sello de calificación -->
+                    <circle class="seal" cx="658" cy="508" r="96" />
+                    <text class="seal-text" x="658" y="508" text-anchor="middle" dominant-baseline="central" font-size="110">10</text>
+
+                </svg>
             </div>
 
             <div class="grades-title">
