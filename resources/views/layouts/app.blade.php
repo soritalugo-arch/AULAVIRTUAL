@@ -257,6 +257,8 @@
         @yield('contenido')
     </main>
 
+    @stack('scripts')
+
     {{-- Indicador deslizante del navbar: anima de un enlace a otro entre páginas --}}
     <script>
         (function () {

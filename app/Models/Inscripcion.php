@@ -16,11 +16,12 @@ class Inscripcion extends Model
     protected $fillable = [
         'id_estudiante',
         'id_curso',
-        'fecha_inscripcion'
+        'id_cuatrimestre',
+        'fecha_inscripcion',
     ];
 
     protected $casts = [
-        'fecha_inscripcion' => 'date'
+        'fecha_inscripcion' => 'date',
     ];
 
     public function estudiante()
@@ -31,5 +32,10 @@ class Inscripcion extends Model
     public function curso()
     {
         return $this->belongsTo(Curso::class, 'id_curso');
+    }
+
+    public function cuatrimestre()
+    {
+        return $this->belongsTo(Cuatrimestre::class, 'id_cuatrimestre');
     }
 }
