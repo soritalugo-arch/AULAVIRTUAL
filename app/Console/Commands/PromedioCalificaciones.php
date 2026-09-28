@@ -12,7 +12,7 @@ class PromedioCalificaciones extends Command
     // uso: php artisan notas:promedio [--curso=id] [--cuatrimestre=id]
     protected $signature = 'notas:promedio
                             {--curso= : id del curso; omitir para mostrar todos}
-                            {--cuatrimestre= : id del cuatrimestre; omitir para usar el mas reciente}';
+                            {--cuatrimestre= : id del cuatrimestre; omitir para usar el vigente}';
     protected $description = 'muestra el promedio de notas por curso y cuatrimestre';
     public function __construct(private CalificacionAsistenciaService $servicio)
     {
@@ -24,13 +24,13 @@ class PromedioCalificaciones extends Command
         $idCuatrimestre = $this->option('cuatrimestre') ? (int) $this->option('cuatrimestre') : null;
         // resolver cuatrimestre
         if (!$idCuatrimestre) {
-            $cuatrimestre = Cuatrimestre::orderByDesc('id_cuatrimestre')->first();
+            $cuatrimestre = $this->servicio->cuatrimestreVigente();
             if (!$cuatrimestre) {
-                $this->error('no hay cuatrimestres registrados.');
+                $this->error('no hay cuatrimestres vigentes registrados.');
                 return Command::FAILURE;
             }
             $idCuatrimestre = $cuatrimestre->id_cuatrimestre;
-            $this->line("cuatrimestre no indicado; usando el mas reciente: #{$idCuatrimestre}");
+            $this->line("cuatrimestre no indicado; usando el vigente: #{$idCuatrimestre}");
         } else {
             $cuatrimestre = Cuatrimestre::find($idCuatrimestre);
             if (!$cuatrimestre) {

@@ -13,14 +13,19 @@ class MisNotasController extends Controller
     public function index()
     {
         $estudiante    = auth()->user()->estudiante;
+        $vigente       = $this->servicio->cuatrimestreVigente();
         $inscripciones = Inscripcion::where('id_estudiante', $estudiante->id_usuario)
             ->with('curso.cuatrimestres', 'curso.calificaciones')
             ->get();
-        $resumen = $inscripciones->map(function ($ins) use ($estudiante) {
+        $resumen = $inscripciones->map(function ($ins) use ($estudiante, $vigente) {
             $curso        = $ins->curso;
-            $cuatrimestre = $curso->cuatrimestres()->orderByDesc('id_cuatrimestre')->first();
+            $cuatrimestres = $curso->cuatrimestres()->orderByDesc('fecha_inicio')->get();
+            $cuatrimestre = $cuatrimestres->contains('id_cuatrimestre', $vigente?->id_cuatrimestre)
+                ? $vigente
+                : $cuatrimestres->first();
             if (!$cuatrimestre) return null;
             $idCuatr      = $cuatrimestre->id_cuatrimestre;
+            $cuatrimestreTerminado = $cuatrimestre->fecha_fin->lt(now());
             $calificacion = $curso->calificaciones
                 ->where('id_estudiante', $estudiante->id_usuario)
                 ->where('id_cuatrimestre', $idCuatr)
@@ -29,15 +34,17 @@ class MisNotasController extends Controller
             return [
                 'curso'            => $curso->nombre,
                 'cuatrimestre'     => $idCuatr,
+                'cuatrimestreTerminado' => $cuatrimestreTerminado,
                 'nota'             => $calificacion?->nota,
                 'observaciones'    => $calificacion?->observaciones,
                 'totalClases'      => $this->servicio->clasesDictadas($curso->id_curso, $idCuatr),
                 'porcentajeFaltas' => $porcentaje,
-                'estado'           => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje),
+                'estado'           => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje, $cuatrimestreTerminado),
                 'alerta'           => $this->servicio->nivelAlerta($porcentaje),
                 'promedioCurso'    => $this->servicio->promedioPorCurso($curso->id_curso, $idCuatr),
             ];
         })->filter()->values();
-        return view('estudiante.notas', compact('resumen'));
+        $cuatrimestreTerminado = $vigente ? $vigente->fecha_fin->lt(now()) : true;
+        return view('estudiante.notas', compact('resumen', 'cuatrimestreTerminado'));
     }
 }

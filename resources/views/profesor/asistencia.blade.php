@@ -318,6 +318,48 @@
         background: #dce8ff;
     }
 
+    /* Selector de cuatrimestre dentro del toolbar */
+
+    .fecha-toolbar .toolbar-sep {
+        width: 1px;
+
+        height: 26px;
+
+        background: #e0eafa;
+    }
+
+    .fecha-toolbar select.fecha-input {
+        cursor: pointer;
+    }
+
+    /* Horario del curso */
+
+    .horario-chip {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 7px;
+
+        height: 36px;
+
+        padding: 0 14px;
+
+        border-radius: 18px;
+
+        background: #eaf1fb;
+
+        color: #4f72b4;
+
+        font-size: 12.5px;
+
+        font-weight: 600;
+    }
+
+    .horario-chip i {
+        font-size: 12px;
+    }
+
 
     /* =====================================================
        MENSAJE DE ÉXITO
@@ -832,8 +874,35 @@
 
         </div>
 
-        {{-- Selección de fecha de la clase --}}
+        {{-- Selección de cuatrimestre y fecha de la clase --}}
         <div class="fecha-toolbar">
+
+            <label for="select-cuatrimestre">
+                <i class="fa-solid fa-layer-group"></i>
+                Cuatrimestre:
+            </label>
+
+            <form method="GET" action="{{ route('profesor.asistencia', $curso->id_curso) }}" class="fecha-form">
+
+                <select
+                    name="cuatrimestre"
+                    id="select-cuatrimestre"
+                    onchange="this.form.submit()"
+                    class="fecha-input"
+                >
+                    @foreach($cuatrimestres as $c)
+                        <option value="{{ $c->id_cuatrimestre }}"
+                            @selected($c->id_cuatrimestre === $cuatrimestre->id_cuatrimestre)>
+                            #{{ $c->id_cuatrimestre }} ({{ $c->fecha_inicio }} — {{ $c->fecha_fin }})
+                        </option>
+                    @endforeach
+                </select>
+
+                <input type="hidden" name="fecha" value="{{ $fecha }}">
+
+            </form>
+
+            <span class="toolbar-sep" aria-hidden="true"></span>
 
             <label for="fecha-clase">
                 <i class="fa-solid fa-calendar-day"></i>
@@ -842,11 +911,15 @@
 
             <form method="GET" action="{{ route('profesor.asistencia', $curso->id_curso) }}" class="fecha-form">
 
+                <input type="hidden" name="cuatrimestre" value="{{ $cuatrimestre->id_cuatrimestre }}">
+
                 <input
                     type="date"
                     name="fecha"
                     id="fecha-clase"
                     value="{{ $fecha }}"
+                    min="{{ $cuatrimestre->fecha_inicio->toDateString() }}"
+                    max="{{ $cuatrimestre->fecha_fin->toDateString() }}"
                     class="fecha-input"
                 >
 
@@ -855,6 +928,13 @@
                 </button>
 
             </form>
+
+            @if($horarios->isNotEmpty())
+                <span class="horario-chip">
+                    <i class="fa-solid fa-clock"></i>
+                    {{ $horarios->map(fn($h) => $h->dia_semana . ' ' . substr($h->hora_inicio, 0, 5) . '–' . substr($h->hora_fin, 0, 5))->implode(', ') }}
+                </span>
+            @endif
 
         </div>
 
@@ -881,7 +961,7 @@
 
             <span class="legend-item legend-danger">
                 <i class="fa-solid fa-circle-exclamation"></i>
-                Pierde materia (más del 30% de faltas)
+                {{ $cuatrimestreTerminado ? 'Pierde materia (más del 30% de faltas)' : 'En riesgo (más del 30% de lo dictado)' }}
             </span>
 
         </div>
@@ -947,7 +1027,9 @@
                                 <span class="nombre">{{ $est['nombre'] }}</span>
 
                                 @if($est['alerta'] === 'peligro')
-                                    <span class="nombre-warn peligro">Pierde la materia — superó el 30% de faltas</span>
+                                    <span class="nombre-warn peligro">
+                                        {{ $cuatrimestreTerminado ? 'Pierde la materia — superó el 30% de faltas' : 'En riesgo — superó el 30% de lo dictado' }}
+                                    </span>
                                 @elseif($est['alerta'] === 'advertencia')
                                     <span class="nombre-warn advertencia">Cerca del límite — comuníquese con el estudiante</span>
                                 @endif
@@ -970,7 +1052,7 @@
                                 @if($est['alerta'] === 'peligro')
                                     <span class="badge-estado badge-perdida">
                                         <i class="fa-solid fa-circle-xmark"></i>
-                                        Pérdida de materia
+                                        {{ $cuatrimestreTerminado ? 'Pérdida de materia' : 'En Riesgo' }}
                                     </span>
                                 @elseif($est['alerta'] === 'advertencia')
                                     <span class="badge-estado badge-alerta">

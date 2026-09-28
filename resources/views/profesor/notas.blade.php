@@ -522,6 +522,12 @@
         color: #ec3e67;
     }
 
+    .status.presunto {
+        background: #ffe5d1;
+
+        color: #c2560a;
+    }
+
     /* INPUT DE NOTA */
 
     .grade-input {
@@ -682,6 +688,70 @@
 
 
     /* =====================================================
+       SELECTOR DE CUATRIMESTRE
+    ===================================================== */
+
+    .cuatrimestre-bar {
+        position: relative;
+
+        z-index: 2;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 12px;
+
+        flex-wrap: wrap;
+
+        margin-bottom: 22px;
+
+        padding: 12px 18px;
+
+        background: rgba(255, 255, 255, 0.80);
+
+        border: 1px solid #e0eafa;
+
+        border-radius: 16px;
+    }
+
+    .cuatrimestre-bar label {
+        color: #47608f;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+    .cuatrimestre-bar select {
+        height: 34px;
+
+        padding: 0 10px;
+
+        border: 1px solid #ccd5e3;
+
+        border-radius: 9px;
+
+        background: #ffffff;
+
+        color: #243c62;
+
+        font-size: 13px;
+
+        outline: none;
+
+        cursor: pointer;
+    }
+
+    .cuatrimestre-bar select:focus {
+        border-color: #5686ef;
+
+        box-shadow:
+            0 0 0 2px rgba(86, 134, 239, 0.14);
+    }
+
+
+    /* =====================================================
        ESTADO VACÍO
     ===================================================== */
 
@@ -777,6 +847,30 @@
 
         </div>
 
+        {{-- Selector de cuatrimestre --}}
+        <div class="cuatrimestre-bar">
+
+            <label for="select-cuatrimestre">Cuatrimestre:</label>
+
+            <form method="GET" action="{{ route('profesor.notas', $curso->id_curso) }}">
+
+                <select
+                    name="cuatrimestre"
+                    id="select-cuatrimestre"
+                    onchange="this.form.submit()"
+                >
+                    @foreach($cuatrimestres as $c)
+                        <option value="{{ $c->id_cuatrimestre }}"
+                            @selected($c->id_cuatrimestre === $cuatrimestre->id_cuatrimestre)>
+                            #{{ $c->id_cuatrimestre }} ({{ $c->fecha_inicio }} — {{ $c->fecha_fin }})
+                        </option>
+                    @endforeach
+                </select>
+
+            </form>
+
+        </div>
+
         {{-- Mensajes --}}
         @if(session('success'))
             <div class="alert-success">
@@ -800,7 +894,7 @@
 
             <span class="legend-item legend-danger">
                 <i class="fa-solid fa-circle-exclamation"></i>
-                Pierde materia (más del 30% de faltas)
+                {{ $cuatrimestreTerminado ? 'Pierde materia (más del 30% de faltas)' : 'En riesgo (más del 30% de lo dictado)' }}
             </span>
 
         </div>
@@ -859,6 +953,7 @@
                             $claseEstado = match($est['estado']) {
                                 'Aprobado'  => 'ok',
                                 'Reprobado' => 'fail',
+                                'Reprobado (presunto)' => 'presunto',
                                 default     => '',
                             };
                         @endphp
@@ -873,7 +968,9 @@
                                 <span class="nombre">{{ $est['nombre'] }}</span>
 
                                 @if($est['alerta'] === 'peligro')
-                                    <span class="nombre-warn peligro">Pierde la materia</span>
+                                    <span class="nombre-warn peligro">
+                                        {{ $cuatrimestreTerminado ? 'Pierde la materia' : 'En riesgo — superó el 30% de faltas' }}
+                                    </span>
                                 @elseif($est['alerta'] === 'advertencia')
                                     <span class="nombre-warn advertencia">Cerca del limite</span>
                                 @endif

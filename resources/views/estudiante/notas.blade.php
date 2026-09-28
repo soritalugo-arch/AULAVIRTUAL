@@ -836,8 +836,8 @@
                     <i class="fa-solid fa-exclamation"></i>
                 </div>
                 <span>
-                    Perdiste la materia
-                    <small>(más del 30% de faltas)</small>
+                    {{ $cuatrimestreTerminado ? 'Perdiste la materia' : 'En riesgo de perderla' }}
+                    <small>({{ $cuatrimestreTerminado ? 'más del 30% de faltas' : 'más del 30% de lo dictado' }})</small>
                 </span>
             </div>
 
@@ -884,6 +884,7 @@
                     $estadoClass = match ($item['estado']) {
                         'Aprobado'  => 'ok',
                         'Reprobado' => 'fail',
+                        'Reprobado (presunto)' => 'fail',
                         default     => '',
                     };
                 @endphp

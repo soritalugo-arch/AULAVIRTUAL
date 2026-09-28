@@ -16,12 +16,22 @@ class AsistenciaController extends Controller
     {
         $profesor     = auth()->user()->profesor;
         $curso        = $profesor->cursos()->where('id_curso', $cursoId)->firstOrFail();
-        $cuatrimestre = $curso->cuatrimestres()->orderByDesc('id_cuatrimestre')->first();
+        $cuatrimestres = $curso->cuatrimestres()->orderByDesc('fecha_inicio')->get();
+        if ($request->filled('cuatrimestre')) {
+            $cuatrimestre = $curso->cuatrimestres()->find($request->integer('cuatrimestre')) ?? abort(404);
+        } else {
+            $vigente = $this->servicio->cuatrimestreVigente();
+            $cuatrimestre = $cuatrimestres->contains('id_cuatrimestre', $vigente?->id_cuatrimestre)
+                ? $vigente
+                : $cuatrimestres->first();
+        }
         if (!$cuatrimestre) {
             return back()->with('error', 'Este curso no tiene un cuatrimestre activo.');
         }
         $fecha   = $request->input('fecha', now()->toDateString());
         $idCuatr = $cuatrimestre->id_cuatrimestre;
+        $cuatrimestreTerminado = $cuatrimestre->fecha_fin->lt(now());
+        $horarios = $curso->horarios;
         // asistencias ya registradas para la fecha (pre-marca los checkboxes)
         $asistenciasHoy = Asistencia::where('id_curso', $cursoId)
             ->where('id_cuatrimestre', $idCuatr)
@@ -33,11 +43,13 @@ class AsistenciaController extends Controller
         $totalClases = $this->servicio->clasesDictadas($cursoId, $idCuatr);
         $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $totalClases, $asistenciasHoy) {
             $est        = $ins->estudiante;
-            $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr);
+            $faltas     = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
+            $porcentaje = $totalClases > 0 ? round(($faltas / $totalClases) * 100, 1) : 0.0;
             return [
                 'id'               => $est->id_usuario,
                 'nombre'           => $est->usuario->nombres . ' ' . $est->usuario->apellidos,
                 'totalClases'      => $totalClases,
+                'faltas'           => $faltas,
                 'porcentajeFaltas' => $porcentaje,
                 'alerta'           => $this->servicio->nivelAlerta($porcentaje),
                 // si ya existe registro para la fecha lo usa; si no, asume presente
@@ -46,30 +58,51 @@ class AsistenciaController extends Controller
                     : true,
             ];
         });
-        return view('profesor.asistencia', compact('curso', 'cuatrimestre', 'fecha', 'estudiantes'));
+        return view('profesor.asistencia', compact('curso', 'cuatrimestre', 'cuatrimestres', 'fecha', 'estudiantes', 'cuatrimestreTerminado', 'horarios'));
     }
     // guarda o actualiza la asistencia de todos los inscritos para la fecha indicada
     public function guardar(Request $request)
     {
+        $idCurso = (int) $request->id_curso;
+        $idCuatr = (int) $request->id_cuatrimestre;
+        $profesor = auth()->user()->profesor;
+        $curso = $profesor?->cursos()->whereKey($idCurso)->first();
+        abort_unless($curso !== null, 403);
+        $cuatrimestre = $curso->cuatrimestres()->find($idCuatr);
+        abort_unless($cuatrimestre !== null, 403);
+
         $request->validate([
             'id_curso'        => 'required|exists:curso,id_curso',
             'id_cuatrimestre' => 'required|exists:cuatrimestre,id_cuatrimestre',
             'fecha'           => 'required|date',
             'presentes'       => 'nullable|array',
         ]);
-        $inscripciones = Inscripcion::where('id_curso', $request->id_curso)->get();
+
+        $fecha = $request->date('fecha');
+        abort_unless(
+            $fecha->between($cuatrimestre->fecha_inicio, $cuatrimestre->fecha_fin),
+            422,
+            'La fecha está fuera del período de la materia.'
+        );
+        abort_unless(
+            $this->servicio->esDiaDeClase($curso, $fecha),
+            422,
+            'La fecha no corresponde a un día de clase del curso.'
+        );
+
+        $inscripciones = Inscripcion::where('id_curso', $idCurso)->get();
         $presentesIds  = $request->input('presentes', []);
         foreach ($inscripciones as $ins) {
             $this->servicio->registrarAsistencia(
                 $ins->id_estudiante,
-                (int) $request->id_curso,
-                (int) $request->id_cuatrimestre,
+                $idCurso,
+                $idCuatr,
                 $request->fecha,
                 in_array($ins->id_estudiante, $presentesIds)
             );
         }
         return redirect()
-            ->route('profesor.asistencia', ['curso' => $request->id_curso, 'fecha' => $request->fecha])
+            ->route('profesor.asistencia', ['curso' => $idCurso, 'cuatrimestre' => $idCuatr, 'fecha' => $request->fecha])
             ->with('success', 'Asistencia guardada para el ' . $request->fecha);
     }
 }

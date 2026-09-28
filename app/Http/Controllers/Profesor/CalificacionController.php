@@ -20,42 +20,60 @@ class CalificacionController extends Controller
         return view('profesor.mis_cursos', compact('cursos'));
     }
     // tabla de notas del curso con porcentaje de faltas por estudiante
-    public function notas($cursoId)
+    public function notas($cursoId, Request $request)
     {
         $profesor     = auth()->user()->profesor;
         $curso        = $profesor->cursos()->where('id_curso', $cursoId)->firstOrFail();
-        $cuatrimestre = $curso->cuatrimestres()->orderByDesc('id_cuatrimestre')->first();
+        $cuatrimestres = $curso->cuatrimestres()->orderByDesc('fecha_inicio')->get();
+        if ($request->filled('cuatrimestre')) {
+            $cuatrimestre = $curso->cuatrimestres()->find($request->integer('cuatrimestre')) ?? abort(404);
+        } else {
+            $vigente = $this->servicio->cuatrimestreVigente();
+            $cuatrimestre = $cuatrimestres->contains('id_cuatrimestre', $vigente?->id_cuatrimestre)
+                ? $vigente
+                : $cuatrimestres->first();
+        }
         if (!$cuatrimestre) {
             return back()->with('error', 'Este curso no tiene un cuatrimestre activo.');
         }
         $idCuatr     = $cuatrimestre->id_cuatrimestre;
         $totalClases = $this->servicio->clasesDictadas($cursoId, $idCuatr);
+        $cuatrimestreTerminado = $cuatrimestre->fecha_fin->lt(now());
         $inscripciones = Inscripcion::where('id_curso', $cursoId)
             ->with('estudiante.usuario', 'estudiante.calificaciones')
             ->get();
-        $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $totalClases) {
+        $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $totalClases, $cuatrimestreTerminado) {
             $est  = $ins->estudiante;
             $calificacion = $est->calificaciones
                 ->where('id_curso', $cursoId)
                 ->where('id_cuatrimestre', $idCuatr)
                 ->first();
-            $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr);
+            $faltas    = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
+            $porcentaje = $totalClases > 0 ? round(($faltas / $totalClases) * 100, 1) : 0.0;
             return [
                 'id'               => $est->id_usuario,
                 'nombre'           => $est->usuario->nombres . ' ' . $est->usuario->apellidos,
                 'nota'             => $calificacion?->nota,
                 'observaciones'    => $calificacion?->observaciones,
                 'totalClases'      => $totalClases,
+                'faltas'           => $faltas,
                 'porcentajeFaltas' => $porcentaje,
                 'alerta'           => $this->servicio->nivelAlerta($porcentaje),
-                'estado'           => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje),
+                'estado'           => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje, $cuatrimestreTerminado),
             ];
         });
-        return view('profesor.notas', compact('curso', 'cuatrimestre', 'estudiantes'));
+        return view('profesor.notas', compact('curso', 'cuatrimestre', 'cuatrimestres', 'estudiantes', 'cuatrimestreTerminado'));
     }
     // guarda o actualiza las notas enviadas en el formulario
     public function guardarNota(Request $request)
     {
+        $idCurso = (int) $request->id_curso;
+        $idCuatr = (int) $request->id_cuatrimestre;
+        $profesor = auth()->user()->profesor;
+        $curso = $profesor?->cursos()->whereKey($idCurso)->first();
+        abort_unless($curso !== null, 403);
+        abort_unless($curso->cuatrimestres()->whereKey($idCuatr)->exists(), 403);
+
         $request->validate([
             'id_curso'              => 'required|exists:curso,id_curso',
             'id_cuatrimestre'       => 'required|exists:cuatrimestre,id_cuatrimestre',
@@ -65,16 +83,20 @@ class CalificacionController extends Controller
             'notas.*.observaciones' => 'nullable|string|max:500',
         ]);
         foreach ($request->notas as $item) {
-            if (is_null($item['nota'] ?? null)) continue; // omitir filas sin nota
+            $idEstudiante = (int) $item['id_estudiante'];
+            if (is_null($item['nota'] ?? null)) {
+                $this->servicio->quitarNota($idEstudiante, $idCurso, $idCuatr);
+                continue;
+            }
             $this->servicio->guardarNota(
-                (int) $item['id_estudiante'],
-                (int) $request->id_curso,
-                (int) $request->id_cuatrimestre,
+                $idEstudiante,
+                $idCurso,
+                $idCuatr,
                 (int) $item['nota'],
                 $item['observaciones'] ?? null
             );
         }
-        return redirect()->route('profesor.notas', $request->id_curso)
+        return redirect()->route('profesor.notas', ['curso' => $idCurso, 'cuatrimestre' => $idCuatr])
             ->with('success', 'Notas guardadas correctamente.');
     }
 }
