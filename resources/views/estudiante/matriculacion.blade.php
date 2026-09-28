@@ -279,10 +279,58 @@
     }
 
     .module-icon svg {
-        width: 72px;
-        height: 72px;
+        width: 88px;
+        height: 58px;
+    }
 
-        color: #5271e8;
+    /* Icono: libro abierto con verificación */
+
+    .module-icon .book-outline {
+
+        fill: #e8edfc;
+
+        stroke: #5b72d5;
+
+        stroke-width: 46;
+
+        stroke-linejoin: round;
+        stroke-linecap: round;
+    }
+
+    .module-icon .book-line {
+
+        fill: none;
+
+        stroke: #5b72d5;
+
+        stroke-width: 44;
+
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+
+    .module-icon .check-box {
+
+        fill: #e8edfc;
+
+        stroke: #5b72d5;
+
+        stroke-width: 44;
+
+        stroke-linejoin: round;
+        stroke-linecap: round;
+    }
+
+    .module-icon .check {
+
+        fill: none;
+
+        stroke: #4e67cb;
+
+        stroke-width: 58;
+
+        stroke-linecap: round;
+        stroke-linejoin: round;
     }
 
 
@@ -867,6 +915,11 @@
             font-size: 38px;
         }
 
+        .module-icon svg {
+            width: 62px;
+            height: 41px;
+        }
+
         .module-info h1 {
             font-size: 28px;
         }
@@ -994,34 +1047,33 @@
     <section class="module-card">
 
         <div class="module-icon">
-            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <!-- Esquina superior izquierda doblada -->
-                <path d="M 26 34 H 39 V 21 L 26 34 Z" fill="currentColor" />
+            <svg viewBox="0 0 1024 683" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 
-                <!-- Borde del documento -->
-                <path d="M 39 21 H 67 C 71.4 21 75 24.6 75 29 V 77 C 75 81.4 71.4 85 67 85 H 33 C 28.6 85 25 81.4 25 77 V 34 L 39 21 Z"
-                      stroke="currentColor"
-                      stroke-width="5.5"
-                      stroke-linejoin="round"
-                      stroke-linecap="round" />
+                <!-- Página izquierda -->
+                <path class="book-outline"
+                      d="M493 151 C462 120 423 108 379 108 L181 108 C166 108 157 119 157 134 L157 551 C157 567 168 577 184 577 L374 577 C420 577 459 589 493 610 Z" />
+
+                <!-- Página derecha -->
+                <path class="book-outline"
+                      d="M493 151 C526 119 564 108 608 108 L820 108 C835 108 844 119 844 134 L844 551 C844 567 833 577 817 577 L616 577 C570 577 531 589 493 610 Z" />
+
+                <!-- Líneas de la página izquierda -->
+                <line class="book-line" x1="225" y1="218" x2="437" y2="218" />
+                <line class="book-line" x1="225" y1="292" x2="437" y2="292" />
+                <line class="book-line" x1="225" y1="381" x2="437" y2="381" />
+                <line class="book-line" x1="225" y1="469" x2="437" y2="469" />
 
                 <!-- Casilla de verificación -->
-                <rect x="35" y="38" width="16" height="16" rx="3" stroke="currentColor" stroke-width="4.5" fill="none" />
+                <path class="check-box"
+                      d="M604 214 L705 214 L705 335 L604 335 C592 335 585 327 585 316 L585 234 C585 222 592 214 604 214 Z" />
 
-                <!-- Marca de verificación (Checkmark) -->
-                <path d="M 38 46 L 44 52 L 53 37"
-                      stroke="currentColor"
-                      stroke-width="5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round" />
+                <!-- Marca de verificación -->
+                <path class="check" d="M626 274 L654 302 L751 201" />
 
-                <!-- Líneas del formulario -->
-                <line x1="35" y1="63" x2="65" y2="63" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" />
-                <line x1="35" y1="72" x2="65" y2="72" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" />
+                <!-- Líneas de la página derecha -->
+                <line class="book-line" x1="561" y1="430" x2="774" y2="430" />
+                <line class="book-line" x1="561" y1="491" x2="774" y2="491" />
 
-                <!-- Lápiz de registro -->
-                <path d="M 54 56 L 58 48 L 71 35 C 73 33 76 33 78 35 L 79 36 C 81 38 81 41 79 43 L 66 56 L 54 56 Z"
-                      fill="currentColor" />
             </svg>
         </div>
 
