@@ -39,6 +39,26 @@
 
 
     /* ================================
+       CONTENEDOR PRINCIPAL
+    ================================ */
+
+    /* El main del layout no agrega padding propio en esta pagina */
+    main {
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    /* Margen lateral amplio (~45px por lado), igual que Mis Notas */
+    .matriculacion-wrap {
+        width: calc(100% - 90px);
+
+        margin: 35px auto 50px;
+    }
+
+
+    /* ================================
        MENSAJES DE ESTADO
     ================================ */
 
@@ -852,6 +872,12 @@
 
     @media (max-width: 700px) {
 
+        .matriculacion-wrap {
+            width: calc(100% - 40px);
+
+            margin-top: 20px;
+        }
+
         .module-card {
             flex-direction: column;
         }
@@ -867,6 +893,13 @@
 
         .module-description {
             line-height: 1.5;
+        }
+    }
+
+    @media (max-width: 480px) {
+
+        .matriculacion-wrap {
+            width: calc(100% - 20px);
         }
     }
 </style>

@@ -58,8 +58,14 @@
         }
 
         .logo-icon {
+            display: inline-flex;
+            flex-shrink: 0;
             color: #5d7fdf;
-            font-size: 28px;
+        }
+
+        .logo-icon svg {
+            width: 37px;
+            height: 28px;
         }
 
         .logo-aula { color: #21157c; }
@@ -174,7 +180,7 @@
             <div class="nav-left">
                 <a href="{{ route($dashboard) }}" class="navbar-logo">
                     @yield('logo_icon')
-                    <span class="logo-aula">Aula</span><span class="logo-virtual">Virtual</span>
+                    <span class="logo-word"><span class="logo-aula">Aula</span><span class="logo-virtual">Virtual</span></span>
                 </a>
                 <div class="nav-divider"></div>
                 <ul class="nav-menu hidden md:flex">

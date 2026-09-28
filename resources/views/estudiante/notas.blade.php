@@ -8,7 +8,23 @@
 @endsection
 
 @section('logo_icon')
-    <i class="fa-solid fa-graduation-cap logo-icon"></i>
+    <span class="logo-icon">
+        <svg viewBox="0 0 140 105" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+                <linearGradient id="graduationGradient" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#4c5bc3"/>
+                    <stop offset="100%" stop-color="#6e94ee"/>
+                </linearGradient>
+            </defs>
+            <polygon points="70,4 136,34 70,65 4,34" fill="url(#graduationGradient)"/>
+            <circle cx="70" cy="34" r="3" fill="white"/>
+            <path d="M26 49 L26 72 Q26 78 32 81 L64 96 Q70 99 76 96 L108 81 Q114 78 114 72 L114 49 L70 69 Z" fill="url(#graduationGradient)"/>
+            <path d="M26 49 L70 70 L114 49" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.9"/>
+            <path d="M125 35 L125 61" fill="none" stroke="#5a73d2" stroke-width="4" stroke-linecap="round"/>
+            <circle cx="125" cy="67" r="7" fill="#607ddc"/>
+            <path d="M125 73 L125 91" fill="none" stroke="#607ddc" stroke-width="4" stroke-linecap="round"/>
+        </svg>
+    </span>
 @endsection
 
 @section('contenido')
@@ -321,6 +337,15 @@
         font-size: 13px;
 
         font-weight: 700;
+    }
+
+    /* Cabecera: titulos centrados exactamente sobre sus valores (CURSO queda a la izquierda) */
+    .table-header div {
+        text-align: center;
+    }
+
+    .table-header div:first-child {
+        text-align: left;
     }
 
     .course-row {
