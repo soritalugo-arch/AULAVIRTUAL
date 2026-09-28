@@ -77,6 +77,45 @@
         color: #991b1b;
     }
 
+    .alert-banner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+
+        gap: 14px;
+    }
+
+    .alert-msg {
+        display: flex;
+        align-items: center;
+
+        gap: 10px;
+    }
+
+    .alert-close {
+        flex-shrink: 0;
+
+        border: none;
+
+        background: transparent;
+
+        color: inherit;
+
+        font-size: 22px;
+
+        line-height: 1;
+
+        cursor: pointer;
+
+        opacity: 0.55;
+
+        transition: opacity 0.15s ease;
+    }
+
+    .alert-close:hover {
+        opacity: 1;
+    }
+
 
     /* ================================
        ALERTA DE DEUDA
@@ -669,6 +708,95 @@
 
 
     /* ================================
+       DIÁLOGO DE CONFIRMACIÓN
+    ================================ */
+
+    .confirm-dialog {
+        border: none;
+
+        border-radius: 24px;
+
+        padding: 32px 34px;
+
+        width: min(460px, 92vw);
+
+        background: linear-gradient(110deg, #ffffff, #fbfdff);
+
+        box-shadow: 0 20px 45px rgba(40, 66, 120, 0.28);
+
+        text-align: center;
+
+        font-family: "DM Sans", Arial, sans-serif;
+
+        color: #172b5c;
+    }
+
+    .confirm-dialog::backdrop {
+        background: rgba(23, 27, 66, 0.45);
+
+        backdrop-filter: blur(2px);
+    }
+
+    .confirm-icon {
+        width: 62px;
+        height: 62px;
+
+        margin: 0 auto 18px;
+
+        border-radius: 50%;
+
+        background: linear-gradient(145deg, #ffe3ea, #ffd3dc);
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        color: #f03458;
+
+        font-size: 26px;
+    }
+
+    .confirm-dialog h3 {
+        font-family: Georgia, "Times New Roman", serif;
+
+        font-size: 24px;
+
+        color: #171c7c;
+
+        margin-bottom: 10px;
+    }
+
+    .confirm-msg {
+        font-size: 15px;
+
+        color: #7186b5;
+
+        line-height: 1.5;
+
+        margin-bottom: 6px;
+    }
+
+    .confirm-curso {
+        display: block;
+
+        font-weight: 700;
+
+        font-size: 15px;
+
+        color: #223d91;
+
+        margin-bottom: 24px;
+    }
+
+    .confirm-actions {
+        display: flex;
+        justify-content: center;
+
+        gap: 14px;
+    }
+
+
+    /* ================================
        FILA VACÍA
     ================================ */
 
@@ -743,19 +871,22 @@
     <!-- Mensajes de estado -->
     @if(session('success'))
     <div class="alert-banner alert-success" role="alert">
-        <i class="fa-solid fa-circle-check"></i> {{ session('success') }}
+        <span class="alert-msg"><i class="fa-solid fa-circle-check"></i> {{ session('success') }}</span>
+        <button type="button" class="alert-close" aria-label="Cerrar aviso">&times;</button>
     </div>
     @endif
 
     @if(session('info'))
     <div class="alert-banner alert-info" role="alert">
-        <i class="fa-solid fa-circle-info"></i> {{ session('info') }}
+        <span class="alert-msg"><i class="fa-solid fa-circle-info"></i> {{ session('info') }}</span>
+        <button type="button" class="alert-close" aria-label="Cerrar aviso">&times;</button>
     </div>
     @endif
 
     @if(session('error'))
     <div class="alert-banner alert-error" role="alert">
-        <i class="fa-solid fa-triangle-exclamation"></i> {{ session('error') }}
+        <span class="alert-msg"><i class="fa-solid fa-triangle-exclamation"></i> {{ session('error') }}</span>
+        <button type="button" class="alert-close" aria-label="Cerrar aviso">&times;</button>
     </div>
     @endif
 
@@ -930,10 +1061,10 @@
 
                     @elseif($inscrito)
 
-                        <form action="{{ route('estudiante.desinscribir') }}" method="POST">
+                        <form action="{{ route('estudiante.desinscribir') }}" method="POST" id="form-desinscribir-{{ $curso->id_curso }}">
                             @csrf
                             <input type="hidden" name="id_curso" value="{{ $curso->id_curso }}">
-                            <button type="submit" class="btn-remove" onclick="return confirm('¿Deseas retirar esta asignatura?')">
+                            <button type="submit" class="btn-remove" data-submit-form="form-desinscribir-{{ $curso->id_curso }}" data-curso="{{ $curso->nombre }}">
                                 <i class="fa-solid fa-circle-minus"></i>
                                 Desmatricular
                             </button>
@@ -966,6 +1097,58 @@
 
     </section>
 
+    <!-- Diálogo de confirmación para desmatricular -->
+    <dialog class="confirm-dialog" id="confirm-desinscribir">
+        <div class="confirm-icon">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <h3>Retirar asignatura</h3>
+        <p class="confirm-msg">¿Deseas retirar esta asignatura de tu inscripción?</p>
+        <span class="confirm-curso" id="confirm-curso"></span>
+        <div class="confirm-actions">
+            <button type="button" class="btn-exit-list" data-close-confirm>Cancelar</button>
+            <button type="button" class="btn-remove" id="confirm-submit">Sí, retirar</button>
+        </div>
+    </dialog>
+
 </div>
+
+<script>
+    // Cerrar los avisos al pulsar la X
+    document.querySelectorAll('.alert-close').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var banner = btn.closest('.alert-banner');
+            if (banner) banner.remove();
+        });
+    });
+
+    // Confirmación con estilo antes de desmatricular
+    var confirmDialog = document.getElementById('confirm-desinscribir');
+    var pendingForm = null;
+
+    document.querySelectorAll('[data-submit-form]').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+            e.preventDefault();
+            pendingForm = document.getElementById(btn.getAttribute('data-submit-form'));
+            document.getElementById('confirm-curso').textContent = btn.getAttribute('data-curso');
+            confirmDialog.showModal();
+        });
+    });
+
+    document.querySelectorAll('[data-close-confirm]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            confirmDialog.close();
+        });
+    });
+
+    document.getElementById('confirm-submit').addEventListener('click', function () {
+        if (pendingForm) pendingForm.submit();
+    });
+
+    // Cerrar si se hace clic fuera del diálogo
+    confirmDialog.addEventListener('click', function (e) {
+        if (e.target === confirmDialog) confirmDialog.close();
+    });
+</script>
 
 @endsection
