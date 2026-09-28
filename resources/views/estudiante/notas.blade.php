@@ -7,6 +7,10 @@
     <li><a href="{{ route('estudiante.notas') }}" class="nav-link">Mis Notas</a></li>
 @endsection
 
+@section('logo_icon')
+    <i class="fa-solid fa-graduation-cap logo-icon"></i>
+@endsection
+
 @section('contenido')
 
 <style>
@@ -43,6 +47,21 @@
         overflow-x: hidden;
     }
 
+    /* El main del layout no agrega padding propio en esta pagina */
+    main {
+        padding-left: 0;
+        padding-right: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    /* Contenedor con margen lateral amplio (35px a cada lado) */
+    .notas-wrap {
+        width: calc(100% - 90px);
+
+        margin: 35px auto 50px;
+    }
+
 
     /* =====================================================
        TARJETA PRINCIPAL
@@ -53,7 +72,7 @@
 
         min-height: 740px;
 
-        padding: 30px 25px 40px;
+        padding: 40px 0 45px;
 
         overflow: hidden;
 
@@ -110,9 +129,9 @@
 
         align-items: center;
 
-        gap: 27px;
+        gap: 28px;
 
-        margin: 0 0 25px 0;
+        margin: 0 32px 30px;
     }
 
 
@@ -170,14 +189,14 @@
 
         z-index: 2;
 
-        margin-left: 152px;
+        margin-left: 185px;
 
         display: flex;
         align-items: center;
 
         gap: 20px;
 
-        margin-bottom: 45px;
+        margin-bottom: 42px;
     }
 
     .legend {
@@ -262,7 +281,9 @@
 
         z-index: 2;
 
-        width: 100%;
+        width: calc(100% - 44px);
+
+        margin: 0 22px;
 
         border: 1px solid #d9e6fb;
 
@@ -572,6 +593,8 @@
 
         padding: 18px 24px;
 
+        margin: 0 32px 20px;
+
         border-radius: 18px;
 
         background: #fff4d4;
@@ -612,6 +635,16 @@
 
         .grades-header {
             align-items: flex-start;
+
+            margin: 0 16px 25px;
+        }
+
+        .grades-table {
+            width: auto;
+
+            margin: 0 14px;
+
+            overflow-x: auto;
         }
 
         .grades-icon {
@@ -629,10 +662,6 @@
             line-height: 1.5;
         }
 
-        .grades-table {
-            overflow-x: auto;
-        }
-
         .table-header,
         .course-row {
             min-width: 1050px;
@@ -641,8 +670,14 @@
 
     @media (max-width: 550px) {
 
+        .notas-wrap {
+            width: calc(100% - 20px);
+
+            margin-top: 20px;
+        }
+
         .grades-card {
-            padding: 22px 15px;
+            padding: 24px 0 35px;
 
             border-radius: 20px;
         }
@@ -650,7 +685,15 @@
         .grades-header {
             flex-direction: column;
 
+            align-items: center;
+
             gap: 15px;
+
+            margin: 0 12px 20px;
+        }
+
+        .grades-table {
+            margin: 0 8px;
         }
 
         .attendance-legend {
