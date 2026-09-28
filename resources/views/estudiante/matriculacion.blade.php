@@ -2,6 +2,15 @@
 
 @section('titulo', 'Matriculación de Asignaturas')
 
+@section('menu_extra')
+    <li>
+        <a href="{{ route('estudiante.matriculacion') }}" class="nav-link {{ request()->routeIs('estudiante.matriculacion') ? 'active' : '' }}">Matriculación</a>
+    </li>
+    <li>
+        <a href="{{ route('estudiante.notas') }}" class="nav-link {{ request()->routeIs('estudiante.notas') ? 'active' : '' }}">Mis Notas</a>
+    </li>
+@endsection
+
 @section('contenido')
 
 <link rel="stylesheet"

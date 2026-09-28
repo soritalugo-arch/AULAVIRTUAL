@@ -3,8 +3,8 @@
 @section('titulo', 'Mis Notas y Asistencia')
 
 @section('menu_extra')
-    <li><a href="{{ route('estudiante.matriculacion') }}" class="nav-link">Matriculación</a></li>
-    <li><a href="{{ route('estudiante.notas') }}" class="nav-link">Mis Notas</a></li>
+    <li><a href="{{ route('estudiante.matriculacion') }}" class="nav-link {{ request()->routeIs('estudiante.matriculacion') ? 'active' : '' }}">Matriculación</a></li>
+    <li><a href="{{ route('estudiante.notas') }}" class="nav-link {{ request()->routeIs('estudiante.notas') ? 'active' : '' }}">Mis Notas</a></li>
 @endsection
 
 @section('logo_icon')

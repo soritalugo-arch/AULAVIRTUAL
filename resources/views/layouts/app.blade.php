@@ -82,6 +82,7 @@
         }
 
         .nav-link {
+            position: relative;
             font-family: "DM Sans", sans-serif;
             font-size: 15px;
             font-weight: 600;
@@ -91,6 +92,24 @@
         }
 
         .nav-link:hover { color: #2d4b99; }
+
+        /* Enlace activo: texto azul + línea inferior */
+        .nav-link.active {
+            color: #2f55c4;
+            font-weight: 700;
+        }
+
+        .nav-link.active::after {
+            content: "";
+            position: absolute;
+            left: 50%;
+            bottom: -8px;
+            width: 100%;
+            height: 3px;
+            border-radius: 4px;
+            background: #5477DF;
+            transform: translateX(-50%);
+        }
 
         .nav-user,
         .user {
@@ -185,7 +204,7 @@
                 <div class="nav-divider"></div>
                 <ul class="nav-menu hidden md:flex">
                     <li>
-                        <a href="{{ route($dashboard) }}" class="nav-link">Dashboard</a>
+                        <a href="{{ route($dashboard) }}" class="nav-link {{ request()->routeIs($dashboard) ? 'active' : '' }}">Dashboard</a>
                     </li>
                     @yield('menu_extra')
                 </ul>

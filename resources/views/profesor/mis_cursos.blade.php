@@ -4,7 +4,7 @@
 
 @section('menu_extra')
     <li>
-        <a href="{{ route('profesor.cursos') }}" class="nav-link">Mis Cursos</a>
+        <a href="{{ route('profesor.cursos') }}" class="nav-link {{ request()->routeIs('profesor.cursos', 'profesor.notas*', 'profesor.asistencia*') ? 'active' : '' }}">Mis Cursos</a>
     </li>
 @endsection
 

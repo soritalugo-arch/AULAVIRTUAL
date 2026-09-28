@@ -4,10 +4,10 @@
 
 @section('menu_extra')
     <li>
-        <a href="{{ route('estudiante.matriculacion') }}" class="nav-link">Matriculación</a>
+        <a href="{{ route('estudiante.matriculacion') }}" class="nav-link {{ request()->routeIs('estudiante.matriculacion') ? 'active' : '' }}">Matriculación</a>
     </li>
     <li>
-        <a href="{{ route('estudiante.notas') }}" class="nav-link">Mis Notas</a>
+        <a href="{{ route('estudiante.notas') }}" class="nav-link {{ request()->routeIs('estudiante.notas') ? 'active' : '' }}">Mis Notas</a>
     </li>
 @endsection
 
