@@ -3,7 +3,7 @@
 @section('titulo', 'Asistencia — ' . $curso->nombre)
 
 @section('menu_extra')
-    <li><a href="{{ route('profesor.cursos') }}" class="hover:text-blue-700">Mis Cursos</a></li>
+    <li><a href="{{ route('profesor.cursos') }}" class="nav-link {{ request()->routeIs('profesor.cursos', 'profesor.notas*', 'profesor.asistencia*') ? 'active' : '' }}">Mis Cursos</a></li>
 @endsection
 
 @section('contenido')
@@ -84,6 +84,10 @@
                         'advertencia' => 'bg-yellow-100 text-yellow-800',
                         default       => 'bg-green-100 text-green-800',
                     };
+                    // El controlador no envía el conteo bruto; se deriva del % y el total
+                    $faltasMostradas = $est['totalClases'] > 0
+                        ? (int) round(($est['porcentajeFaltas'] / 100) * $est['totalClases'])
+                        : 0;
                 @endphp
 
                 <tr class="{{ $rowBg }}">
@@ -101,7 +105,7 @@
                     <td class="px-4 py-3 text-center">
                         <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $badgeFaltas }}">
                             {{ $est['porcentajeFaltas'] }}%
-                            <span class="font-normal">({{ $est['faltas'] }} de {{ $est['totalClases'] }} clases)</span>
+                            <span class="font-normal">({{ $faltasMostradas }} de {{ $est['totalClases'] }} clases)</span>
                         </span>
                     </td>
 
