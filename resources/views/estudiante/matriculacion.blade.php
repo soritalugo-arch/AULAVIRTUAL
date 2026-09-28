@@ -279,58 +279,55 @@
     }
 
     .module-icon svg {
-        width: 100px;
-        height: 67px;
+        width: 112px;
+        height: 112px;
     }
 
-    /* Icono: libro abierto con verificación */
+    /* Icono: matrícula con documento, lista y usuario */
 
-    .module-icon .book-outline {
+    .module-icon .icon-background {
 
-        fill: #e8edfc;
-
-        stroke: #5b72d5;
-
-        stroke-width: 42;
-
-        stroke-linejoin: round;
-        stroke-linecap: round;
+        fill: #e1eaff;
     }
 
-    .module-icon .book-line {
+    .module-icon .document {
 
-        fill: none;
-
-        stroke: #5b72d5;
-
-        stroke-width: 40;
-
-        stroke-linecap: round;
-        stroke-linejoin: round;
+        fill: #6b82e5;
     }
 
-    .module-icon .check-box {
+    .module-icon .document-fold {
 
-        fill: #e8edfc;
-
-        stroke: #5b72d5;
-
-        stroke-width: 40;
-
-        stroke-linejoin: round;
-        stroke-linecap: round;
+        fill: #526bd2;
     }
 
-    .module-icon .check {
+    .module-icon .document-line {
 
-        fill: none;
+        fill: #eef3ff;
+    }
 
-        stroke: #4e67cb;
+    .module-icon .document-dot {
 
-        stroke-width: 35;
+        fill: #eef3ff;
+    }
 
-        stroke-linecap: round;
-        stroke-linejoin: round;
+    .module-icon .user {
+
+        fill: #5c73d7;
+    }
+
+    .module-icon .user-outline {
+
+        fill: #eef3ff;
+    }
+
+    .module-icon .add-circle {
+
+        fill: #526bd2;
+    }
+
+    .module-icon .add-symbol {
+
+        fill: #f4f7ff;
     }
 
 
@@ -916,8 +913,8 @@
         }
 
         .module-icon svg {
-            width: 70px;
-            height: 47px;
+            width: 80px;
+            height: 80px;
         }
 
         .module-info h1 {
@@ -1047,32 +1044,48 @@
     <section class="module-card">
 
         <div class="module-icon">
-            <svg viewBox="0 0 1024 683" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
 
-                <!-- Página izquierda -->
-                <path class="book-outline"
-                      d="M493 151 C462 120 423 108 379 108 L181 108 C166 108 157 119 157 134 L157 551 C157 567 168 577 184 577 L374 577 C420 577 459 589 493 610 Z" />
+                <!-- Fondo circular -->
+                <circle class="icon-background" cx="512" cy="512" r="465" />
 
-                <!-- Página derecha -->
-                <path class="book-outline"
-                      d="M493 151 C526 119 564 108 608 108 L820 108 C835 108 844 119 844 134 L844 551 C844 567 833 577 817 577 L616 577 C570 577 531 589 493 610 Z" />
+                <!-- Documento -->
+                <path class="document"
+                      d="M293 272 C293 250 311 232 333 232 H560 L672 344 V690 C672 713 654 731 631 731 H333 C311 731 293 713 293 690 Z" />
 
-                <!-- Líneas de la página izquierda -->
-                <line class="book-line" x1="225" y1="218" x2="437" y2="218" />
-                <line class="book-line" x1="225" y1="292" x2="437" y2="292" />
-                <line class="book-line" x1="225" y1="381" x2="437" y2="381" />
-                <line class="book-line" x1="225" y1="469" x2="437" y2="469" />
+                <!-- Esquina doblada -->
+                <path class="document-fold"
+                      d="M560 232 V319 C560 337 575 352 593 352 H672 Z" />
 
-                <!-- Casilla de verificación -->
-                <path class="check-box"
-                      d="M604 214 L705 214 L705 335 L604 335 C592 335 585 327 585 316 L585 234 C585 222 592 214 604 214 Z" />
+                <!-- Línea superior del documento -->
+                <rect class="document-line" x="360" y="335" width="225" height="38" rx="19" />
 
-                <!-- Marca de verificación -->
-                <path class="check" d="M624 272 L655 303 L690 236" />
+                <!-- Primer punto + línea -->
+                <circle class="document-dot" cx="377" cy="431" r="16" />
+                <rect class="document-line" x="420" y="414" width="184" height="34" rx="17" />
 
-                <!-- Líneas de la página derecha -->
-                <line class="book-line" x1="561" y1="430" x2="774" y2="430" />
-                <line class="book-line" x1="561" y1="491" x2="774" y2="491" />
+                <!-- Segundo punto + línea -->
+                <circle class="document-dot" cx="377" cy="502" r="16" />
+                <rect class="document-line" x="420" y="485" width="130" height="34" rx="17" />
+
+                <!-- Tercer punto + línea -->
+                <circle class="document-dot" cx="377" cy="573" r="16" />
+                <rect class="document-line" x="420" y="556" width="120" height="34" rx="17" />
+
+                <!-- Contorno blanco del usuario: cabeza + cuerpo -->
+                <circle class="user-outline" cx="653" cy="550" r="76" />
+                <path class="user-outline" d="M535 756 C535 684 588 638 653 638 C718 638 771 684 771 756 Z" />
+
+                <!-- Usuario: cabeza + cuerpo -->
+                <circle class="user" cx="653" cy="550" r="57" />
+                <path class="user" d="M555 756 C555 696 598 657 653 657 C708 657 751 696 751 756 Z" />
+
+                <!-- Círculo de agregar -->
+                <circle class="add-circle" cx="770" cy="718" r="76" />
+
+                <!-- Signo "+" -->
+                <rect class="add-symbol" x="755" y="675" width="30" height="86" rx="15" />
+                <rect class="add-symbol" x="727" y="703" width="86" height="30" rx="15" />
 
             </svg>
         </div>
