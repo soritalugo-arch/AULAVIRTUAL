@@ -1,124 +1,919 @@
 @extends('layouts.app')
 
-@section('titulo', 'Mis Notas')
+@section('titulo', 'Mis Notas y Asistencia')
 
 @section('menu_extra')
-    <li><a href="{{ route('estudiante.matriculacion') }}" class="hover:text-blue-700">Matriculacion</a></li>
-    <li><a href="{{ route('estudiante.notas') }}"        class="hover:text-blue-700">Mis Notas</a></li>
+    <li><a href="{{ route('estudiante.matriculacion') }}" class="nav-link">Matriculación</a></li>
+    <li><a href="{{ route('estudiante.notas') }}" class="nav-link">Mis Notas</a></li>
 @endsection
 
 @section('contenido')
 
-<div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Mis Notas y Asistencia</h1>
-    <p class="text-gray-500 text-sm mt-1">Resumen de tu rendimiento por curso en el cuatrimestre actual.</p>
-</div>
+<style>
+    /* =====================================================
+       CONFIGURACIÓN GENERAL
+    ===================================================== */
 
-{{-- Leyenda --}}
-<div class="flex gap-3 mb-5 text-xs flex-wrap">
-    <span class="inline-flex items-center gap-1 bg-green-100 text-green-800 px-2 py-1 rounded-full font-medium">Sin riesgo (menos del 25% de faltas)</span>
-    <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">Atencion (entre 25% y 30% de faltas)</span>
-    <span class="inline-flex items-center gap-1 bg-red-100 text-red-800 px-2 py-1 rounded-full font-medium">Perdiste la materia (mas del 30% de faltas)</span>
-</div>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
 
-@if($resumen->isEmpty())
-    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 rounded-lg p-4">
-        No tienes cursos inscritos con datos de notas o asistencia.
-    </div>
-@else
+    body {
+        font-family: Arial, Helvetica, sans-serif;
 
-<div class="bg-white rounded-xl shadow overflow-x-auto">
-    <table class="w-full text-sm text-left">
-        <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 text-xs uppercase tracking-wide">
-            <tr>
-                <th class="px-4 py-3">Curso</th>
-                <th class="px-4 py-3 text-center">Nota</th>
-                <th class="px-4 py-3 text-center">% Faltas</th>
-                <th class="px-4 py-3 text-center">Estado</th>
-                <th class="px-4 py-3 text-center">Promedio del curso</th>
-                <th class="px-4 py-3">Observacion del profesor</th>
-            </tr>
-        </thead>
-        <tbody class="divide-y divide-gray-100">
+        min-height: 100vh;
+
+        color: #19325f;
+
+        background:
+            radial-gradient(
+                circle at 5% 15%,
+                rgba(198, 218, 255, 0.65),
+                transparent 32%
+            ),
+            radial-gradient(
+                circle at 95% 85%,
+                rgba(190, 212, 255, 0.65),
+                transparent 35%
+            ),
+            #f3f7fd;
+
+        overflow-x: hidden;
+    }
+
+
+    /* =====================================================
+       TARJETA PRINCIPAL
+    ===================================================== */
+
+    .grades-card {
+        position: relative;
+
+        min-height: 740px;
+
+        padding: 30px 25px 40px;
+
+        overflow: hidden;
+
+        background:
+            linear-gradient(
+                135deg,
+                rgba(255, 255, 255, 0.96),
+                rgba(248, 251, 255, 0.94)
+            );
+
+        border: 1px solid #d9e6fb;
+
+        border-radius: 28px;
+
+        box-shadow:
+            0 10px 30px rgba(71, 106, 170, 0.10);
+    }
+
+
+    /* Decoración inferior */
+
+    .grades-card::after {
+        content: "";
+
+        position: absolute;
+
+        width: 650px;
+        height: 250px;
+
+        right: -170px;
+        bottom: -160px;
+
+        border-radius: 50%;
+
+        background:
+            rgba(188, 211, 253, 0.35);
+
+        transform: rotate(-18deg);
+
+        pointer-events: none;
+    }
+
+
+    /* =====================================================
+       ENCABEZADO
+    ===================================================== */
+
+    .grades-header {
+        position: relative;
+
+        z-index: 2;
+
+        display: flex;
+
+        align-items: center;
+
+        gap: 27px;
+
+        margin: 0 0 25px 0;
+    }
+
+
+    /* Icono de notas */
+
+    .grades-icon {
+        width: 125px;
+        height: 125px;
+
+        flex-shrink: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+
+        background:
+            linear-gradient(
+                145deg,
+                #dce8ff,
+                #edf3ff
+            );
+
+        color: #6284df;
+
+        font-size: 51px;
+    }
+
+    .grades-title h1 {
+        margin-bottom: 7px;
+
+        color: #171d7d;
+
+        font-family: Georgia, "Times New Roman", serif;
+
+        font-size: 36px;
+
+        font-weight: 700;
+    }
+
+    .grades-title p {
+        color: #7087ba;
+
+        font-size: 17px;
+    }
+
+
+    /* =====================================================
+       LEYENDA DE ASISTENCIA
+    ===================================================== */
+
+    .attendance-legend {
+        position: relative;
+
+        z-index: 2;
+
+        margin-left: 152px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 20px;
+
+        margin-bottom: 45px;
+    }
+
+    .legend {
+        height: 45px;
+
+        padding: 0 18px;
+
+        display: flex;
+        align-items: center;
+
+        gap: 10px;
+
+        border-radius: 25px;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+    .legend small {
+        font-size: 13px;
+
+        font-weight: 500;
+    }
+
+    .legend-icon {
+        width: 23px;
+        height: 23px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 50%;
+
+        font-size: 12px;
+    }
+
+    .legend.green {
+        background: #dcf9e9;
+
+        color: #0d9261;
+    }
+
+    .legend.green .legend-icon {
+        background: #c5f1db;
+
+        color: #079263;
+    }
+
+    .legend.yellow {
+        background: #fff4d4;
+
+        color: #896a1b;
+    }
+
+    .legend.yellow .legend-icon {
+        background: #ffe6a5;
+
+        color: #c78d18;
+    }
+
+    .legend.red {
+        background: #ffe0e8;
+
+        color: #ec3e67;
+    }
+
+    .legend.red .legend-icon {
+        background: #ffcbd8;
+
+        color: #ef3c63;
+    }
+
+
+    /* =====================================================
+       TABLA
+    ===================================================== */
+
+    .grades-table {
+        position: relative;
+
+        z-index: 2;
+
+        width: 100%;
+
+        border: 1px solid #d9e6fb;
+
+        border-radius: 22px;
+
+        overflow: hidden;
+
+        background: rgba(255, 255, 255, 0.75);
+
+        box-shadow:
+            0 5px 15px rgba(85, 115, 170, 0.06);
+    }
+
+    .table-header {
+        min-height: 72px;
+
+        padding: 0 25px;
+
+        display: grid;
+
+        grid-template-columns:
+            25%
+            12%
+            13%
+            15%
+            20%
+            15%;
+
+        align-items: center;
+
+        background: #f1f6ff;
+
+        color: #6b82b5;
+
+        font-size: 13px;
+
+        font-weight: 700;
+    }
+
+    .course-row {
+        min-height: 110px;
+
+        padding: 10px 25px;
+
+        display: grid;
+
+        grid-template-columns:
+            25%
+            12%
+            13%
+            15%
+            20%
+            15%;
+
+        align-items: center;
+
+        background:
+            rgba(255, 255, 255, 0.90);
+
+        border-top: 1px solid #e4ebf6;
+    }
+
+
+    /* =====================================================
+       CURSO
+    ===================================================== */
+
+    .course {
+        display: flex;
+
+        align-items: center;
+
+        gap: 18px;
+    }
+
+    .course-icon {
+        width: 59px;
+        height: 59px;
+
+        flex-shrink: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 15px;
+
+        background:
+            linear-gradient(
+                145deg,
+                #e0ebff,
+                #d2e1ff
+            );
+
+        color: #6080db;
+
+        font-size: 22px;
+    }
+
+    .course-info {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 6px;
+    }
+
+    .course-info strong {
+        color: #1d398d;
+
+        font-size: 16px;
+    }
+
+    .course-info span {
+        color: #7c91bf;
+
+        font-size: 14px;
+    }
+
+
+    /* =====================================================
+       NOTA
+    ===================================================== */
+
+    .grade {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        gap: 5px;
+    }
+
+    .grade-value {
+        width: 92px;
+        height: 38px;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 22px;
+
+        background: #edf3fc;
+
+        color: #6680b5;
+
+        font-size: 18px;
+
+        font-weight: 500;
+    }
+
+    .grade-value.pass {
+        background: #d9f9e8;
+
+        color: #079263;
+    }
+
+    .grade-value.fail {
+        background: #ffe0e8;
+
+        color: #d23a5f;
+    }
+
+    .grade em {
+        color: #7890bd;
+
+        font-size: 13px;
+    }
+
+
+    /* =====================================================
+       FALTAS
+    ===================================================== */
+
+    .absences {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        gap: 5px;
+    }
+
+    .absence-badge {
+        min-width: 75px;
+
+        padding: 8px 14px;
+
+        text-align: center;
+
+        border-radius: 22px;
+
+        background: #d9f9e8;
+
+        color: #0a9560;
+
+        font-weight: 700;
+
+        font-size: 14px;
+    }
+
+    .absence-badge.yellow {
+        background: #fff4d4;
+
+        color: #c78d18;
+    }
+
+    .absence-badge.red {
+        background: #ffe0e8;
+
+        color: #ec3e67;
+    }
+
+    .absences small {
+        color: #70a78f;
+
+        font-size: 13px;
+    }
+
+
+    /* =====================================================
+       ESTADO
+    ===================================================== */
+
+    .status {
+        display: flex;
+
+        justify-content: center;
+    }
+
+    .status span {
+        padding: 9px 18px;
+
+        border-radius: 22px;
+
+        background: #eaf1fb;
+
+        color: #4f72b4;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+    .status.ok span {
+        background: #d9f9e8;
+
+        color: #0a9560;
+    }
+
+    .status.fail span {
+        background: #ffe0e8;
+
+        color: #ec3e67;
+    }
+
+
+    /* =====================================================
+       PROMEDIO
+    ===================================================== */
+
+    .average {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: center;
+
+        gap: 5px;
+
+        color: #7790bf;
+    }
+
+    .average span {
+        font-size: 17px;
+    }
+
+    .average em {
+        font-size: 13px;
+    }
+
+
+    /* =====================================================
+       OBSERVACIÓN
+    ===================================================== */
+
+    .observation {
+        color: #7b91bc;
+
+        font-size: 17px;
+
+        text-align: center;
+    }
+
+
+    /* =====================================================
+       ESTADO VACÍO
+    ===================================================== */
+
+    .empty-state {
+        position: relative;
+
+        z-index: 2;
+
+        padding: 18px 24px;
+
+        border-radius: 18px;
+
+        background: #fff4d4;
+
+        border: 1px solid #fde68a;
+
+        color: #854d0e;
+
+        font-size: 15px;
+    }
+
+
+    /* =====================================================
+       RESPONSIVE
+    ===================================================== */
+
+    @media (max-width: 1100px) {
+
+        .attendance-legend {
+            margin-left: 0;
+
+            flex-wrap: wrap;
+        }
+
+        .table-header,
+        .course-row {
+            grid-template-columns:
+                23%
+                12%
+                13%
+                14%
+                19%
+                19%;
+        }
+    }
+
+    @media (max-width: 800px) {
+
+        .grades-header {
+            align-items: flex-start;
+        }
+
+        .grades-icon {
+            width: 90px;
+            height: 90px;
+
+            font-size: 38px;
+        }
+
+        .grades-title h1 {
+            font-size: 28px;
+        }
+
+        .grades-title p {
+            line-height: 1.5;
+        }
+
+        .grades-table {
+            overflow-x: auto;
+        }
+
+        .table-header,
+        .course-row {
+            min-width: 1050px;
+        }
+    }
+
+    @media (max-width: 550px) {
+
+        .grades-card {
+            padding: 22px 15px;
+
+            border-radius: 20px;
+        }
+
+        .grades-header {
+            flex-direction: column;
+
+            gap: 15px;
+        }
+
+        .attendance-legend {
+            flex-direction: column;
+
+            align-items: stretch;
+
+            margin-bottom: 25px;
+        }
+
+        .legend {
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="notas-wrap">
+
+    @php
+        // Iconos por materia (solo visual)
+        $mapaIconos = [
+            'programación' => 'fa-code',
+            'base de datos' => 'fa-database',
+            'base' => 'fa-database',
+            'matemá' => 'fa-calculator',
+            'cálculo' => 'fa-calculator',
+            'diseño' => 'fa-pen-ruler',
+            'marketing' => 'fa-bullhorn',
+            'turismo' => 'fa-plane',
+            'enfermería' => 'fa-user-nurse',
+            'electrónica' => 'fa-microchip',
+            'instalaciones' => 'fa-bolt',
+            'inglés' => 'fa-language',
+            'emprendimiento' => 'fa-rocket',
+            'anatomía' => 'fa-heart-pulse',
+            'contabilidad' => 'fa-coins',
+            'ofimática' => 'fa-file-lines',
+            'redes' => 'fa-globe',
+            'sistema' => 'fa-gear',
+            'expresión' => 'fa-comment-dots',
+            'física' => 'fa-atom',
+            'química' => 'fa-flask',
+            'economía' => 'fa-chart-line',
+        ];
+
+        $iconoCurso = function (string $nombre) use ($mapaIconos): string {
+            $nombre = mb_strtolower($nombre);
+
+            foreach ($mapaIconos as $clave => $icono) {
+                if (mb_strpos($nombre, $clave) !== false) {
+                    return $icono;
+                }
+            }
+
+            return 'fa-book-open';
+        };
+    @endphp
+
+    <!-- ================= CONTENIDO ================= -->
+
+    <section class="grades-card">
+
+        <!-- ENCABEZADO -->
+
+        <div class="grades-header">
+
+            <div class="grades-icon">
+                <i class="fa-solid fa-file-lines"></i>
+            </div>
+
+            <div class="grades-title">
+
+                <h1>Mis Notas y Asistencia</h1>
+
+                <p>Resumen de tu rendimiento por curso en el cuatrimestre actual.</p>
+
+            </div>
+
+        </div>
+
+
+        <!-- INDICADORES -->
+
+        <div class="attendance-legend">
+
+            <div class="legend green">
+                <div class="legend-icon">
+                    <i class="fa-solid fa-arrow-trend-up"></i>
+                </div>
+                <span>
+                    Sin riesgo
+                    <small>(menos del 25% de faltas)</small>
+                </span>
+            </div>
+
+            <div class="legend yellow">
+                <div class="legend-icon">
+                    <i class="fa-solid fa-clock"></i>
+                </div>
+                <span>
+                    Atención
+                    <small>(entre 25% y 30% de faltas)</small>
+                </span>
+            </div>
+
+            <div class="legend red">
+                <div class="legend-icon">
+                    <i class="fa-solid fa-exclamation"></i>
+                </div>
+                <span>
+                    Perdiste la materia
+                    <small>(más del 30% de faltas)</small>
+                </span>
+            </div>
+
+        </div>
+
+
+        @if($resumen->isEmpty())
+
+            <div class="empty-state">
+                No tienes cursos inscritos con datos de notas o asistencia.
+            </div>
+
+        @else
+
+        <!-- TABLA -->
+
+        <div class="grades-table">
+
+            <!-- CABECERA -->
+
+            <div class="table-header">
+                <div>CURSO</div>
+                <div>NOTA</div>
+                <div>% FALTAS</div>
+                <div>ESTADO</div>
+                <div>PROMEDIO DEL CURSO</div>
+                <div>OBSERVACIÓN DEL PROFESOR</div>
+            </div>
+
             @foreach($resumen as $item)
 
-            @php
-                $rowBg = match($item['alerta']) {
-                    'peligro'     => 'bg-red-50',
-                    'advertencia' => 'bg-yellow-50',
-                    default       => '',
-                };
-                $badgeFaltas = match($item['alerta']) {
-                    'peligro'     => 'bg-red-100 text-red-800',
-                    'advertencia' => 'bg-yellow-100 text-yellow-800',
-                    default       => 'bg-green-100 text-green-800',
-                };
-                $badgeEstado = match($item['estado']) {
-                    'Aprobado'  => 'bg-green-100 text-green-800',
-                    'Reprobado' => 'bg-red-100 text-red-800',
-                    default     => 'bg-gray-100 text-gray-600',
-                };
-            @endphp
+                @php
+                    $icono     = $iconoCurso($item['curso']);
+                    $tieneNota = ! is_null($item['nota']);
 
-            <tr class="{{ $rowBg }}">
-                {{-- Curso --}}
-                <td class="px-4 py-3 font-medium text-gray-800">
-                    {{ $item['curso'] }}
-                    <div class="text-xs text-gray-400 font-normal">Cuatrimestre #{{ $item['cuatrimestre'] }}</div>
-                </td>
+                    // Colores según el nivel de alerta de faltas
+                    $badgeFaltas = match ($item['alerta']) {
+                        'peligro'     => 'red',
+                        'advertencia' => 'yellow',
+                        default       => '',
+                    };
 
-                {{-- Nota --}}
-                <td class="px-4 py-3 text-center">
-                    @if(!is_null($item['nota']))
-                        <span class="text-xl font-bold {{ $item['nota'] >= 6 ? 'text-green-700' : 'text-red-600' }}">
-                            {{ $item['nota'] }}
+                    // Clase del estado según su valor
+                    $estadoClass = match ($item['estado']) {
+                        'Aprobado'  => 'ok',
+                        'Reprobado' => 'fail',
+                        default     => '',
+                    };
+                @endphp
+
+                <div class="course-row">
+
+                    <!-- CURSO -->
+
+                    <div class="course">
+
+                        <div class="course-icon">
+                            <i class="fa-solid {{ $icono }}"></i>
+                        </div>
+
+                        <div class="course-info">
+
+                            <strong>{{ $item['curso'] }}</strong>
+
+                            <span>Cuatrimestre #{{ $item['cuatrimestre'] }}</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- NOTA -->
+
+                    <div class="grade">
+
+                        @if($tieneNota)
+
+                            <div class="grade-value {{ $item['nota'] >= 6 ? 'pass' : 'fail' }}">
+                                {{ $item['nota'] }}
+                            </div>
+
+                        @else
+
+                            <div class="grade-value">—</div>
+
+                            <em>Sin nota aun</em>
+
+                        @endif
+
+                    </div>
+
+
+                    <!-- FALTAS -->
+
+                    <div class="absences">
+
+                        <span class="absence-badge {{ $badgeFaltas }}">
+                            {{ $item['porcentajeFaltas'] }}%
                         </span>
-                        <span class="text-gray-400 text-xs">/10</span>
-                    @else
-                        <span class="text-gray-400 italic text-xs">Sin nota aun</span>
-                    @endif
-                </td>
 
-                {{-- % Faltas --}}
-                <td class="px-4 py-3 text-center">
-                    <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold {{ $badgeFaltas }}">
-                        {{ $item['porcentajeFaltas'] }}%
-                        <span class="font-normal">({{ $item['totalClases'] }} clases)</span>
-                    </span>
-                    @if($item['alerta'] === 'peligro')
-                        <div class="text-red-600 text-xs font-semibold mt-1">Superaste el 30% de faltas</div>
-                    @elseif($item['alerta'] === 'advertencia')
-                        <div class="text-yellow-700 text-xs font-semibold mt-1">Estas cerca del limite</div>
-                    @endif
-                </td>
+                        <small>({{ $item['totalClases'] }} clases)</small>
 
-                {{-- Estado --}}
-                <td class="px-4 py-3 text-center">
-                    <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold {{ $badgeEstado }}">
-                        {{ $item['estado'] }}
-                    </span>
-                </td>
+                    </div>
 
-                {{-- Promedio del curso --}}
-                <td class="px-4 py-3 text-center">
-                    @if(!is_null($item['promedioCurso']))
-                        <span class="text-gray-700 font-semibold">{{ $item['promedioCurso'] }}</span>
-                        <span class="text-gray-400 text-xs">/10</span>
-                    @else
-                        <span class="text-gray-400 italic text-xs">Sin datos</span>
-                    @endif
-                </td>
 
-                {{-- Observacion --}}
-                <td class="px-4 py-3 text-gray-600 italic text-xs">
-                    {{ $item['observaciones'] ?? '—' }}
-                </td>
-            </tr>
+                    <!-- ESTADO -->
+
+                    <div class="status {{ $estadoClass }}">
+
+                        <span>{{ $item['estado'] }}</span>
+
+                    </div>
+
+
+                    <!-- PROMEDIO -->
+
+                    <div class="average">
+
+                        @if(! is_null($item['promedioCurso']))
+
+                            <span>{{ $item['promedioCurso'] }}</span>
+                            <em>Promedio del curso</em>
+
+                        @else
+
+                            <span>—</span>
+                            <em>Sin datos</em>
+
+                        @endif
+
+                    </div>
+
+
+                    <!-- OBSERVACIÓN -->
+
+                    <div class="observation">
+
+                        <span>{{ $item['observaciones'] ?? '—' }}</span>
+
+                    </div>
+
+                </div>
+
             @endforeach
-        </tbody>
-    </table>
-</div>
 
-@endif
+        </div>
+
+        @endif
+
+    </section>
+
+</div>
 
 @endsection

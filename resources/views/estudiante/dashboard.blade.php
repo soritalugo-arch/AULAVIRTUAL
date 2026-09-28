@@ -7,7 +7,7 @@
         <a href="{{ route('estudiante.matriculacion') }}" class="nav-link">Matriculación</a>
     </li>
     <li>
-        <a href="{{ route('estudiante.notas') }}" class="hover:text-blue-700">Mis Notas</a>
+        <a href="{{ route('estudiante.notas') }}" class="nav-link">Mis Notas</a>
     </li>
 @endsection
 
