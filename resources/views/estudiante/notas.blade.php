@@ -134,6 +134,8 @@
     /* Icono de notas */
 
     .grades-icon {
+        position: relative;
+
         width: 125px;
         height: 125px;
 
@@ -151,47 +153,30 @@
                 #dce8ff,
                 #edf3ff
             );
+
+        color: #6284df;
+
+        font-size: 51px;
     }
 
-    .grades-icon svg {
+    /* Círculo interior, igual al de Matriculación */
+    .grades-icon::before {
+        content: "";
+
+        position: absolute;
+
         width: 112px;
         height: 112px;
+
+        border-radius: 50%;
+
+        background: #e1eaff;
     }
 
-    /* Logo: boleta de calificaciones con sello (mismo diseño que Matriculación) */
+    .grades-icon i {
+        position: relative;
 
-    .grades-icon .icon-background {
-
-        fill: #e1eaff;
-    }
-
-    .grades-icon .document {
-
-        fill: #6b82e5;
-    }
-
-    .grades-icon .document-fold {
-
-        fill: #526bd2;
-    }
-
-    .grades-icon .document-line {
-
-        fill: #eef3ff;
-    }
-
-    .grades-icon .seal {
-
-        fill: #eef3ff;
-    }
-
-    .grades-icon .seal-text {
-
-        fill: #526bd2;
-
-        font-family: "DM Sans", Arial, sans-serif;
-
-        font-weight: 700;
+        z-index: 1;
     }
 
     .grades-title h1 {
@@ -696,7 +681,7 @@
             font-size: 38px;
         }
 
-        .grades-icon svg {
+        .grades-icon::before {
             width: 80px;
             height: 80px;
         }
@@ -808,32 +793,7 @@
         <div class="grades-header">
 
             <div class="grades-icon">
-                <svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-
-                    <!-- Fondo circular -->
-                    <circle class="icon-background" cx="512" cy="512" r="465" />
-
-                    <!-- Boleta de calificaciones -->
-                    <path class="document"
-                          d="M293 272 C293 250 311 232 333 232 H560 L672 344 V690 C672 713 654 731 631 731 H333 C311 731 293 713 293 690 Z" />
-
-                    <!-- Esquina doblada -->
-                    <path class="document-fold"
-                          d="M560 232 V319 C560 337 575 352 593 352 H672 Z" />
-
-                    <!-- Línea superior -->
-                    <rect class="document-line" x="360" y="335" width="225" height="38" rx="19" />
-
-                    <!-- Asignaturas de la boleta -->
-                    <rect class="document-line" x="344" y="448" width="300" height="34" rx="17" />
-                    <rect class="document-line" x="344" y="520" width="240" height="34" rx="17" />
-                    <rect class="document-line" x="344" y="592" width="180" height="34" rx="17" />
-
-                    <!-- Sello de calificación -->
-                    <circle class="seal" cx="658" cy="508" r="96" />
-                    <text class="seal-text" x="658" y="508" text-anchor="middle" dominant-baseline="central" font-size="110">10</text>
-
-                </svg>
+                <i class="fa-solid fa-file-lines"></i>
             </div>
 
             <div class="grades-title">
