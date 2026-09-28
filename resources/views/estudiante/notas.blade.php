@@ -939,7 +939,7 @@
                             {{ $item['porcentajeFaltas'] }}%
                         </span>
 
-                        <small>({{ $item['totalClases'] }} clases)</small>
+                        <small>({{ $item['clasesRegistradas'] }} de {{ $item['totalClases'] }} clases)</small>
 
                     </div>
 

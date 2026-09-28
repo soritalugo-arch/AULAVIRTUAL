@@ -7,6 +7,7 @@ use App\Models\Calificacion;
 use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class CalificacionAsistenciaService
 {
@@ -52,12 +53,25 @@ class CalificacionAsistenciaService
             ->distinct('fecha')
             ->count('fecha');
     }
-    // faltas / clases dictadas * 100; retorna 0 si no hay clases
+    // total de clases programadas para el curso y cuatrimestre (columna de la pivot);
+    // null si no está definido
+    public function totalClasesProgramadas(int $idCurso, int $idCuatrimestre): ?int
+    {
+        $total = DB::table('curso_cuatrimestre')
+            ->where('curso_id', $idCurso)
+            ->where('cuatrimestre_id', $idCuatrimestre)
+            ->value('total_clases');
+
+        return $total === null ? null : (int) $total;
+    }
+    // faltas / clases programadas * 100 cuando el total programado existe;
+    // si no, faltas / clases dictadas * 100; retorna 0 si no hay clases
     public function porcentajeInasistencia(int $idEstudiante, int $idCurso, int $idCuatrimestre): float
     {
-        $totalClases = $this->clasesDictadas($idCurso, $idCuatrimestre);
-        if ($totalClases === 0) return 0.0;
-        return round(($this->faltasEstudiante($idEstudiante, $idCurso, $idCuatrimestre) / $totalClases) * 100, 1);
+        $denominador = $this->totalClasesProgramadas($idCurso, $idCuatrimestre)
+            ?? $this->clasesDictadas($idCurso, $idCuatrimestre);
+        if ($denominador <= 0) return 0.0;
+        return round(($this->faltasEstudiante($idEstudiante, $idCurso, $idCuatrimestre) / $denominador) * 100, 1);
     }
     // cantidad de inasistencias del estudiante en el curso y cuatrimestre
     public function faltasEstudiante(int $idEstudiante, int $idCurso, int $idCuatrimestre): int

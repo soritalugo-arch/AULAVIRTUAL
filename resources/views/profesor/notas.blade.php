@@ -297,6 +297,22 @@
         color: #ec3e67;
     }
 
+    /* Resumen de clases registradas */
+
+    .registro-clases {
+        margin: -10px 0 18px;
+
+        color: #7c8db0;
+
+        font-size: 12.5px;
+
+        text-align: right;
+    }
+
+    .registro-clases strong {
+        color: #47608f;
+    }
+
 
     /* =====================================================
        TABLA
@@ -899,6 +915,10 @@
 
         </div>
 
+        <p class="registro-clases">
+            Se han registrado <strong>{{ $clasesRegistradas }}</strong> de <strong>{{ $totalClases }}</strong> clases programadas.
+        </p>
+
         @if($estudiantes->isEmpty())
 
             <div class="empty-state">
@@ -935,11 +955,6 @@
                         @foreach($estudiantes as $i => $est)
 
                         @php
-                            // El controlador no envía el conteo bruto; se deriva del % y el total
-                            $faltasMostradas = $est['totalClases'] > 0
-                                ? (int) round(($est['porcentajeFaltas'] / 100) * $est['totalClases'])
-                                : 0;
-
                             $claseFila   = match($est['alerta']) {
                                 'peligro'     => 'row-peligro',
                                 'advertencia' => 'row-advertencia',
@@ -982,7 +997,7 @@
 
                                 <span class="absence {{ $claseFaltas }}">
                                     {{ $est['porcentajeFaltas'] }}%
-                                    <span class="absence-detalle">({{ $faltasMostradas }}/{{ $est['totalClases'] }})</span>
+                                    <span class="absence-detalle">({{ $est['faltas'] }}/{{ $est['totalClases'] }})</span>
                                 </span>
 
                             </td>

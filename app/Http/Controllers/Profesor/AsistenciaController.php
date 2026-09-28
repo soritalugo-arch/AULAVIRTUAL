@@ -40,25 +40,27 @@ class AsistenciaController extends Controller
         $inscripciones = Inscripcion::where('id_curso', $cursoId)
             ->with('estudiante.usuario')
             ->get();
-        $totalClases = $this->servicio->clasesDictadas($cursoId, $idCuatr);
-        $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $totalClases, $asistenciasHoy) {
+        $clasesRegistradas = $this->servicio->clasesDictadas($cursoId, $idCuatr);
+        $totalClases       = $this->servicio->totalClasesProgramadas($cursoId, $idCuatr) ?? $clasesRegistradas;
+        $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $clasesRegistradas, $totalClases, $asistenciasHoy) {
             $est        = $ins->estudiante;
             $faltas     = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
-            $porcentaje = $totalClases > 0 ? round(($faltas / $totalClases) * 100, 1) : 0.0;
+            $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr);
             return [
-                'id'               => $est->id_usuario,
-                'nombre'           => $est->usuario->nombres . ' ' . $est->usuario->apellidos,
-                'totalClases'      => $totalClases,
-                'faltas'           => $faltas,
-                'porcentajeFaltas' => $porcentaje,
-                'alerta'           => $this->servicio->nivelAlerta($porcentaje),
+                'id'                 => $est->id_usuario,
+                'nombre'             => $est->usuario->nombres . ' ' . $est->usuario->apellidos,
+                'clasesRegistradas'  => $clasesRegistradas,
+                'totalClases'        => $totalClases,
+                'faltas'             => $faltas,
+                'porcentajeFaltas'   => $porcentaje,
+                'alerta'             => $this->servicio->nivelAlerta($porcentaje),
                 // si ya existe registro para la fecha lo usa; si no, asume presente
-                'presente'         => $asistenciasHoy->has($est->id_usuario)
+                'presente'           => $asistenciasHoy->has($est->id_usuario)
                     ? (bool) $asistenciasHoy[$est->id_usuario]
                     : true,
             ];
         });
-        return view('profesor.asistencia', compact('curso', 'cuatrimestre', 'cuatrimestres', 'fecha', 'estudiantes', 'cuatrimestreTerminado', 'horarios'));
+        return view('profesor.asistencia', compact('curso', 'cuatrimestre', 'cuatrimestres', 'fecha', 'estudiantes', 'cuatrimestreTerminado', 'horarios', 'clasesRegistradas', 'totalClases'));
     }
     // guarda o actualiza la asistencia de todos los inscritos para la fecha indicada
     public function guardar(Request $request)

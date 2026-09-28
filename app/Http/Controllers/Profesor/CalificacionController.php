@@ -37,32 +37,34 @@ class CalificacionController extends Controller
             return back()->with('error', 'Este curso no tiene un cuatrimestre activo.');
         }
         $idCuatr     = $cuatrimestre->id_cuatrimestre;
-        $totalClases = $this->servicio->clasesDictadas($cursoId, $idCuatr);
+        $clasesRegistradas = $this->servicio->clasesDictadas($cursoId, $idCuatr);
+        $totalClases       = $this->servicio->totalClasesProgramadas($cursoId, $idCuatr) ?? $clasesRegistradas;
         $cuatrimestreTerminado = $cuatrimestre->fecha_fin->lt(now());
         $inscripciones = Inscripcion::where('id_curso', $cursoId)
             ->with('estudiante.usuario', 'estudiante.calificaciones')
             ->get();
-        $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $totalClases, $cuatrimestreTerminado) {
+        $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $clasesRegistradas, $totalClases, $cuatrimestreTerminado) {
             $est  = $ins->estudiante;
             $calificacion = $est->calificaciones
                 ->where('id_curso', $cursoId)
                 ->where('id_cuatrimestre', $idCuatr)
                 ->first();
-            $faltas    = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
-            $porcentaje = $totalClases > 0 ? round(($faltas / $totalClases) * 100, 1) : 0.0;
+            $faltas     = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
+            $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr);
             return [
-                'id'               => $est->id_usuario,
-                'nombre'           => $est->usuario->nombres . ' ' . $est->usuario->apellidos,
-                'nota'             => $calificacion?->nota,
-                'observaciones'    => $calificacion?->observaciones,
-                'totalClases'      => $totalClases,
-                'faltas'           => $faltas,
-                'porcentajeFaltas' => $porcentaje,
-                'alerta'           => $this->servicio->nivelAlerta($porcentaje),
-                'estado'           => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje, $cuatrimestreTerminado),
+                'id'                 => $est->id_usuario,
+                'nombre'             => $est->usuario->nombres . ' ' . $est->usuario->apellidos,
+                'nota'               => $calificacion?->nota,
+                'observaciones'      => $calificacion?->observaciones,
+                'clasesRegistradas'  => $clasesRegistradas,
+                'totalClases'        => $totalClases,
+                'faltas'             => $faltas,
+                'porcentajeFaltas'   => $porcentaje,
+                'alerta'             => $this->servicio->nivelAlerta($porcentaje),
+                'estado'             => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje, $cuatrimestreTerminado),
             ];
         });
-        return view('profesor.notas', compact('curso', 'cuatrimestre', 'cuatrimestres', 'estudiantes', 'cuatrimestreTerminado'));
+        return view('profesor.notas', compact('curso', 'cuatrimestre', 'cuatrimestres', 'estudiantes', 'cuatrimestreTerminado', 'clasesRegistradas', 'totalClases'));
     }
     // guarda o actualiza las notas enviadas en el formulario
     public function guardarNota(Request $request)

@@ -31,13 +31,15 @@ class MisNotasController extends Controller
                 ->where('id_cuatrimestre', $idCuatr)
                 ->first();
             $porcentaje = $this->servicio->porcentajeInasistencia($estudiante->id_usuario, $curso->id_curso, $idCuatr);
+            $clasesRegistradas = $this->servicio->clasesDictadas($curso->id_curso, $idCuatr);
             return [
                 'curso'            => $curso->nombre,
                 'cuatrimestre'     => $idCuatr,
                 'cuatrimestreTerminado' => $cuatrimestreTerminado,
                 'nota'             => $calificacion?->nota,
                 'observaciones'    => $calificacion?->observaciones,
-                'totalClases'      => $this->servicio->clasesDictadas($curso->id_curso, $idCuatr),
+                'clasesRegistradas' => $clasesRegistradas,
+                'totalClases'      => $this->servicio->totalClasesProgramadas($curso->id_curso, $idCuatr) ?? $clasesRegistradas,
                 'porcentajeFaltas' => $porcentaje,
                 'estado'           => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje, $cuatrimestreTerminado),
                 'alerta'           => $this->servicio->nivelAlerta($porcentaje),

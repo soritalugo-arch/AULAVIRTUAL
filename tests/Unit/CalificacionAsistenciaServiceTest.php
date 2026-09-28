@@ -153,6 +153,47 @@ test('porcentaje de inasistencia: faltas sobre clases dictadas', function () {
     expect($servicio->porcentajeInasistencia($estudiante->getKey(), $curso->getKey(), $cuatrimestre->getKey()))->toBe(41.7);
 });
 
+test('total de clases programadas se lee de la pivot curso_cuatrimestre', function () {
+    $servicio = new CalificacionAsistenciaService;
+    $curso = cursoDeLaCarreraPrueba();
+    $cuatrimestre = $curso->cuatrimestres()->first();
+
+    expect($servicio->totalClasesProgramadas($curso->getKey(), $cuatrimestre->getKey()))->toBeNull();
+
+    $curso->cuatrimestres()->updateExistingPivot($cuatrimestre->getKey(), ['total_clases' => 12]);
+
+    expect($servicio->totalClasesProgramadas($curso->getKey(), $cuatrimestre->getKey()))->toBe(12);
+});
+
+test('porcentaje de inasistencia usa el total programado cuando existe', function () {
+    $servicio = new CalificacionAsistenciaService;
+    $curso = cursoDeLaCarreraPrueba();
+    $cuatrimestre = $curso->cuatrimestres()->first();
+    $estudiante = estudianteNotasPrueba();
+    $curso->cuatrimestres()->updateExistingPivot($cuatrimestre->getKey(), ['total_clases' => 12]);
+
+    $fechas = collect(range(1, 5))
+        ->map(fn (int $dia) => \Illuminate\Support\Carbon::create(2026, 3, $dia)->toDateString());
+
+    foreach ($fechas as $fecha) {
+        Asistencia::create([
+            'id_estudiante' => $estudiante->getKey(),
+            'id_curso' => $curso->getKey(),
+            'id_cuatrimestre' => $cuatrimestre->getKey(),
+            'fecha' => $fecha,
+            'presente' => true,
+        ]);
+    }
+    foreach ($fechas->take(3) as $fecha) {
+        Asistencia::where('id_estudiante', $estudiante->getKey())
+            ->where('fecha', $fecha)
+            ->update(['presente' => false]);
+    }
+
+    expect($servicio->clasesDictadas($curso->getKey(), $cuatrimestre->getKey()))->toBe(5);
+    expect($servicio->porcentajeInasistencia($estudiante->getKey(), $curso->getKey(), $cuatrimestre->getKey()))->toBe(25.0);
+});
+
 test('porcentaje de inasistencia sin clases registradas es 0', function () {
     $servicio = new CalificacionAsistenciaService;
     $curso = cursoDeLaCarreraPrueba();
