@@ -2,6 +2,10 @@
 
 @section('titulo', 'Mi Historial Académico')
 
+{{-- Esta página mide su tarjeta con la misma fórmula que el navbar, así que
+     necesita el ancho completo en vez del límite de 1280px del <main>. --}}
+@section('clase_main', 'hist-main')
+
 @section('menu_extra')
     <li><a href="{{ route('estudiante.matriculacion') }}" class="nav-link {{ request()->routeIs('estudiante.matriculacion') ? 'active' : '' }}">Matriculación</a></li>
     <li><a href="{{ route('estudiante.notas') }}" class="nav-link {{ request()->routeIs('estudiante.notas') ? 'active' : '' }}">Mis Notas</a></li>
@@ -17,10 +21,14 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    /* Margen lateral amplio, igual que Mis Notas y Matriculación: la tarjeta
-       queda centrada y con los mismos bordes que la barra de navegación. */
+    /* La barra de navegación mide calc(100% - 70px) sobre todo el ancho de la
+       ventana. Aquí se replica esa misma fórmula —con sus variantes de 700px y
+       480px— para que la tarjeta tenga exactamente el mismo ancho y los mismos
+       bordes que el navbar. */
+    .hist-main { max-width: none; padding-inline: 0; }
+
     .hist-wrap {
-        width: calc(100% - 90px);
+        width: calc(100% - 70px);
 
         margin: 35px auto 50px;
     }
