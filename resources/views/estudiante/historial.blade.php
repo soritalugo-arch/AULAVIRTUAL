@@ -17,7 +17,13 @@
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    .hist-wrap { margin: 6px 0 40px; }
+    /* Margen lateral amplio, igual que Mis Notas y Matriculación: la tarjeta
+       queda centrada y con los mismos bordes que la barra de navegación. */
+    .hist-wrap {
+        width: calc(100% - 90px);
+
+        margin: 35px auto 50px;
+    }
 
     /* ── Tarjeta principal ─────────────────────────────────────────── */
 
@@ -446,6 +452,18 @@
 
         .fila-curso { grid-template-columns: 1fr 1fr; row-gap: 10px; }
     }
+
+    @media (max-width: 700px) {
+        .hist-wrap {
+            width: calc(100% - 40px);
+
+            margin-top: 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hist-wrap { width: calc(100% - 20px); }
+    }
 </style>
 
 <div class="hist-wrap">
@@ -481,7 +499,7 @@
             <div class="resumen-item">
                 <span>Aprobados</span>
                 <b>{{ number_format($resumen['aprobados']) }}</b>
-                <em>Nota 6 o superior y sin excessos de faltas</em>
+                <em>Nota 6 o superior y sin excesos de faltas</em>
             </div>
             <div class="resumen-item">
                 <span>Reprobados</span>
