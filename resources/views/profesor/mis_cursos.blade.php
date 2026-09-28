@@ -162,9 +162,9 @@
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
 
-        gap: 38px;
+        gap: 26px;
 
-        max-width: 1390px;
+        max-width: 1080px;
     }
 
 
@@ -173,9 +173,9 @@
     ===================================================== */
 
     .course-card {
-        min-height: 235px;
+        min-height: 168px;
 
-        padding: 28px 34px;
+        padding: 22px 26px;
 
         display: flex;
 
@@ -188,7 +188,7 @@
 
         border: 1px solid #e0eafa;
 
-        border-radius: 27px;
+        border-radius: 22px;
 
         box-shadow:
             0 9px 25px rgba(74, 110, 177, 0.09);
@@ -216,7 +216,7 @@
 
         align-items: center;
 
-        gap: 27px;
+        gap: 18px;
     }
 
 
@@ -225,8 +225,8 @@
     ===================================================== */
 
     .course-icon {
-        width: 90px;
-        height: 90px;
+        width: 62px;
+        height: 62px;
 
         flex-shrink: 0;
 
@@ -245,7 +245,7 @@
 
         color: #6785dc;
 
-        font-size: 35px;
+        font-size: 24px;
     }
 
 
@@ -258,7 +258,7 @@
 
         flex-direction: column;
 
-        gap: 10px;
+        gap: 6px;
     }
 
     .course-info h2 {
@@ -266,7 +266,7 @@
 
         font-family: Georgia, "Times New Roman", serif;
 
-        font-size: 25px;
+        font-size: 19px;
 
         font-weight: 700;
 
@@ -276,7 +276,7 @@
     .course-info p {
         color: #8298c3;
 
-        font-size: 17px;
+        font-size: 13px;
     }
 
 
@@ -290,28 +290,28 @@
         grid-template-columns:
             1fr 1fr;
 
-        gap: 18px;
+        gap: 12px;
 
-        margin-left: 117px;
+        margin-left: 80px;
     }
 
     .btn-notes,
     .btn-attendance {
-        height: 56px;
+        height: 40px;
 
         border: none;
 
-        border-radius: 28px;
+        border-radius: 20px;
 
         display: flex;
         align-items: center;
         justify-content: center;
 
-        gap: 10px;
+        gap: 8px;
 
         color: white;
 
-        font-size: 17px;
+        font-size: 13px;
 
         font-weight: 700;
 
@@ -324,7 +324,7 @@
 
     .btn-notes i,
     .btn-attendance i {
-        font-size: 17px;
+        font-size: 13px;
     }
 
     /* NOTAS */
@@ -399,7 +399,7 @@
 
     @media (max-width: 1200px) {
 
-        .courses-wrap {
+        .cursos-wrap {
             width: calc(100% - 60px);
         }
 
@@ -414,7 +414,7 @@
 
     @media (max-width: 900px) {
 
-        .courses-wrap {
+        .cursos-wrap {
             width: calc(100% - 40px);
         }
 
@@ -423,13 +423,13 @@
         }
 
         .course-card {
-            min-height: 220px;
+            min-height: 160px;
         }
     }
 
     @media (max-width: 600px) {
 
-        .courses-wrap {
+        .cursos-wrap {
             width: calc(100% - 20px);
 
             margin-top: 20px;
@@ -452,41 +452,41 @@
         }
 
         .course-card {
-            padding: 24px;
+            padding: 18px;
 
-            min-height: 250px;
+            min-height: 170px;
         }
 
         .course-top {
-            gap: 17px;
+            gap: 14px;
         }
 
         .course-icon {
-            width: 70px;
-            height: 70px;
+            width: 54px;
+            height: 54px;
 
-            font-size: 27px;
+            font-size: 21px;
         }
 
         .course-info h2 {
-            font-size: 20px;
+            font-size: 17px;
         }
 
         .course-info p {
-            font-size: 14px;
+            font-size: 13px;
         }
 
         .course-actions {
-            margin-top: 25px;
+            margin-top: 18px;
 
             grid-template-columns: 1fr;
 
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn-notes,
         .btn-attendance {
-            height: 48px;
+            height: 40px;
         }
     }
 </style>
