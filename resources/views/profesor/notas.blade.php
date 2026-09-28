@@ -710,7 +710,7 @@
     .cuatrimestre-bar {
         position: relative;
 
-        z-index: 2;
+        z-index: 30;
 
         display: flex;
 
@@ -732,6 +732,12 @@
     }
 
     .cuatrimestre-bar label {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 8px;
+
         color: #47608f;
 
         font-size: 13px;
@@ -739,31 +745,221 @@
         font-weight: 600;
     }
 
-    .cuatrimestre-bar select {
-        height: 34px;
+    .cuatrimestre-bar label i {
+        color: #5578e6;
 
-        padding: 0 10px;
+        font-size: 12px;
+    }
+
+    /* =====================================================
+       DROPDOWN PREMIUM (selector a medida)
+    ===================================================== */
+
+    .sel {
+        position: relative;
+    }
+
+    .sel-trigger {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        height: 42px;
+
+        padding: 0 14px 0 8px;
 
         border: 1px solid #ccd5e3;
 
-        border-radius: 9px;
+        border-radius: 21px;
 
         background: #ffffff;
 
+        cursor: pointer;
+
+        outline: none;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .sel-trigger:hover {
+        border-color: #a9bfe2;
+    }
+
+    .sel-trigger:focus-visible,
+    .sel.is-open .sel-trigger {
+        border-color: #5686ef;
+
+        box-shadow:
+            0 0 0 3px rgba(86, 134, 239, 0.14);
+    }
+
+    .sel-trigger-icon {
+        display: inline-flex;
+
+        align-items: center;
+        justify-content: center;
+
+        width: 30px;
+        height: 30px;
+
+        border-radius: 50%;
+
+        background: #eaf1fb;
+
+        color: #5578e6;
+
+        font-size: 12px;
+    }
+
+    .sel-trigger-text {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        line-height: 1.25;
+    }
+
+    .sel-trigger-title {
         color: #243c62;
 
         font-size: 13px;
 
-        outline: none;
-
-        cursor: pointer;
+        font-weight: 700;
     }
 
-    .cuatrimestre-bar select:focus {
-        border-color: #5686ef;
+    .sel-trigger-sub {
+        color: #8ba0c8;
+
+        font-size: 11px;
+    }
+
+    .sel-chevron {
+        margin-left: 2px;
+
+        color: #8ba0c8;
+
+        font-size: 10px;
+
+        transition: transform 0.2s ease;
+    }
+
+    .sel.is-open .sel-chevron {
+        transform: rotate(180deg);
+    }
+
+    .sel-menu {
+        display: none;
+
+        position: absolute;
+
+        top: calc(100% + 8px);
+
+        left: 0;
+
+        z-index: 40;
+
+        min-width: 270px;
+
+        max-width: calc(100vw - 70px);
+
+        padding: 6px;
+
+        background: #ffffff;
+
+        border: 1px solid #d9e6fb;
+
+        border-radius: 16px;
 
         box-shadow:
-            0 0 0 2px rgba(86, 134, 239, 0.14);
+            0 14px 34px rgba(60, 90, 150, 0.16);
+    }
+
+    .sel.is-open .sel-menu {
+        display: block;
+
+        animation: sel-in 0.14s ease;
+    }
+
+    @keyframes sel-in {
+        from {
+            opacity: 0;
+
+            transform: translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+
+            transform: translateY(0);
+        }
+    }
+
+    .sel-option {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        padding: 10px 12px;
+
+        border-radius: 12px;
+
+        color: #243c62;
+
+        text-decoration: none;
+
+        transition: background 0.12s ease;
+    }
+
+    .sel-option:hover {
+        background: #f2f7ff;
+    }
+
+    .sel-option.is-active {
+        background: #eaf1fb;
+    }
+
+    .sel-opt-text {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        line-height: 1.25;
+
+        flex: 1;
+    }
+
+    .sel-opt-title {
+        font-size: 13px;
+
+        font-weight: 700;
+    }
+
+    .sel-opt-sub {
+        color: #8ba0c8;
+
+        font-size: 11.5px;
+    }
+
+    .sel-opt-check {
+        color: #5578e6;
+
+        font-size: 13px;
+
+        opacity: 0;
+    }
+
+    .sel-option.is-active .sel-opt-check {
+        opacity: 1;
     }
 
 
@@ -866,24 +1062,37 @@
         {{-- Selector de cuatrimestre --}}
         <div class="cuatrimestre-bar">
 
-            <label for="select-cuatrimestre">Cuatrimestre:</label>
+            <label for="select-cuatrimestre">
+                <i class="fa-solid fa-layer-group"></i>
+                Cuatrimestre:
+            </label>
 
-            <form method="GET" action="{{ route('profesor.notas', $curso->id_curso) }}">
+            <div class="sel" data-sel>
 
-                <select
-                    name="cuatrimestre"
-                    id="select-cuatrimestre"
-                    onchange="this.form.submit()"
-                >
+                <button type="button" class="sel-trigger" id="select-cuatrimestre" data-sel-toggle aria-haspopup="listbox">
+                    <span class="sel-trigger-icon"><i class="fa-solid fa-layer-group"></i></span>
+                    <span class="sel-trigger-text">
+                        <span class="sel-trigger-title">Cuatrimestre #{{ $cuatrimestre->id_cuatrimestre }}</span>
+                        <span class="sel-trigger-sub">{{ $cuatrimestre->fecha_inicio }} — {{ $cuatrimestre->fecha_fin }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down sel-chevron"></i>
+                </button>
+
+                <div class="sel-menu" role="listbox">
                     @foreach($cuatrimestres as $c)
-                        <option value="{{ $c->id_cuatrimestre }}"
-                            @selected($c->id_cuatrimestre === $cuatrimestre->id_cuatrimestre)>
-                            #{{ $c->id_cuatrimestre }} ({{ $c->fecha_inicio }} — {{ $c->fecha_fin }})
-                        </option>
+                        <a class="sel-option {{ $c->id_cuatrimestre === $cuatrimestre->id_cuatrimestre ? 'is-active' : '' }}"
+                           role="option"
+                           href="{{ route('profesor.notas', $curso->id_curso) }}?cuatrimestre={{ $c->id_cuatrimestre }}">
+                            <span class="sel-opt-text">
+                                <span class="sel-opt-title">Cuatrimestre #{{ $c->id_cuatrimestre }}</span>
+                                <span class="sel-opt-sub">{{ $c->fecha_inicio }} — {{ $c->fecha_fin }}</span>
+                            </span>
+                            <i class="fa-solid fa-check sel-opt-check"></i>
+                        </a>
                     @endforeach
-                </select>
+                </div>
 
-            </form>
+            </div>
 
         </div>
 
@@ -1065,5 +1274,37 @@
     </section>
 
 </div>
+
+<script>
+    (function () {
+        var triggers = document.querySelectorAll('[data-sel-toggle]');
+
+        function closeAllSel() {
+            document.querySelectorAll('.sel.is-open').forEach(function (o) {
+                o.classList.remove('is-open');
+            });
+        }
+
+        triggers.forEach(function (trigger) {
+            trigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var sel = trigger.closest('.sel');
+
+                if (sel.classList.contains('is-open')) {
+                    sel.classList.remove('is-open');
+                } else {
+                    closeAllSel();
+                    sel.classList.add('is-open');
+                }
+            });
+        });
+
+        document.addEventListener('click', closeAllSel);
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') closeAllSel();
+        });
+    })();
+</script>
 
 @endsection

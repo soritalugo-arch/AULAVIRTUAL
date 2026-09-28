@@ -211,7 +211,7 @@
     .fecha-toolbar {
         position: relative;
 
-        z-index: 2;
+        z-index: 30;
 
         display: flex;
 
@@ -265,59 +265,6 @@
         flex-wrap: wrap;
     }
 
-    .fecha-input {
-        height: 36px;
-
-        padding: 0 12px;
-
-        border: 1px solid #ccd5e3;
-
-        border-radius: 9px;
-
-        font-size: 13px;
-
-        color: #243c62;
-
-        outline: none;
-
-        transition:
-            border-color 0.15s ease,
-            box-shadow 0.15s ease;
-    }
-
-    .fecha-input:focus {
-        border-color: #3bb59e;
-
-        box-shadow:
-            0 0 0 2px rgba(59, 181, 158, 0.15);
-    }
-
-    .btn-cambiar {
-        height: 36px;
-
-        padding: 0 16px;
-
-        border: none;
-
-        border-radius: 18px;
-
-        background: #eaf1fb;
-
-        color: #4f72b4;
-
-        font-size: 12.5px;
-
-        font-weight: 700;
-
-        cursor: pointer;
-
-        transition: 0.15s ease;
-    }
-
-    .btn-cambiar:hover {
-        background: #dce8ff;
-    }
-
     /* Selector de cuatrimestre dentro del toolbar */
 
     .fecha-toolbar .toolbar-sep {
@@ -326,10 +273,6 @@
         height: 26px;
 
         background: #e0eafa;
-    }
-
-    .fecha-toolbar select.fecha-input {
-        cursor: pointer;
     }
 
     /* Horario del curso */
@@ -358,6 +301,524 @@
 
     .horario-chip i {
         font-size: 12px;
+    }
+
+    /* =====================================================
+       DROPDOWN PREMIUM (selector a medida)
+    ===================================================== */
+
+    .sel {
+        position: relative;
+    }
+
+    .sel-trigger {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        height: 42px;
+
+        padding: 0 14px 0 8px;
+
+        border: 1px solid #ccd5e3;
+
+        border-radius: 21px;
+
+        background: #ffffff;
+
+        cursor: pointer;
+
+        outline: none;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .sel-trigger:hover {
+        border-color: #a9bfe2;
+    }
+
+    .sel-trigger:focus-visible,
+    .sel.is-open .sel-trigger {
+        border-color: #5686ef;
+
+        box-shadow:
+            0 0 0 3px rgba(86, 134, 239, 0.14);
+    }
+
+    .sel-trigger-icon {
+        display: inline-flex;
+
+        align-items: center;
+        justify-content: center;
+
+        width: 30px;
+        height: 30px;
+
+        border-radius: 50%;
+
+        background: #eaf1fb;
+
+        color: #5578e6;
+
+        font-size: 12px;
+    }
+
+    .sel-trigger-text {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        line-height: 1.25;
+    }
+
+    .sel-trigger-title {
+        color: #243c62;
+
+        font-size: 13px;
+
+        font-weight: 700;
+    }
+
+    .sel-trigger-sub {
+        color: #8ba0c8;
+
+        font-size: 11px;
+    }
+
+    .sel-chevron {
+        margin-left: 2px;
+
+        color: #8ba0c8;
+
+        font-size: 10px;
+
+        transition: transform 0.2s ease;
+    }
+
+    .sel.is-open .sel-chevron {
+        transform: rotate(180deg);
+    }
+
+    .sel-menu {
+        display: none;
+
+        position: absolute;
+
+        top: calc(100% + 8px);
+
+        left: 0;
+
+        z-index: 40;
+
+        min-width: 270px;
+
+        max-width: calc(100vw - 70px);
+
+        padding: 6px;
+
+        background: #ffffff;
+
+        border: 1px solid #d9e6fb;
+
+        border-radius: 16px;
+
+        box-shadow:
+            0 14px 34px rgba(60, 90, 150, 0.16);
+    }
+
+    .sel.is-open .sel-menu {
+        display: block;
+
+        animation: sel-in 0.14s ease;
+    }
+
+    @keyframes sel-in {
+        from {
+            opacity: 0;
+
+            transform: translateY(-4px);
+        }
+
+        to {
+            opacity: 1;
+
+            transform: translateY(0);
+        }
+    }
+
+    .sel-option {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        padding: 10px 12px;
+
+        border-radius: 12px;
+
+        color: #243c62;
+
+        text-decoration: none;
+
+        transition: background 0.12s ease;
+    }
+
+    .sel-option:hover {
+        background: #f2f7ff;
+    }
+
+    .sel-option.is-active {
+        background: #eaf1fb;
+    }
+
+    .sel-opt-text {
+        display: flex;
+
+        flex-direction: column;
+
+        align-items: flex-start;
+
+        line-height: 1.25;
+
+        flex: 1;
+    }
+
+    .sel-opt-title {
+        font-size: 13px;
+
+        font-weight: 700;
+    }
+
+    .sel-opt-sub {
+        color: #8ba0c8;
+
+        font-size: 11.5px;
+    }
+
+    .sel-opt-check {
+        color: #5578e6;
+
+        font-size: 13px;
+
+        opacity: 0;
+    }
+
+    .sel-option.is-active .sel-opt-check {
+        opacity: 1;
+    }
+
+
+    /* =====================================================
+       CALENDARIO A MEDIDA
+    ===================================================== */
+
+    .cal {
+        position: relative;
+    }
+
+    .cal-trigger {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 8px;
+
+        height: 36px;
+
+        padding: 0 14px;
+
+        border: 1px solid #ccd5e3;
+
+        border-radius: 18px;
+
+        background: #ffffff;
+
+        color: #243c62;
+
+        font-size: 13px;
+
+        cursor: pointer;
+
+        outline: none;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .cal-trigger > i:first-child {
+        color: #3bb59e;
+
+        font-size: 13px;
+    }
+
+    .cal-trigger:hover {
+        border-color: #a7cdc3;
+    }
+
+    .cal-trigger:focus-visible,
+    .cal.is-open .cal-trigger {
+        border-color: #3bb59e;
+
+        box-shadow:
+            0 0 0 3px rgba(59, 181, 158, 0.15);
+    }
+
+    .cal-chevron {
+        margin-left: 2px;
+
+        color: #8ba0c8;
+
+        font-size: 10px;
+
+        transition: transform 0.2s ease;
+    }
+
+    .cal.is-open .cal-chevron {
+        transform: rotate(180deg);
+    }
+
+    .cal-panel {
+        display: none;
+
+        position: absolute;
+
+        top: calc(100% + 8px);
+
+        left: 0;
+
+        z-index: 40;
+
+        width: 292px;
+
+        max-width: calc(100vw - 70px);
+
+        padding: 14px;
+
+        background: #ffffff;
+
+        border: 1px solid #d9e6fb;
+
+        border-radius: 18px;
+
+        box-shadow:
+            0 16px 38px rgba(60, 90, 150, 0.18);
+    }
+
+    .cal.is-open .cal-panel {
+        display: block;
+
+        animation: sel-in 0.14s ease;
+    }
+
+    .cal-head {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 8px;
+
+        margin-bottom: 10px;
+    }
+
+    .cal-title {
+        color: #243c62;
+
+        font-size: 13.5px;
+
+        font-weight: 700;
+    }
+
+    .cal-nav {
+        display: inline-flex;
+
+        align-items: center;
+        justify-content: center;
+
+        width: 28px;
+        height: 28px;
+
+        border: none;
+
+        border-radius: 50%;
+
+        background: #f1f6ff;
+
+        color: #4f72b4;
+
+        font-size: 11px;
+
+        cursor: pointer;
+
+        transition: background 0.12s ease;
+    }
+
+    .cal-nav:hover:not(:disabled) {
+        background: #dce8ff;
+    }
+
+    .cal-nav:disabled {
+        opacity: 0.35;
+
+        cursor: default;
+    }
+
+    .cal-dow {
+        display: grid;
+
+        grid-template-columns: repeat(7, 1fr);
+
+        gap: 2px;
+
+        margin-bottom: 4px;
+    }
+
+    .cal-dow span {
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        height: 26px;
+
+        color: #8ba0c8;
+
+        font-size: 10.5px;
+
+        font-weight: 700;
+
+        text-transform: uppercase;
+    }
+
+    .cal-grid {
+        display: grid;
+
+        grid-template-columns: repeat(7, 1fr);
+
+        gap: 2px;
+    }
+
+    .cal-cell {
+        display: flex;
+
+        align-items: center;
+        justify-content: center;
+
+        height: 34px;
+
+        border: none;
+
+        border-radius: 50%;
+
+        background: transparent;
+
+        color: #243c62;
+
+        font-size: 12.5px;
+
+        cursor: pointer;
+
+        transition: background 0.12s ease;
+    }
+
+    .cal-cell:hover:not(:disabled) {
+        background: #eaf1fb;
+    }
+
+    .cal-cell:disabled {
+        color: #c7d1e2;
+
+        cursor: default;
+    }
+
+    .cal-cell.is-today:not(.is-selected) {
+        box-shadow:
+            inset 0 0 0 1.5px #7198ef;
+    }
+
+    .cal-cell.is-selected {
+        background:
+            linear-gradient(
+                100deg,
+                #3bb59e,
+                #55cbb5
+            );
+
+        color: #ffffff;
+
+        font-weight: 700;
+
+        box-shadow:
+            0 4px 10px rgba(59, 181, 158, 0.30);
+    }
+
+    .cal-foot {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        gap: 8px;
+
+        margin-top: 10px;
+
+        padding-top: 10px;
+
+        border-top: 1px solid #edf2f9;
+    }
+
+    .cal-today {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 6px;
+
+        height: 30px;
+
+        padding: 0 14px;
+
+        border: none;
+
+        border-radius: 15px;
+
+        background: #eaf1fb;
+
+        color: #4f72b4;
+
+        font-size: 12px;
+
+        font-weight: 700;
+
+        cursor: pointer;
+
+        transition: background 0.12s ease;
+    }
+
+    .cal-today:hover:not(:disabled) {
+        background: #dce8ff;
+    }
+
+    .cal-today:disabled {
+        opacity: 0.45;
+
+        cursor: default;
+    }
+
+    .cal-hint {
+        color: #9aa9c4;
+
+        font-size: 11px;
     }
 
     /* Resumen de clases registradas */
@@ -898,25 +1359,32 @@
                 Cuatrimestre:
             </label>
 
-            <form method="GET" action="{{ route('profesor.asistencia', $curso->id_curso) }}" class="fecha-form">
+            <div class="sel" data-sel>
 
-                <select
-                    name="cuatrimestre"
-                    id="select-cuatrimestre"
-                    onchange="this.form.submit()"
-                    class="fecha-input"
-                >
+                <button type="button" class="sel-trigger" id="select-cuatrimestre" data-sel-toggle aria-haspopup="listbox">
+                    <span class="sel-trigger-icon"><i class="fa-solid fa-layer-group"></i></span>
+                    <span class="sel-trigger-text">
+                        <span class="sel-trigger-title">Cuatrimestre #{{ $cuatrimestre->id_cuatrimestre }}</span>
+                        <span class="sel-trigger-sub">{{ $cuatrimestre->fecha_inicio }} — {{ $cuatrimestre->fecha_fin }}</span>
+                    </span>
+                    <i class="fa-solid fa-chevron-down sel-chevron"></i>
+                </button>
+
+                <div class="sel-menu" role="listbox">
                     @foreach($cuatrimestres as $c)
-                        <option value="{{ $c->id_cuatrimestre }}"
-                            @selected($c->id_cuatrimestre === $cuatrimestre->id_cuatrimestre)>
-                            #{{ $c->id_cuatrimestre }} ({{ $c->fecha_inicio }} — {{ $c->fecha_fin }})
-                        </option>
+                        <a class="sel-option {{ $c->id_cuatrimestre === $cuatrimestre->id_cuatrimestre ? 'is-active' : '' }}"
+                           role="option"
+                           href="{{ route('profesor.asistencia', $curso->id_curso) }}?cuatrimestre={{ $c->id_cuatrimestre }}&amp;fecha={{ $fecha }}">
+                            <span class="sel-opt-text">
+                                <span class="sel-opt-title">Cuatrimestre #{{ $c->id_cuatrimestre }}</span>
+                                <span class="sel-opt-sub">{{ $c->fecha_inicio }} — {{ $c->fecha_fin }}</span>
+                            </span>
+                            <i class="fa-solid fa-check sel-opt-check"></i>
+                        </a>
                     @endforeach
-                </select>
+                </div>
 
-                <input type="hidden" name="fecha" value="{{ $fecha }}">
-
-            </form>
+            </div>
 
             <span class="toolbar-sep" aria-hidden="true"></span>
 
@@ -925,25 +1393,46 @@
                 Fecha de la clase:
             </label>
 
-            <form method="GET" action="{{ route('profesor.asistencia', $curso->id_curso) }}" class="fecha-form">
+            <div class="cal" data-cal
+                 data-url="{{ route('profesor.asistencia', $curso->id_curso) }}"
+                 data-cuatrimestre="{{ $cuatrimestre->id_cuatrimestre }}"
+                 data-fecha="{{ $fecha }}"
+                 data-min="{{ $cuatrimestre->fecha_inicio->toDateString() }}"
+                 data-max="{{ $cuatrimestre->fecha_fin->toDateString() }}">
 
-                <input type="hidden" name="cuatrimestre" value="{{ $cuatrimestre->id_cuatrimestre }}">
-
-                <input
-                    type="date"
-                    name="fecha"
-                    id="fecha-clase"
-                    value="{{ $fecha }}"
-                    min="{{ $cuatrimestre->fecha_inicio->toDateString() }}"
-                    max="{{ $cuatrimestre->fecha_fin->toDateString() }}"
-                    class="fecha-input"
-                >
-
-                <button type="submit" class="btn-cambiar">
-                    Cambiar
+                <button type="button" class="cal-trigger" id="fecha-clase" data-cal-toggle>
+                    <i class="fa-solid fa-calendar-day"></i>
+                    <span data-cal-label>{{ $fecha }}</span>
+                    <i class="fa-solid fa-chevron-down cal-chevron"></i>
                 </button>
 
-            </form>
+                <div class="cal-panel">
+                    <div class="cal-head">
+                        <button type="button" class="cal-nav" data-cal-prev aria-label="Mes anterior">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <span class="cal-title" data-cal-title></span>
+                        <button type="button" class="cal-nav" data-cal-next aria-label="Mes siguiente">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+
+                    <div class="cal-dow">
+                        <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+                    </div>
+
+                    <div class="cal-grid" data-cal-grid></div>
+
+                    <div class="cal-foot">
+                        <button type="button" class="cal-today" data-cal-today>
+                            <i class="fa-solid fa-arrow-rotate-left"></i>
+                            Hoy
+                        </button>
+                        <span class="cal-hint">Elige un día para cargarlo</span>
+                    </div>
+                </div>
+
+            </div>
 
             @if($horarios->isNotEmpty())
                 <span class="horario-chip">
@@ -1129,5 +1618,182 @@
     </section>
 
 </div>
+
+<script>
+    (function () {
+        var triggers = document.querySelectorAll('[data-sel-toggle]');
+
+        function closeAllSel() {
+            document.querySelectorAll('.sel.is-open').forEach(function (o) {
+                o.classList.remove('is-open');
+            });
+        }
+
+        function closeCal() {
+            if (cal) cal.classList.remove('is-open');
+        }
+
+        triggers.forEach(function (trigger) {
+            trigger.addEventListener('click', function (e) {
+                e.stopPropagation();
+                var sel = trigger.closest('.sel');
+
+                if (sel.classList.contains('is-open')) {
+                    sel.classList.remove('is-open');
+                } else {
+                    closeCal();
+                    closeAllSel();
+                    sel.classList.add('is-open');
+                }
+            });
+        });
+
+        /* =====================================================
+           Calendario a medida
+        ===================================================== */
+
+        var cal = document.querySelector('[data-cal]');
+
+        if (cal) {
+            var title   = cal.querySelector('[data-cal-title]');
+            var grid    = cal.querySelector('[data-cal-grid]');
+            var label   = cal.querySelector('[data-cal-label]');
+            var prev    = cal.querySelector('[data-cal-prev]');
+            var next    = cal.querySelector('[data-cal-next]');
+            var todayBtn = cal.querySelector('[data-cal-today]');
+
+            var baseUrl = cal.getAttribute('data-url');
+            var cuatr  = cal.getAttribute('data-cuatrimestre');
+            var fecha  = cal.getAttribute('data-fecha') || '';
+            var minD   = toDate(cal.getAttribute('data-min'));
+            var maxD   = toDate(cal.getAttribute('data-max'));
+
+            var DIAS    = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+            var MESES   = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio',
+                            'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+            var MESES_C = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul',
+                            'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+
+            var selected = fecha ? toDate(fecha) : null;
+            var viewY = 0, viewM = 0;
+
+            function toDate(s) {
+                var p = s.split('-');
+                return new Date(+p[0], +p[1] - 1, +p[2]);
+            }
+
+            function pad(n) {
+                return (n < 10 ? '0' : '') + n;
+            }
+
+            function iso(d) {
+                return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+            }
+
+            function today() {
+                var n = new Date();
+                return new Date(n.getFullYear(), n.getMonth(), n.getDate());
+            }
+
+            function labelText(d) {
+                return DIAS[d.getDay()] + ' ' + d.getDate() + ' ' + MESES_C[d.getMonth()] + ' ' + d.getFullYear();
+            }
+
+            function render(y, m) {
+                title.textContent = MESES[m] + ' ' + y;
+
+                var first  = new Date(y, m, 1);
+                var days   = new Date(y, m + 1, 0).getDate();
+                var offset = (first.getDay() + 6) % 7;
+                var t      = today();
+                var html   = '';
+
+                for (var b = 0; b < offset; b++) {
+                    html += '<span class="cal-cell"></span>';
+                }
+
+                for (var d = 1; d <= days; d++) {
+                    var dd  = new Date(y, m, d);
+                    var dis = dd < minD || dd > maxD;
+                    var cls = 'cal-cell';
+
+                    if (selected && iso(dd) === iso(selected)) cls += ' is-selected';
+                    if (iso(dd) === iso(t)) cls += ' is-today';
+
+                    html += '<button type="button" class="' + cls + '" data-fecha="' + iso(dd) + '"'
+                        + (dis ? ' disabled' : '') + '>' + d + '</button>';
+                }
+
+                grid.innerHTML = html;
+
+                var prevM = m - 1, prevY = y;
+                if (prevM < 0) { prevM = 11; prevY--; }
+                prev.disabled = new Date(prevY, prevM + 1, 0) < minD;
+
+                var nextM = m + 1, nextY = y;
+                if (nextM > 11) { nextM = 0; nextY++; }
+                next.disabled = new Date(nextY, nextM, 1) > maxD;
+            }
+
+            function openCal() {
+                var base = selected || toDate(fecha);
+                viewY = base.getFullYear();
+                viewM = base.getMonth();
+                render(viewY, viewM);
+                todayBtn.disabled = today() < minD || today() > maxD;
+                cal.classList.add('is-open');
+            }
+
+            cal.querySelector('.cal-trigger').addEventListener('click', function (e) {
+                e.stopPropagation();
+                if (cal.classList.contains('is-open')) {
+                    cal.classList.remove('is-open');
+                } else {
+                    closeAllSel();
+                    openCal();
+                }
+            });
+
+            prev.addEventListener('click', function () {
+                viewM--;
+                if (viewM < 0) { viewM = 11; viewY--; }
+                render(viewY, viewM);
+            });
+
+            next.addEventListener('click', function () {
+                viewM++;
+                if (viewM > 11) { viewM = 0; viewY++; }
+                render(viewY, viewM);
+            });
+
+            grid.addEventListener('click', function (e) {
+                var target = e.target.closest ? e.target.closest('.cal-cell') : null;
+                if (!target || target.disabled || target.tagName !== 'BUTTON') return;
+                location.href = baseUrl + '?cuatrimestre=' + cuatr + '&fecha=' + target.getAttribute('data-fecha');
+            });
+
+            todayBtn.addEventListener('click', function () {
+                var t = today();
+                if (t < minD || t > maxD) return;
+                location.href = baseUrl + '?cuatrimestre=' + cuatr + '&fecha=' + iso(t);
+            });
+
+            label.textContent = labelText(selected || toDate(fecha));
+        }
+
+        /* Cerrar al hacer clic fuera o con Escape */
+        document.addEventListener('click', function () {
+            closeAllSel();
+            closeCal();
+        });
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeAllSel();
+                closeCal();
+            }
+        });
+    })();
+</script>
 
 @endsection
