@@ -1624,29 +1624,32 @@
         var triggers = document.querySelectorAll('[data-sel-toggle]');
 
         function closeAllSel() {
-            document.querySelectorAll('.sel.is-open').forEach(function (o) {
-                o.classList.remove('is-open');
-            });
+            var open = document.querySelectorAll('.sel.is-open');
+            for (var oi = 0; oi < open.length; oi++) {
+                open[oi].classList.remove('is-open');
+            }
         }
 
         function closeCal() {
             if (cal) cal.classList.remove('is-open');
         }
 
-        triggers.forEach(function (trigger) {
-            trigger.addEventListener('click', function (e) {
-                e.stopPropagation();
-                var sel = trigger.closest('.sel');
+        for (var ti = 0; ti < triggers.length; ti++) {
+            (function (trigger) {
+                trigger.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    var sel = trigger.closest('.sel');
 
-                if (sel.classList.contains('is-open')) {
-                    sel.classList.remove('is-open');
-                } else {
-                    closeCal();
-                    closeAllSel();
-                    sel.classList.add('is-open');
-                }
-            });
-        });
+                    if (sel.classList.contains('is-open')) {
+                        sel.classList.remove('is-open');
+                    } else {
+                        closeCal();
+                        closeAllSel();
+                        sel.classList.add('is-open');
+                    }
+                });
+            })(triggers[ti]);
+        }
 
         /* =====================================================
            Calendario a medida
@@ -1781,10 +1784,15 @@
             label.textContent = labelText(selected || toDate(fecha));
         }
 
-        /* Cerrar al hacer clic fuera o con Escape */
-        document.addEventListener('click', function () {
-            closeAllSel();
-            closeCal();
+        /* Cerrar solo al hacer clic FUERA del dropdown/calendario o con Escape */
+        document.addEventListener('click', function (e) {
+            var target = e.target;
+            var inside = target && target.closest && (target.closest('.sel') || target.closest('.cal'));
+
+            if (!inside) {
+                closeAllSel();
+                closeCal();
+            }
         });
 
         document.addEventListener('keydown', function (e) {
