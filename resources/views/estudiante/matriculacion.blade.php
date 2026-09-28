@@ -712,6 +712,11 @@
     ================================ */
 
     .confirm-dialog {
+        position: fixed;
+        inset: 0;
+
+        margin: auto;
+
         border: none;
 
         border-radius: 24px;

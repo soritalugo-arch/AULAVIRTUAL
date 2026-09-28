@@ -98,8 +98,8 @@
                     : 'estudiante.dashboard');
         @endphp
         <header class="bg-white border-b border-gray-200">
-            <nav class="max-w-7xl mx-auto px-6 sm:px-10 lg:px-12 flex items-center justify-between h-16">
-                <div class="flex items-center gap-16">
+            <nav class="max-w-7xl mx-auto pl-8 sm:pl-14 lg:pl-20 pr-5 sm:pr-8 lg:pr-10 flex items-center justify-between h-16">
+                <div class="flex items-center gap-24">
                     <a href="{{ route($dashboard) }}" class="navbar-logo"><span class="logo-aula">Aula</span><span class="logo-virtual">Virtual</span></a>
                     <ul class="nav-menu hidden md:flex">
                         <li>
