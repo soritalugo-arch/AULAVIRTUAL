@@ -279,8 +279,10 @@
     }
 
     .module-icon svg {
-        width: 76px;
-        height: 57px;
+        width: 72px;
+        height: 72px;
+
+        color: #5271e8;
     }
 
 
@@ -992,20 +994,34 @@
     <section class="module-card">
 
         <div class="module-icon">
-            <svg viewBox="0 0 140 105" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <defs>
-                    <linearGradient id="graduationGradient" x1="0" y1="0" x2="1" y2="1">
-                        <stop offset="0%" stop-color="#4c5bc3"/>
-                        <stop offset="100%" stop-color="#6e94ee"/>
-                    </linearGradient>
-                </defs>
-                <polygon points="70,4 136,34 70,65 4,34" fill="url(#graduationGradient)" />
-                <circle cx="70" cy="34" r="3" fill="white" />
-                <path d="M26 49 L26 72 Q26 78 32 81 L64 96 Q70 99 76 96 L108 81 Q114 78 114 72 L114 49 L70 69 Z" fill="url(#graduationGradient)" />
-                <path d="M26 49 L70 70 L114 49" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.9" />
-                <path d="M125 35 L125 61" fill="none" stroke="#5a73d2" stroke-width="4" stroke-linecap="round" />
-                <circle cx="125" cy="67" r="7" fill="#607ddc" />
-                <path d="M125 73 L125 91" fill="none" stroke="#607ddc" stroke-width="4" stroke-linecap="round" />
+            <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <!-- Esquina superior izquierda doblada -->
+                <path d="M 26 34 H 39 V 21 L 26 34 Z" fill="currentColor" />
+
+                <!-- Borde del documento -->
+                <path d="M 39 21 H 67 C 71.4 21 75 24.6 75 29 V 77 C 75 81.4 71.4 85 67 85 H 33 C 28.6 85 25 81.4 25 77 V 34 L 39 21 Z"
+                      stroke="currentColor"
+                      stroke-width="5.5"
+                      stroke-linejoin="round"
+                      stroke-linecap="round" />
+
+                <!-- Casilla de verificación -->
+                <rect x="35" y="38" width="16" height="16" rx="3" stroke="currentColor" stroke-width="4.5" fill="none" />
+
+                <!-- Marca de verificación (Checkmark) -->
+                <path d="M 38 46 L 44 52 L 53 37"
+                      stroke="currentColor"
+                      stroke-width="5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round" />
+
+                <!-- Líneas del formulario -->
+                <line x1="35" y1="63" x2="65" y2="63" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" />
+                <line x1="35" y1="72" x2="65" y2="72" stroke="currentColor" stroke-width="4.5" stroke-linecap="round" />
+
+                <!-- Lápiz de registro -->
+                <path d="M 54 56 L 58 48 L 71 35 C 73 33 76 33 78 35 L 79 36 C 81 38 81 41 79 43 L 66 56 L 54 56 Z"
+                      fill="currentColor" />
             </svg>
         </div>
 

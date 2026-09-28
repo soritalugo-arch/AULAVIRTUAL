@@ -73,6 +73,7 @@
         .logo-virtual { color: #587be1; }
 
         .nav-menu {
+            position: relative;
             display: flex;
             align-items: center;
             gap: 35px;
@@ -99,16 +100,21 @@
             font-weight: 700;
         }
 
-        .nav-link.active::after {
-            content: "";
+        /* Indicador deslizante bajo el enlace activo */
+        .nav-indicator {
             position: absolute;
-            left: 50%;
+            left: 0;
             bottom: -8px;
-            width: 100%;
+            width: 0;
             height: 3px;
             border-radius: 4px;
             background: #5477DF;
-            transform: translateX(-50%);
+            opacity: 0;
+            transform: translateX(0px);
+            pointer-events: none;
+            transition:
+                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .nav-user,
@@ -198,11 +204,28 @@
         <header class="navbar-card">
             <div class="nav-left">
                 <a href="{{ route($dashboard) }}" class="navbar-logo">
-                    @yield('logo_icon')
+                    <span class="logo-icon">
+                        <svg viewBox="0 0 140 105" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="graduationGradient" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0%" stop-color="#4c5bc3"/>
+                                    <stop offset="100%" stop-color="#6e94ee"/>
+                                </linearGradient>
+                            </defs>
+                            <polygon points="70,4 136,34 70,65 4,34" fill="url(#graduationGradient)"/>
+                            <circle cx="70" cy="34" r="3" fill="white"/>
+                            <path d="M26 49 L26 72 Q26 78 32 81 L64 96 Q70 99 76 96 L108 81 Q114 78 114 72 L114 49 L70 69 Z" fill="url(#graduationGradient)"/>
+                            <path d="M26 49 L70 70 L114 49" fill="none" stroke="#ffffff" stroke-width="4" opacity="0.9"/>
+                            <path d="M125 35 L125 61" fill="none" stroke="#5a73d2" stroke-width="4" stroke-linecap="round"/>
+                            <circle cx="125" cy="67" r="7" fill="#607ddc"/>
+                            <path d="M125 73 L125 91" fill="none" stroke="#607ddc" stroke-width="4" stroke-linecap="round"/>
+                        </svg>
+                    </span>
                     <span class="logo-word"><span class="logo-aula">Aula</span><span class="logo-virtual">Virtual</span></span>
                 </a>
                 <div class="nav-divider"></div>
                 <ul class="nav-menu hidden md:flex">
+                    <li class="nav-indicator" aria-hidden="true"></li>
                     <li>
                         <a href="{{ route($dashboard) }}" class="nav-link {{ request()->routeIs($dashboard) ? 'active' : '' }}">Dashboard</a>
                     </li>
@@ -233,5 +256,71 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         @yield('contenido')
     </main>
+
+    {{-- Indicador deslizante del navbar: anima de un enlace a otro entre páginas --}}
+    <script>
+        (function () {
+            var menu = document.querySelector('.nav-menu');
+            var indicator = document.querySelector('.nav-indicator');
+            if (!menu || !indicator) return;
+
+            var links = Array.prototype.slice.call(menu.querySelectorAll('a.nav-link'));
+            if (!links.length) return;
+
+            var active = null;
+            for (var i = 0; i < links.length; i++) {
+                if (links[i].classList.contains('active')) { active = links[i]; break; }
+            }
+            var activeIndex = active ? links.indexOf(active) : -1;
+            var firstHref = links[0] ? links[0].getAttribute('href') : null;
+
+            function visible(el) { return el.offsetParent !== null; }
+
+            function pos(el) {
+                var m = menu.getBoundingClientRect();
+                var l = el.getBoundingClientRect();
+                return { left: l.left - m.left + (menu.scrollLeft || 0), width: l.width };
+            }
+
+            function place(x, w, animate) {
+                indicator.style.transition = animate ? '' : 'none';
+                indicator.style.opacity = '1';
+                indicator.style.transform = 'translateX(' + x + 'px)';
+                indicator.style.width = w + 'px';
+            }
+
+            function render(animate) {
+                if (!active || !visible(menu)) {
+                    indicator.style.opacity = '0';
+                    return;
+                }
+                var p = pos(active);
+                place(p.left, p.width, animate);
+            }
+
+            var prev = null;
+            try { prev = JSON.parse(sessionStorage.getItem('__aulaNavIndicator') || 'null'); } catch (e) {}
+
+            var coinciden = prev && prev.index >= 0 && prev.index < links.length
+                         && prev.index !== activeIndex && prev.firstHref === firstHref;
+
+            if (active && coinciden) {
+                // Parte desde la posición del enlace anterior y desliza al actual
+                var from = pos(links[prev.index]);
+                place(from.left, from.width, false);
+                void indicator.offsetWidth; // fuerza reflow antes de animar
+                render(true);
+            } else {
+                render(false); // primera visita o menú distinto: aparece sin animación
+            }
+
+            try {
+                sessionStorage.setItem('__aulaNavIndicator',
+                    JSON.stringify({ index: activeIndex, firstHref: firstHref }));
+            } catch (e) {}
+
+            window.addEventListener('resize', function () { render(false); });
+        })();
+    </script>
 </body>
 </html>
