@@ -53,17 +53,10 @@ class InscripcionService
                 throw new Exception('El estudiante ya está en la lista de espera de esta asignatura.');
             }
 
-            // 6. Conflicto de horario del estudiante
-            if ($this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
-                throw new Exception('Existe un conflicto de horario con otra asignatura del estudiante.');
-            }
-
-            // 7. Conflicto de horario del profesor
-            if ($this->tieneConflictoHorarioProfesor($curso)) {
-                throw new Exception('Existe un conflicto de horario para el profesor asignado a la asignatura.');
-            }
-
-            // 8. Control de cupo (con el curso bloqueado, el conteo es seguro)
+            // 6. Control de cupo (con el curso bloqueado, el conteo es seguro).
+            // Se valida ANTES de los conflictos de horario del estudiante para que
+            // el mensaje sea uniforme para todos: estar en lista de espera no
+            // compromete horarios y en la promoción ya se salta a los no aptos.
             $inscritosActuales = Inscripcion::where('id_curso', $curso->id_curso)->count();
 
             if ($inscritosActuales >= $curso->limite_estudiantes) {
@@ -71,6 +64,16 @@ class InscripcionService
                     'id_estudiante' => $estudiante->id_usuario,
                     'id_curso' => $curso->id_curso,
                 ]);
+            }
+
+            // 7. Conflicto de horario del estudiante
+            if ($this->tieneConflictoHorarioEstudiante($estudiante, $curso)) {
+                throw new Exception('Existe un conflicto de horario con otra asignatura del estudiante.');
+            }
+
+            // 8. Conflicto de horario del profesor
+            if ($this->tieneConflictoHorarioProfesor($curso)) {
+                throw new Exception('Existe un conflicto de horario para el profesor asignado a la asignatura.');
             }
 
             // Registrar inscripción

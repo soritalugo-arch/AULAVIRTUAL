@@ -68,7 +68,7 @@ class InscripcionController extends Controller
 
             // Si retorna una instancia de Lista_espera
             if ($resultado instanceof Lista_espera) {
-                return redirect()->back()->with('info', 'El cupo estaba lleno. Has sido ingresado a la lista de espera.');
+                return redirect()->back()->with('info', 'El cupo está lleno. Has sido ingresado a la lista de espera');
             }
 
             return redirect()->back()->with('success', 'Te has matriculado exitosamente en el curso.');

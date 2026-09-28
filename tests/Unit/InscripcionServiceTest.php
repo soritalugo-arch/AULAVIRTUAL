@@ -315,6 +315,44 @@ test('promocion conserva en la lista a quien quedo con deuda y promueve al sigui
     ]);
 });
 
+test('con cupo lleno, un estudiante con conflicto de horario tambien entra a lista de espera', function () {
+    $service = new InscripcionService;
+    $carrera = crearCarreraPrueba();
+
+    // Curso con cupo 1 y horario los lunes
+    $curso = enOfertaDe(Curso::create(['nombre' => 'Curso Lleno Con Horario', 'limite_estudiantes' => 1]), $carrera);
+    Horario::create([
+        'id_curso' => $curso->getKey(),
+        'dia_semana' => 'Lunes',
+        'hora_inicio' => '08:00:00',
+        'hora_fin' => '10:00:00',
+    ]);
+
+    // Un estudiante que ya tiene otra clase que choca con el curso lleno
+    $estudiante = crearEstudiantePrueba('Cony', 'conflicto_espera@test.com', false, $carrera);
+    $cursoBase = enOfertaDe(Curso::create(['nombre' => 'Base Con Horario', 'limite_estudiantes' => 30]), $carrera);
+    Horario::create([
+        'id_curso' => $cursoBase->getKey(),
+        'dia_semana' => 'Lunes',
+        'hora_inicio' => '09:00:00',
+        'hora_fin' => '11:00:00',
+    ]);
+    $service->inscribir($estudiante, $cursoBase);
+
+    // Llenar el cupo del curso
+    $titular = crearEstudiantePrueba('Titular', 'titular_conf@test.com', false, $carrera);
+    $service->inscribir($titular, $curso);
+
+    // Aunque exista conflicto de horario, con el cupo lleno entra a la lista de espera
+    $resultado = $service->inscribir($estudiante, $curso);
+
+    expect($resultado)->toBeInstanceOf(Lista_espera::class);
+    $this->assertDatabaseHas('lista_espera', [
+        'id_estudiante' => $estudiante->getKey(),
+        'id_curso' => $curso->getKey(),
+    ]);
+});
+
 test('quita de la lista de espera al estudiante que se retira voluntariamente', function () {
     $service = new InscripcionService;
     $carrera = crearCarreraPrueba();
