@@ -565,6 +565,27 @@ it('descarga el certificado en pdf con las notas del estudiante', function () {
     expect($respuesta->getContent())->toStartWith('%PDF-');
 });
 
+it('no deja el recorte de la fuente dependiendo del temporal del sistema', function () {
+    $opciones = app('dompdf')->getOptions();
+    $temporal = $opciones->getTempDir();
+
+    // dompdf escribe la fuente recortada en un temporal. Con el del sistema, que
+    // no siempre es escribible, la descarga revienta con "Path must not be empty".
+    expect($temporal)->toBe(storage_path('framework/dompdf'))
+        ->and(is_dir($temporal))->toBeTrue()
+        ->and($opciones->getIsFontSubsettingEnabled())->toBeTrue();
+});
+
+it('le pasa el temporal propio al pdf que dompdf construye de verdad', function () {
+    // Cpdf copia la ruta del temporal en su constructor, que corre dentro de
+    // "new Dompdf". Ajustar la opcion despues llega tarde: la opcion dice una
+    // cosa y el pdf sigue escribiendo en %TEMP%, que es justo lo que falla.
+    $cpdf = app('dompdf')->getCanvas()->get_cpdf();
+
+    expect($cpdf->tmp)->toBe(storage_path('framework/dompdf'))
+        ->and($cpdf->tmp)->not->toBe(sys_get_temp_dir());
+});
+
 it('no infla el certificado incrustando la fuente completa', function () {
     $estudiante = estudianteConCarrera();
     $q1 = cerradoParaHistorial();

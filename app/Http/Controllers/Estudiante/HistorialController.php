@@ -49,10 +49,6 @@ class HistorialController extends Controller
             // Las fuentes estandar del PDF tambien las tienen, pero no todas las
             // versiones de la plataforma compilan los glyphs por igual.
             ->setOption('defaultFont', 'DejaVu Sans')
-            // Sin subsetting dompdf embebe la DejaVu Sans entera y un certificado
-            // de una pagina pesa 880 KB. Recortando la fuente a los glifos que
-            // aparecen, el mismo documento baja a 30 KB.
-            ->setOption('enableFontSubsetting', true)
             // La plantilla es autonoma: nada de CSS ni imagenes remotas, para que
             // el certificado se genere igual sin conexion.
             ->setOption('isRemoteEnabled', false)
