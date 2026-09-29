@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Estudiante\InscripcionController;
 use App\Http\Controllers\Estudiante\MisNotasController;
@@ -21,7 +22,7 @@ Route::middleware('guest')->group(function () {
 Route::post('logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin', fn () => view('admin.dashboard'))->name('admin.dashboard');
+    Route::get('/admin', [DashboardController::class, 'index'])->name('admin.dashboard');
 });
 
 // ─── Rutas del Profesor ──────────────────────────────────────────────────────

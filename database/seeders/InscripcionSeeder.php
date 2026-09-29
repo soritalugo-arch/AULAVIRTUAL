@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Carrera;
+use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
 use App\Models\Usuario;
@@ -12,8 +13,13 @@ use Illuminate\Support\Facades\DB;
 class InscripcionSeeder extends Seeder
 {
     public static array $carreraDeEstudiante = [];
+
     public static array $enrolados = [];
+
     public static array $slotsDeEstudiante = [];
+
+    /** Cuatrimestre al que pertenece toda la matrícula de este seed. */
+    private static int $cuatrimestreId;
 
     private const CARRERA_DE_EMAIL = [
         DatabaseSeeder::EMAIL_ESTUDIANTE => 'Informática',
@@ -46,6 +52,8 @@ class InscripcionSeeder extends Seeder
         $cursosPorNombre = $cursos->keyBy('nombre');
         $cursosPorCarrera = $this->cursosPorCarrera($cursos);
         $capPorCurso = $this->capPorCurso($cursos);
+
+        self::$cuatrimestreId = $this->cuatrimestreDeMatricula()->id_cuatrimestre;
 
         $estudiantes = Estudiante::where('deuda', false)->orderBy('id_usuario')->pluck('id_usuario');
         $idPorEmail = Usuario::whereIn('email', array_keys(self::CARRERA_DE_EMAIL))
@@ -100,6 +108,20 @@ class InscripcionSeeder extends Seeder
         foreach (array_chunk($filas, 500) as $lote) {
             DB::table('inscripcion')->insert($lote);
         }
+    }
+
+    /**
+     * Cuatrimestre al que corresponde la matrícula: el vigente, o el primero
+     * que empieza si aún no hay ninguno en curso (matrícula anticipada).
+     */
+    private function cuatrimestreDeMatricula(): Cuatrimestre
+    {
+        $vigente = Cuatrimestre::where('fecha_inicio', '<=', now())
+            ->where('fecha_fin', '>=', now())
+            ->orderByDesc('fecha_inicio')
+            ->first();
+
+        return $vigente ?? Cuatrimestre::orderBy('fecha_inicio')->firstOrFail();
     }
 
     private function cursosPorCarrera($cursos): array
@@ -196,7 +218,8 @@ class InscripcionSeeder extends Seeder
         $filas[] = [
             'id_estudiante' => $sid,
             'id_curso' => $cid,
-            'fecha_inscripcion' => '2026-09-0' . (($sid % 6) + 1),
+            'id_cuatrimestre' => self::$cuatrimestreId,
+            'fecha_inscripcion' => '2026-09-0'.(($sid % 6) + 1),
             'created_at' => now(),
             'updated_at' => now(),
         ];

@@ -253,9 +253,15 @@
         </header>
     @endauth
 
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    {{-- Por omisión el contenido se limita a 1280px. Las páginas que necesitan
+         ocupar todo el ancho (para alinearse con el navbar) sustituyen estas
+         clases con @section('clase_main', '...'). --}}
+    @php $claseMain = $__env->yieldContent('clase_main', 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'); @endphp
+    <main class="{{ $claseMain }} py-8">
         @yield('contenido')
     </main>
+
+    @stack('scripts')
 
     {{-- Indicador deslizante del navbar: anima de un enlace a otro entre páginas --}}
     <script>

@@ -29,6 +29,14 @@ class CalificacionAsistenciaService
             ->orderByDesc('fecha_inicio')
             ->first();
     }
+    // cuatrimestre cuyo rango de fechas incluye la fecha actual
+    public function cuatrimestreEnCurso(): ?Cuatrimestre
+    {
+        return $this->cuatrimestreVigente()
+            ?? Cuatrimestre::where('fecha_inicio', '<=', now())
+                ->orderByDesc('fecha_inicio')
+                ->first();
+    }
     // upsert de nota por estudiante, curso y cuatrimestre
     public function guardarNota(int $idEstudiante, int $idCurso, int $idCuatrimestre, int $nota, ?string $observaciones): Calificacion
     {
@@ -68,10 +76,35 @@ class CalificacionAsistenciaService
     // si no, faltas / clases dictadas * 100; retorna 0 si no hay clases
     public function porcentajeInasistencia(int $idEstudiante, int $idCurso, int $idCuatrimestre): float
     {
-        $denominador = $this->totalClasesProgramadas($idCurso, $idCuatrimestre)
-            ?? $this->clasesDictadas($idCurso, $idCuatrimestre);
-        if ($denominador <= 0) return 0.0;
-        return round(($this->faltasEstudiante($idEstudiante, $idCurso, $idCuatrimestre) / $denominador) * 100, 1);
+        return $this->inasistenciaDesdeConteos(
+            $this->faltasEstudiante($idEstudiante, $idCurso, $idCuatrimestre),
+            $this->totalClasesProgramadas($idCurso, $idCuatrimestre) ?? 0,
+            $this->clasesDictadas($idCurso, $idCuatrimestre),
+        );
+    }
+
+    /**
+     * Porcentaje de inasistencia a partir de conteos ya resueltos.
+     *
+     * Es la misma regla que porcentajeInasistencia(), pero sin las consultas por
+     * curso. El historial del estudiante trae faltas y clases de todos sus
+     * cursos en una sola consulta y las pasa por aqui, para que el reporte diga
+     * exactamente lo mismo que el modulo del profesor. Si la regla del
+     * denominador cambia, cambia en un solo lugar.
+     *
+     * @param  int  $faltas  cantidad de clases a las que faltó
+     * @param  int  $programadas  total_clases de la pivot, 0 si no está definido
+     * @param  int  $dictadas  fechas distintas con asistencia registrada
+     */
+    public function inasistenciaDesdeConteos(int $faltas, int $programadas, int $dictadas): float
+    {
+        $denominador = $programadas > 0 ? $programadas : $dictadas;
+
+        if ($denominador <= 0) {
+            return 0.0;
+        }
+
+        return round(($faltas / $denominador) * 100, 1);
     }
     // cantidad de inasistencias del estudiante en el curso y cuatrimestre
     public function faltasEstudiante(int $idEstudiante, int $idCurso, int $idCuatrimestre): int

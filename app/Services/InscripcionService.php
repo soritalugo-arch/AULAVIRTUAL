@@ -34,7 +34,9 @@ class InscripcionService
             }
 
             // 2. La asignatura debe ofrecerse en el cuatrimestre vigente
-            if (! $this->cursoEsDelCuatrimestreVigente($curso)) {
+            $cuatrimestre = $this->cuatrimestreVigente();
+
+            if (! $cuatrimestre || ! $curso->cuatrimestres()->whereKey($cuatrimestre->id_cuatrimestre)->exists()) {
                 throw new Exception('La asignatura no está disponible en el cuatrimestre vigente.');
             }
 
@@ -80,6 +82,7 @@ class InscripcionService
             $inscripcion = Inscripcion::create([
                 'id_estudiante' => $estudiante->id_usuario,
                 'id_curso' => $curso->id_curso,
+                'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
                 'fecha_inscripcion' => now(),
             ]);
 
@@ -138,6 +141,12 @@ class InscripcionService
             return;
         }
 
+        $cuatrimestre = $this->cuatrimestreVigente();
+
+        if (! $cuatrimestre) {
+            return;
+        }
+
         $enCola = Lista_espera::where('id_curso', $curso->id_curso)
             ->orderBy('created_at', 'asc')
             ->orderBy('idlista_espera', 'asc')
@@ -161,6 +170,7 @@ class InscripcionService
             Inscripcion::create([
                 'id_estudiante' => $estudiante->id_usuario,
                 'id_curso' => $curso->id_curso,
+                'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
                 'fecha_inscripcion' => now(),
             ]);
 
@@ -224,19 +234,14 @@ class InscripcionService
     }
 
     /**
-     * ¿La asignatura se ofrece en el cuatrimestre vigente?
+     * Cuatrimestre cuyo rango de fechas incluye el día de hoy.
      */
-    private function cursoEsDelCuatrimestreVigente(Curso $curso): bool
+    private function cuatrimestreVigente(): ?Cuatrimestre
     {
-        $vigente = Cuatrimestre::where('fecha_inicio', '<=', now())
+        return Cuatrimestre::where('fecha_inicio', '<=', now())
             ->where('fecha_fin', '>=', now())
+            ->orderByDesc('fecha_inicio')
             ->first();
-
-        if (! $vigente) {
-            return false;
-        }
-
-        return $curso->cuatrimestres()->whereKey($vigente->id_cuatrimestre)->exists();
     }
 
     /**
