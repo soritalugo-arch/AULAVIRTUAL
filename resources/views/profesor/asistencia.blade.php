@@ -1278,52 +1278,98 @@
     }
 
 
-    /* =====================================================
-       RESPONSIVE
+/* =====================================================
+       MEDIA QUERIES (RESPONSIVE)
     ===================================================== */
+    @media (max-width: 768px) {
+        /* Ajustes del panel y espaciados generales */
+        .cursos-wrap { width: calc(100% - 20px); margin-top: 20px; }
+        .courses-panel { padding: 26px 16px; border-radius: 23px; }
+        .asistencia-header h1 { font-size: 24px; }
+        .legend { gap: 9px; }
+        .legend-item { white-space: normal; }
 
-    @media (max-width: 1200px) {
-
-        .cursos-wrap {
-            width: calc(100% - 60px);
+        /* =========================================
+           TRANSFORMACIÓN DE TABLA A TARJETAS
+        ========================================= */
+        
+        /* 1. Forzar que todos los elementos de la tabla se comporten como bloques */
+        table, thead, tbody, th, td, tr {
+            display: block;
+            width: 100%;
         }
 
-        .courses-panel {
-            padding: 34px;
-        }
-    }
-
-    @media (max-width: 900px) {
-
-        .cursos-wrap {
-            width: calc(100% - 40px);
-        }
-    }
-
-    @media (max-width: 600px) {
-
-        .cursos-wrap {
-            width: calc(100% - 20px);
-
-            margin-top: 20px;
+        /* 2. Ocultar el encabezado original de la tabla (las columnas) */
+        thead {
+            display: none;
         }
 
-        .courses-panel {
-            padding: 26px 16px;
-
-            border-radius: 23px;
+        /* 3. Convertir cada fila (tr) en una "tarjeta" */
+        tbody tr {
+            margin-bottom: 16px;
+            padding: 16px;
+            background: rgba(255, 255, 255, 0.85);
+            border: 1px solid #d9e6fb;
+            border-radius: 18px;
+            box-shadow: 0 4px 12px rgba(74, 110, 177, 0.05);
         }
 
-        .asistencia-header h1 {
-            font-size: 24px;
+        /* Colores de alerta en las tarjetas completas */
+        tbody tr.row-peligro {
+            border-color: #ffc2d1;
+            background: rgba(255, 240, 244, 0.9);
+        }
+        tbody tr.row-advertencia {
+            border-color: #fde68a;
+            background: rgba(255, 251, 235, 0.9);
         }
 
-        .legend {
-            gap: 9px;
+        /* 4. Convertir cada celda (td) en una fila interna dentro de la tarjeta */
+        tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #edf0f5;
+            text-align: right;
         }
 
-        .legend-item {
-            white-space: normal;
+        /* Quitar el borde inferior al último elemento de la tarjeta */
+        tbody td:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+        tbody td:first-child {
+            padding-top: 0;
+        }
+
+        /* 5. Inyectar el nombre de la columna dinámicamente a la izquierda */
+        tbody td::before {
+            content: attr(data-label); /* Lee el atributo de tu HTML */
+            font-weight: 700;
+            color: #6b82b5;
+            font-size: 11px;
+            text-transform: uppercase;
+            text-align: left;
+            flex-shrink: 0;
+            margin-right: 15px;
+        }
+
+        /* Ajustes específicos para el contenido de las celdas en móvil */
+        tbody td .nombre {
+            text-align: right;
+            display: block;
+        }
+        
+        tbody td .nombre-warn {
+            text-align: right;
+        }
+
+        /* Separar un poco más la celda del Checkbox para que sea fácil de tocar */
+        tbody td:last-child {
+            margin-top: 8px;
+            padding-top: 14px;
+            border-top: 1px solid #edf0f5;
         }
     }
 </style>
@@ -1543,7 +1589,7 @@
                         <tr class="{{ $claseFila }}">
 
                             {{-- Nombre --}}
-                            <td>
+                            <td data-label="Estudiante">
 
                                 <span class="nombre">{{ $est['nombre'] }}</span>
 
@@ -1558,7 +1604,7 @@
                             </td>
 
                             {{-- % Faltas acumuladas --}}
-                            <td>
+                            <td data-label="Faltas Acumuladas" class="cell-center">
 
                                 <span class="absence {{ $claseFaltas }}">
                                     {{ $est['porcentajeFaltas'] }}%
@@ -1568,7 +1614,7 @@
                             </td>
 
                             {{-- Estado de riesgo --}}
-                            <td>
+                            <td data-label="Estado de Riesgo" class="cell-center">
 
                                 @if($est['alerta'] === 'peligro')
                                     <span class="badge-estado badge-perdida">
@@ -1590,7 +1636,7 @@
                             </td>
 
                             {{-- Presente hoy --}}
-                            <td>
+                            <td data-label="Asistencia de Hoy" class="cell-center">
 
                                 <label class="check-wrap {{ $est['presente'] ? '' : 'ausente' }}">
 

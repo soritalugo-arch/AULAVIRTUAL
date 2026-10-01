@@ -986,53 +986,158 @@
     }
 
 
-    /* =====================================================
-       RESPONSIVE
+/* =====================================================
+       RESPONSIVE (CON TABLA TIPO TARJETA)
     ===================================================== */
 
     @media (max-width: 1200px) {
-
         .cursos-wrap {
             width: calc(100% - 60px);
         }
-
         .courses-panel {
             padding: 34px;
         }
     }
 
     @media (max-width: 900px) {
-
         .cursos-wrap {
             width: calc(100% - 40px);
+        }
+
+        /* Apilar encabezado y controles */
+        .notas-header {
+            flex-direction: column;
+            gap: 16px;
+        }
+        .btn-extra {
+            width: 100%;
+            justify-content: center;
+        }
+        .cuatrimestre-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        .sel-trigger {
+            width: 100%;
+            justify-content: space-between; 
+        }
+        .sel-menu {
+            width: 100%;
+            max-width: 100%;
+        }
+
+        /* =========================================
+           TRANSFORMAR TABLA EN TARJETAS (MOBILE)
+        ========================================= */
+        .table-slot {
+            background: transparent;
+            border: none;
+            box-shadow: none;
+            overflow-x: hidden; /* Elimina definitivamente el scroll horizontal */
+        }
+        
+        table, thead, tbody, tr, th, td {
+            display: block;
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        /* Ocultar encabezados de la tabla tradicional */
+        thead { 
+            display: none; 
+        }
+
+        /* Cada fila de estudiante es ahora una tarjeta individual */
+        tbody tr {
+            margin-bottom: 20px;
+            background: #ffffff;
+            border: 1px solid #d9e6fb;
+            border-radius: 16px;
+            box-shadow: 0 5px 15px rgba(85, 115, 170, 0.05);
+            padding: 4px 0;
+        }
+
+        /* Rejilla interna para cada celda de la tarjeta */
+        td {
+            display: grid;
+            grid-template-columns: 45% 55%; /* Divide el espacio: Título | Valor */
+            align-items: center;
+            padding: 14px 16px;
+            border-bottom: 1px solid #edf0f5;
+            height: auto;
+            text-align: right;
+        }
+
+        td:last-child { 
+            border-bottom: none; 
+        }
+
+        /* Generar los títulos de cada columna dinámicamente con CSS */
+        td::before {
+            grid-column: 1;
+            grid-row: 1 / span 5; /* Evita que el texto de la derecha lo empuje */
+            text-align: left;
+            font-size: 11.5px;
+            font-weight: 700;
+            color: #6b82b5;
+            text-transform: uppercase;
+            align-self: center;
+        }
+
+        /* Asignar el nombre a cada campo */
+        td:nth-child(1)::before { content: "Estudiante"; align-self: start; margin-top: 4px; }
+        td:nth-child(2)::before { content: "% Faltas"; }
+        td:nth-child(3)::before { content: "Estado"; }
+        td:nth-child(4)::before { content: "Nota (1-10)"; }
+        
+        /* Alinear el contenido (los datos) a la derecha */
+        td > * {
+            grid-column: 2;
+            justify-self: end;
+        }
+        
+        /* La observación necesita todo el ancho por ser un input largo */
+        td:nth-child(5) {
+            display: flex;
+            flex-direction: column;
+            align-items: stretch;
+            gap: 10px;
+        }
+        
+        td:nth-child(5)::before {
+            content: "Observación";
+            position: static;
+        }
+        
+        td:nth-child(5) > * {
+            max-width: 100%;
+            text-align: left;
         }
     }
 
     @media (max-width: 600px) {
-
         .cursos-wrap {
-            width: calc(100% - 20px);
-
-            margin-top: 20px;
+            width: 100%; 
+            margin-top: 0;
+            margin-bottom: 0;
         }
-
         .courses-panel {
-            padding: 26px 16px;
-
-            border-radius: 23px;
+            padding: 24px 12px;
+            border-radius: 0;
+            border: none;
+            box-shadow: none;
         }
-
-        .notas-header h1 {
-            font-size: 24px;
-        }
-
-        .legend {
-            gap: 9px;
-        }
-
-        .legend-item {
-            white-space: normal;
-        }
+        .courses-panel::after { display: none; }
+        
+        .notas-header h1 { font-size: 24px; }
+        
+        /* Apilar la leyenda de riesgo */
+        .legend { flex-direction: column; gap: 10px; }
+        .legend-item { white-space: normal; height: auto; padding: 10px 14px; width: 100%; }
+        
+        /* Botón de guardar gigante para tocar con el dedo */
+        .form-actions { margin-top: 20px; }
+        .btn-save { width: 100%; justify-content: center; height: 48px; font-size: 15px; }
     }
 </style>
 
@@ -1228,8 +1333,9 @@
                                     name="notas[{{ $i }}][nota]"
                                     value="{{ $est['nota'] }}"
                                     min="1" max="10"
+                                    class="form-control"
                                     placeholder="—"
-                                    class="grade-input"
+                                    
                                 >
 
                             </td>

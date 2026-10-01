@@ -12,8 +12,9 @@
 
     <style>
         /* ===== NAVBAR: TARJETA FLOTANTE ===== */
-
         .navbar-card {
+            position: relative;
+            z-index: 50;
             width: calc(100% - 70px);
             height: 90px;
             margin: 22px auto 0;
@@ -28,161 +29,107 @@
             backdrop-filter: blur(10px);
         }
 
-        .nav-left {
-            display: flex;
-            align-items: center;
-        }
-
-        .nav-right {
-            display: flex;
-            align-items: center;
-        }
+        .nav-left { display: flex; align-items: center; }
+        .nav-right { display: flex; align-items: center; }
 
         .nav-divider {
-            width: 1px;
-            height: 35px;
+            width: 1px; height: 35px;
             margin: 0 30px;
             background: #e1e7f2;
         }
 
         .navbar-logo {
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
+            display: inline-flex; align-items: center; gap: 12px;
             font-family: "Playfair Display", Georgia, serif;
-            font-size: 28px;
-            font-weight: 600;
-            letter-spacing: -1px;
-            text-decoration: none;
-            white-space: nowrap;
+            font-size: 28px; font-weight: 600;
+            letter-spacing: -1px; text-decoration: none; white-space: nowrap;
         }
-
-        .logo-icon {
-            display: inline-flex;
-            flex-shrink: 0;
-            color: #5d7fdf;
-        }
-
-        .logo-icon svg {
-            width: 37px;
-            height: 28px;
-        }
-
+        .logo-icon { display: inline-flex; flex-shrink: 0; color: #5d7fdf; }
+        .logo-icon svg { width: 37px; height: 28px; }
         .logo-aula { color: #21157c; }
-
         .logo-virtual { color: #587be1; }
 
         .nav-menu {
             position: relative;
-            display: flex;
-            align-items: center;
-            gap: 35px;
-            list-style: none;
-            margin: 0;
-            padding: 0;
+            display: flex; align-items: center; gap: 35px;
+            list-style: none; margin: 0; padding: 0;
         }
 
         .nav-link {
             position: relative;
             font-family: "DM Sans", sans-serif;
-            font-size: 15px;
-            font-weight: 600;
-            color: #4763a5;
-            text-decoration: none;
-            transition: color 0.15s ease;
+            font-size: 15px; font-weight: 600; color: #4763a5;
+            text-decoration: none; transition: color 0.15s ease;
         }
-
         .nav-link:hover { color: #2d4b99; }
+        .nav-link.active { color: #2f55c4; font-weight: 700; }
 
-        /* Enlace activo: texto azul + línea inferior */
-        .nav-link.active {
-            color: #2f55c4;
-            font-weight: 700;
-        }
-
-        /* Indicador deslizante bajo el enlace activo */
         .nav-indicator {
-            position: absolute;
-            left: 0;
-            bottom: -8px;
-            width: 0;
-            height: 3px;
-            border-radius: 4px;
-            background: #5477DF;
-            opacity: 0;
-            transform: translateX(0px);
-            pointer-events: none;
-            transition:
-                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1),
-                width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: absolute; left: 0; bottom: -8px;
+            width: 0; height: 3px; border-radius: 4px; background: #5477DF;
+            opacity: 0; transform: translateX(0px); pointer-events: none;
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .nav-user,
-        .user {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-        }
-
+        .nav-user, .user { display: flex; align-items: center; gap: 13px; }
         .user-icon {
-            width: 45px;
-            height: 45px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            width: 45px; height: 45px;
+            display: flex; align-items: center; justify-content: center;
             border-radius: 50%;
             background: linear-gradient(145deg, #dce8ff, #c6d8ff);
-            color: #6382d9;
-            font-size: 18px;
-            flex-shrink: 0;
+            color: #6382d9; font-size: 18px; flex-shrink: 0;
         }
-
-        .user-name {
-            font-family: "DM Sans", sans-serif;
-            font-size: 15px;
-            font-weight: 500;
-            color: #50669d;
-        }
+        .user-name { font-family: "DM Sans", sans-serif; font-size: 15px; font-weight: 500; color: #50669d; }
 
         .logout-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 9px 20px;
-            border: none;
-            border-radius: 22px;
+            display: inline-flex; align-items: center; gap: 8px;
+            padding: 9px 20px; border: none; border-radius: 22px;
             background: linear-gradient(100deg, #f43d61, #fa5272);
-            color: #ffffff;
-            font-family: "DM Sans", sans-serif;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 6px 15px rgba(239, 65, 99, 0.22);
+            color: #ffffff; font-family: "DM Sans", sans-serif; font-size: 14px; font-weight: 600;
+            cursor: pointer; box-shadow: 0 6px 15px rgba(239, 65, 99, 0.22);
             transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
+        .logout-btn:hover { transform: translateY(-1px); box-shadow: 0 8px 18px rgba(239, 65, 99, 0.30); }
 
-        .logout-btn:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 8px 18px rgba(239, 65, 99, 0.30);
+        /* Botón Menú Móvil (Oculto en escritorio) */
+        .menu-toggle-btn {
+            display: none;
+            background: transparent; border: none;
+            color: #5d7fdf; font-size: 24px;
+            cursor: pointer; margin-left: 15px;
+            transition: color 0.2s;
         }
 
-        .logout-btn i { font-size: 14px; }
-
-        @media (max-width: 700px) {
-            .navbar-card {
-                width: calc(100% - 40px);
-                padding: 0 20px;
+        /* ===== RESPONSIVE NAVBAR ===== */
+        @media (max-width: 900px) {
+            .navbar-card { width: calc(100% - 40px); padding: 0 20px; }
+            .nav-divider { display: none; }
+            .menu-toggle-btn { display: block; }
+            
+            /* Menú colapsado a dropdown flotante */
+            .nav-menu {
+                display: none; /* Oculto por defecto */
+                position: absolute;
+                top: 100%; left: 0; right: 0;
+                margin-top: 15px;
+                background: rgba(255, 255, 255, 0.98);
+                border: 1px solid #dce7fa; border-radius: 20px;
+                padding: 20px;
+                box-shadow: 0 10px 30px rgba(70, 105, 170, 0.15);
+                flex-direction: column; align-items: flex-start; gap: 15px;
             }
-
-            .nav-divider {
-                margin: 0 15px;
-            }
+            .nav-menu.show-mobile { display: flex; }
+            .nav-indicator { display: none !important; } /* Desactivamos el slide en vertical */
+            
+            .user-name { display: none; } /* Ocultar nombre, dejar solo icono */
         }
 
         @media (max-width: 480px) {
-            .navbar-card {
-                width: calc(100% - 20px);
-            }
+            .navbar-card { width: calc(100% - 20px); height: 75px; }
+            .navbar-logo { font-size: 0; } /* Ocultar texto del logo, dejar icono */
+            .logout-btn span { display: none; }
+            .logout-btn { padding: 9px 12px; }
+            .logout-btn i { font-size: 16px; margin: 0; }
         }
     </style>
 
@@ -192,7 +139,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     @endif
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body class="bg-[#f3f7fd] min-h-screen">
     @auth
         @php
             $dashboard = auth()->user()->roles->contains('nombre', 'admin')
@@ -224,7 +171,7 @@
                     <span class="logo-word"><span class="logo-aula">Aula</span><span class="logo-virtual">Virtual</span></span>
                 </a>
                 <div class="nav-divider"></div>
-                <ul class="nav-menu hidden md:flex">
+                <ul class="nav-menu" id="mobile-menu">
                     <li class="nav-indicator" aria-hidden="true"></li>
                     <li>
                         <a href="{{ route($dashboard) }}" class="nav-link {{ request()->routeIs($dashboard) ? 'active' : '' }}">Dashboard</a>
@@ -234,41 +181,60 @@
             </div>
             <div class="nav-right">
                 <div class="user">
-                    <div class="user-icon">
-                        <i class="fa-solid fa-user"></i>
-                    </div>
-                    <span class="user-name hidden sm:inline">
-                        {{ auth()->user()->nombres }} {{ auth()->user()->apellidos }}
-                    </span>
+                    <div class="user-icon"><i class="fa-solid fa-user"></i></div>
+                    <span class="user-name">{{ auth()->user()->nombres }} {{ auth()->user()->apellidos }}</span>
                 </div>
-                <div class="nav-divider"></div>
-                <form method="POST" action="{{ route('logout') }}">
+                <div class="nav-divider hidden sm:block"></div>
+                <form method="POST" action="{{ route('logout') }}" class="m-0 flex">
                     @csrf
                     <button type="submit" class="logout-btn">
                         <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                        Salir
+                        <span>Salir</span>
                     </button>
                 </form>
+                <!-- Botón Toggle -->
+                <button id="btn-toggle-menu" class="menu-toggle-btn">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
             </div>
         </header>
     @endauth
 
-    {{-- Por omisión el contenido se limita a 1280px. Las páginas que necesitan
-         ocupar todo el ancho (para alinearse con el navbar) sustituyen estas
-         clases con @section('clase_main', '...'). --}}
     @php $claseMain = $__env->yieldContent('clase_main', 'max-w-7xl mx-auto px-4 sm:px-6 lg:px-8'); @endphp
-    <main class="{{ $claseMain }} py-8">
+    <main class="{{ $claseMain }} py-10">
         @yield('contenido')
     </main>
 
     @stack('scripts')
 
-    {{-- Indicador deslizante del navbar: anima de un enlace a otro entre páginas --}}
+    {{-- Script del Menú Móvil --}}
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var btnMenu = document.getElementById('btn-toggle-menu');
+            var menu = document.getElementById('mobile-menu');
+            
+            if (btnMenu && menu) {
+                btnMenu.addEventListener('click', function() {
+                    menu.classList.toggle('show-mobile');
+                    var icon = btnMenu.querySelector('i');
+                    if (menu.classList.contains('show-mobile')) {
+                        icon.classList.remove('fa-bars');
+                        icon.classList.add('fa-xmark');
+                    } else {
+                        icon.classList.remove('fa-xmark');
+                        icon.classList.add('fa-bars');
+                    }
+                });
+            }
+        });
+    </script>
+
+    {{-- Indicador deslizante del navbar --}}
     <script>
         (function () {
             var menu = document.querySelector('.nav-menu');
             var indicator = document.querySelector('.nav-indicator');
-            if (!menu || !indicator) return;
+            if (!menu || !indicator || window.innerWidth <= 900) return; // Se desactiva en móvil
 
             var links = Array.prototype.slice.call(menu.querySelectorAll('a.nav-link'));
             if (!links.length) return;
@@ -311,13 +277,12 @@
                          && prev.index !== activeIndex && prev.firstHref === firstHref;
 
             if (active && coinciden) {
-                // Parte desde la posición del enlace anterior y desliza al actual
                 var from = pos(links[prev.index]);
                 place(from.left, from.width, false);
-                void indicator.offsetWidth; // fuerza reflow antes de animar
+                void indicator.offsetWidth; 
                 render(true);
             } else {
-                render(false); // primera visita o menú distinto: aparece sin animación
+                render(false);
             }
 
             try {
@@ -325,7 +290,9 @@
                     JSON.stringify({ index: activeIndex, firstHref: firstHref }));
             } catch (e) {}
 
-            window.addEventListener('resize', function () { render(false); });
+            window.addEventListener('resize', function () { 
+                if(window.innerWidth > 900) render(false); 
+            });
         })();
     </script>
 </body>

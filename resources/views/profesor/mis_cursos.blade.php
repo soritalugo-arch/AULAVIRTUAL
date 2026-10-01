@@ -396,97 +396,118 @@
     /* =====================================================
        RESPONSIVE
     ===================================================== */
+    
+    /* Prevenir que anchos fijos o paddings rompan el diseño */
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
 
     @media (max-width: 1200px) {
-
         .cursos-wrap {
             width: calc(100% - 60px);
         }
-
         .courses-panel {
             padding: 40px;
         }
-
         .course-actions {
             margin-left: 0;
         }
     }
 
     @media (max-width: 900px) {
-
         .cursos-wrap {
             width: calc(100% - 40px);
         }
-
         .courses-grid {
+            /* Una sola columna en tablets/teléfonos grandes */
             grid-template-columns: 1fr;
         }
-
+        
         .course-card {
-            min-height: 160px;
+            min-height: auto;
+        }
+        
+        /* Reacomodar el botón en tablets para que no flote de forma extraña */
+        .course-actions {
+            margin-top: 20px;
+            margin-left: 0;
+            display: flex; /* En lugar de grid para distribuir mejor */
+            gap: 12px;
+        }
+        
+        .btn-notes, .btn-attendance {
+            flex: 1; /* Ambos botones toman el 50% de la tarjeta */
         }
     }
 
     @media (max-width: 600px) {
-
         .cursos-wrap {
-            width: calc(100% - 20px);
-
-            margin-top: 20px;
+            width: 100%; /* Aprovechar toda la pantalla, sin márgenes laterales externos */
+            margin-top: 0;
+            margin-bottom: 0;
         }
 
         .courses-panel {
-            padding: 30px 20px;
-
-            border-radius: 23px;
+            padding: 24px 16px; 
+            border-radius: 0; /* Quitar borde redondeado para aprovechar esquinas completas en móviles */
+            border: none;
+            box-shadow: none;
+            min-height: auto; /* Dejar de forzar 610px */
+        }
+        
+        /* Ocultar el adorno decorativo en móviles para evitar scroll horizontal fantasma */
+        .courses-panel::after {
+             display: none;
         }
 
         .panel-header h1 {
-            font-size: 31px;
+            font-size: 28px; 
         }
 
         .panel-header p {
-            font-size: 16px;
+            font-size: 15px;
+            line-height: 1.4;
+        }
 
-            line-height: 1.5;
+        .courses-grid {
+            gap: 16px; /* Menos espacio entre tarjetas */
         }
 
         .course-card {
-            padding: 18px;
-
-            min-height: 170px;
+            padding: 16px;
+            min-height: auto; /* Dejar que la tarjeta crezca naturalmente */
         }
 
         .course-top {
-            gap: 14px;
+            gap: 12px;
+            align-items: flex-start; /* Alinear el texto e icono arriba */
         }
 
         .course-icon {
-            width: 54px;
-            height: 54px;
-
-            font-size: 21px;
+            width: 48px;
+            height: 48px;
+            font-size: 18px;
         }
 
         .course-info h2 {
-            font-size: 17px;
+            font-size: 16px;
+            margin-bottom: 4px;
         }
 
         .course-info p {
-            font-size: 13px;
+            font-size: 12px;
         }
 
         .course-actions {
-            margin-top: 18px;
-
-            grid-template-columns: 1fr;
-
-            gap: 8px;
+            margin-top: 16px;
+            flex-direction: column; /* Apilar los botones en móviles estrechos */
+            gap: 10px;
         }
 
         .btn-notes,
         .btn-attendance {
-            height: 40px;
+            height: 44px; /* Un poco más alto para tocar con el dedo (ley de Fitts) */
+            font-size: 14px;
         }
     }
 </style>
