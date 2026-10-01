@@ -5,24 +5,31 @@ namespace App\Http\Controllers\Profesor;
 use App\Http\Controllers\Controller;
 use App\Models\Inscripcion;
 use App\Services\CalificacionAsistenciaService;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NotaPublicada;
 
 class CalificacionController extends Controller
 {
     public function __construct(private CalificacionAsistenciaService $servicio) {}
     // lista de cursos del profesor autenticado
     public function cursos()
-    {
-        $profesor = auth()->user()->profesor;
+    {   
+        /** @var \App\Models\Usuario $usuario */
+        $usuario = Auth::user();
+        $profesor = $usuario->profesor;
         $cursos = $profesor->cursos()
             ->with(['cuatrimestres' => fn($q) => $q->orderByDesc('id_cuatrimestre')])
             ->get();
         return view('profesor.mis_cursos', compact('cursos'));
     }
     // tabla de notas del curso con porcentaje de faltas por estudiante
-    public function notas($cursoId, Request $request)
+    public function notas(int $cursoId, Request $request)
     {
-        $profesor     = auth()->user()->profesor;
+        /** @var \App\Models\Usuario $usuario */
+        $usuario = Auth::user();
+        $profesor = $usuario->profesor;
         $curso        = $profesor->cursos()->where('id_curso', $cursoId)->firstOrFail();
         $cuatrimestres = $curso->cuatrimestres()->orderByDesc('fecha_inicio')->get();
         if ($request->filled('cuatrimestre')) {
@@ -71,8 +78,12 @@ class CalificacionController extends Controller
     {
         $idCurso = (int) $request->id_curso;
         $idCuatr = (int) $request->id_cuatrimestre;
-        $profesor = auth()->user()->profesor;
+    
+        /** @var \App\Models\Usuario $usuario */
+        $usuario = Auth::user();
+        $profesor = $usuario->profesor;
         $curso = $profesor?->cursos()->whereKey($idCurso)->first();
+    
         abort_unless($curso !== null, 403);
         abort_unless($curso->cuatrimestres()->whereKey($idCuatr)->exists(), 403);
 
@@ -84,12 +95,18 @@ class CalificacionController extends Controller
             'notas.*.nota'          => 'nullable|integer|min:1|max:10',
             'notas.*.observaciones' => 'nullable|string|max:500',
         ]);
+
+        //  contador de segundos
+        $segundosRetraso = 0;
+
         foreach ($request->notas as $item) {
             $idEstudiante = (int) $item['id_estudiante'];
+    
             if (is_null($item['nota'] ?? null)) {
                 $this->servicio->quitarNota($idEstudiante, $idCurso, $idCuatr);
                 continue;
             }
+
             $this->servicio->guardarNota(
                 $idEstudiante,
                 $idCurso,
@@ -97,8 +114,28 @@ class CalificacionController extends Controller
                 (int) $item['nota'],
                 $item['observaciones'] ?? null
             );
+
+            $estudiante = \App\Models\Estudiante::with('usuario')->find($idEstudiante);
+
+            if ($estudiante?->usuario?->email) {
+                // En lugar de send(), usamos later() con el tiempo calculado
+                Mail::to($estudiante->usuario->email)->later(
+                    now()->addSeconds($segundosRetraso), 
+                    new NotaPublicada(
+                        $estudiante->usuario->nombres, 
+                        $curso->nombre, 
+                        (int) $item['nota']
+                    )
+                );
+        
+                // Sumamos 3 segundos para el próximo correo en la iteración
+                $segundosRetraso += 15; 
+            }
         }
+    
+
         return redirect()->route('profesor.notas', ['curso' => $idCurso, 'cuatrimestre' => $idCuatr])
-            ->with('success', 'Notas guardadas correctamente.');
+            ->with('success', 'Notas guardadas y correos enviados correctamente.');
     }
+
 }

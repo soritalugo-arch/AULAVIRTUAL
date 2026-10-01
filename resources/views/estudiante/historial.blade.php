@@ -29,7 +29,6 @@
 
     .hist-wrap {
         width: calc(100% - 70px);
-
         margin: 35px auto 50px;
     }
 
@@ -37,83 +36,56 @@
 
     .hist-card {
         position: relative;
-
         padding: 34px 30px 40px;
-
         overflow: hidden;
-
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(248, 251, 255, 0.94));
-
         border: 1px solid #d9e6fb;
-
         border-radius: 28px;
-
         box-shadow: 0 10px 30px rgba(71, 106, 170, 0.10);
     }
 
     .hist-card::after {
         content: "";
-
         position: absolute;
-
         width: 620px;
         height: 240px;
-
         right: -180px;
         bottom: -170px;
-
         border-radius: 50%;
-
         background: rgba(188, 211, 253, 0.35);
-
         transform: rotate(-18deg);
-
         pointer-events: none;
     }
 
     .hist-head {
         position: relative;
         z-index: 2;
-
         display: flex;
         align-items: center;
-
         gap: 24px;
-
         margin-bottom: 26px;
     }
 
     .hist-icon {
         position: relative;
-
         width: 96px;
         height: 96px;
-
         flex-shrink: 0;
-
         display: flex;
         align-items: center;
         justify-content: center;
-
         border-radius: 50%;
-
         background: linear-gradient(145deg, #dce8ff, #edf3ff);
-
         color: #6284df;
-
         font-size: 40px;
     }
 
     .hist-icon::before {
         content: "";
-
         position: absolute;
-
         width: 86px;
         height: 86px;
-
         border-radius: 50%;
-
         background: #e1eaff;
     }
 
@@ -123,13 +95,9 @@
 
     .hist-titulo h1 {
         margin-bottom: 5px;
-
         color: #171d7d;
-
         font-family: Georgia, "Times New Roman", serif;
-
         font-size: 32px;
-
         font-weight: 700;
     }
 
@@ -140,25 +108,16 @@
     .btn-certificado {
         display: inline-flex;
         align-items: center;
-
         gap: 9px;
-
         height: 44px;
         padding: 0 20px;
-
         border-radius: 22px;
-
         background: linear-gradient(100deg, #5862e5, #668cf0);
-
         color: white;
-
         font-weight: 700;
         font-size: 14px;
-
         box-shadow: 0 5px 12px rgba(91, 111, 224, 0.25);
-
         white-space: nowrap;
-
         transition: 0.2s ease;
     }
 
@@ -178,29 +137,22 @@
     .resumen {
         position: relative;
         z-index: 2;
-
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(165px, 1fr));
-
         gap: 14px;
-
         margin-bottom: 26px;
     }
 
     .resumen-item {
         padding: 16px 18px;
-
         border: 1px solid #d9e6fb;
         border-radius: 20px;
-
         background: rgba(255, 255, 255, 0.75);
     }
 
     .resumen-item span {
         display: block;
-
         margin-bottom: 6px;
-
         color: #7b91bc;
         font-size: 12px;
         font-weight: 600;
@@ -227,33 +179,24 @@
     .leyenda {
         position: relative;
         z-index: 2;
-
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-
         gap: 12px;
-
         margin-bottom: 24px;
     }
 
     .leyenda .chip {
         display: flex;
         align-items: center;
-
         gap: 8px;
-
         height: 38px;
         padding: 0 16px;
-
         border-radius: 20px;
-
         font-size: 12px;
         font-weight: 600;
     }
 
-    /* Los sufijos son los que devuelve CalificacionAsistenciaService::nivelAlerta(),
-       para no tener que traducir el veredicto otra vez en la vista. */
     .chip.ok { background: #dcf9e9; color: #0d9261; }
     .chip.advertencia { background: #fff4d4; color: #896a1b; }
     .chip.peligro { background: #ffe0e8; color: #ec3e67; }
@@ -265,14 +208,10 @@
     .periodo {
         position: relative;
         z-index: 2;
-
         margin-bottom: 20px;
-
         border: 1px solid #d9e6fb;
         border-radius: 22px;
-
         background: rgba(255, 255, 255, 0.75);
-
         overflow: hidden;
     }
 
@@ -280,24 +219,17 @@
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-
         gap: 12px;
-
         padding: 16px 20px;
-
         border-bottom: 1px solid #d9e6fb;
-
         background: rgba(237, 243, 252, 0.7);
     }
 
     .periodo-codigo {
         padding: 6px 14px;
-
         border-radius: 20px;
-
         background: #eaf1fb;
         color: #4f72b4;
-
         font-size: 13px;
         font-weight: 700;
     }
@@ -306,14 +238,10 @@
 
     .periodo-vacio {
         margin-left: auto;
-
         padding: 5px 13px;
-
         border-radius: 20px;
-
         background: #eaf1fb;
         color: #4f72b4;
-
         font-size: 12px;
         font-weight: 600;
     }
@@ -323,20 +251,15 @@
     .fila-cabecera,
     .fila-curso {
         display: grid;
-
         grid-template-columns: minmax(0, 2.6fr) 90px 140px 150px minmax(0, 1.4fr);
-
         gap: 12px;
-
         align-items: center;
-
         padding: 0 20px;
     }
 
     .fila-cabecera {
         padding-top: 12px;
         padding-bottom: 12px;
-
         color: #7b91bc;
         font-size: 11px;
         font-weight: 700;
@@ -347,9 +270,7 @@
     .fila-curso {
         padding-top: 13px;
         padding-bottom: 13px;
-
         border-top: 1px solid rgba(217, 230, 251, 0.8);
-
         font-size: 14px;
     }
 
@@ -373,16 +294,12 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-
         min-width: 56px;
         height: 34px;
         padding: 0 10px;
-
         border-radius: 18px;
-
         background: #edf3fc;
         color: #6680b5;
-
         font-size: 16px;
         font-weight: 700;
     }
@@ -402,14 +319,10 @@
     .pill {
         display: inline-flex;
         align-items: center;
-
         padding: 7px 15px;
-
         border-radius: 20px;
-
         font-size: 12px;
         font-weight: 600;
-
         white-space: nowrap;
     }
 
@@ -423,25 +336,20 @@
     .sin-historial {
         position: relative;
         z-index: 2;
-
         padding: 46px 30px;
-
         text-align: center;
     }
 
     .sin-historial i {
         display: block;
         margin-bottom: 16px;
-
         color: #a9bde4;
-
         font-size: 46px;
     }
 
     .sin-historial b {
         display: block;
         margin-bottom: 8px;
-
         color: #19325f;
         font-size: 18px;
     }
@@ -449,28 +357,104 @@
     .sin-historial p {
         max-width: 470px;
         margin: 0 auto;
-
         color: #7b91bc;
         font-size: 15px;
         line-height: 1.55;
     }
 
-    @media (max-width: 900px) {
-        .fila-cabecera { display: none; }
+    /* =====================================================
+       RESPONSIVE - TABLA TIPO TARJETA
+    ===================================================== */
 
-        .fila-curso { grid-template-columns: 1fr 1fr; row-gap: 10px; }
+    @media (max-width: 900px) {
+        .fila-cabecera {
+            display: none; /* Ocultamos la cabecera en móvil */
+        }
+
+        .fila-curso {
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            margin: 15px 20px;
+            border: 1px solid #d9e6fb;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 4px 12px rgba(85, 115, 170, 0.05);
+            gap: 12px;
+        }
+
+        .fila-curso:first-of-type {
+            border-top: 1px solid #d9e6fb; /* Restaurar borde superior para la primera tarjeta */
+        }
+
+        .celda-curso {
+            width: 100%;
+            border-bottom: 2px solid #f1f6ff;
+            padding-bottom: 12px;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        /* Estilo general para celdas que no son el curso */
+        .fila-curso > div:not(.celda-curso) {
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            text-align: right;
+        }
+
+        /* Etiquetas dinámicas usando attr(data-label) */
+        .fila-curso > div:not(.celda-curso)::before {
+            content: attr(data-label);
+            font-size: 12px;
+            font-weight: 700;
+            color: #7b91bc;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-align: left;
+            flex-shrink: 0;
+            margin-right: 15px;
+        }
+        
+        .sin-dato {
+             text-align: right;
+        }
     }
 
     @media (max-width: 700px) {
         .hist-wrap {
             width: calc(100% - 40px);
-
             margin-top: 20px;
+        }
+
+        .hist-head {
+             flex-direction: column;
+             text-align: center;
+             gap: 15px;
+        }
+        
+        .periodo-head {
+             flex-direction: column;
+             align-items: center;
+             text-align: center;
+             gap: 8px;
+        }
+        
+        .periodo-vacio {
+             margin-left: 0;
+        }
+        
+        .leyenda {
+             justify-content: center;
         }
     }
 
     @media (max-width: 480px) {
         .hist-wrap { width: calc(100% - 20px); }
+        .hist-card { padding: 25px 15px 30px; }
+        .fila-curso { margin: 15px 10px; }
     }
 </style>
 
@@ -578,10 +562,6 @@
 
                     @foreach ($periodo['cursos'] as $curso)
                         @php
-                            // Todo sale del veredicto que ya dio el servicio de
-                            // reglas. No se vuelve a comparar la nota con el 6 aca:
-                            // un 9 con 40 % de faltas es reprobado, y pintarlo de
-                            // aprobado contradiria lo que ve el alumno en sus notas.
                             $pildora = match ($curso['estado']) {
                                 'Reprobado (presunto)' => ['presunto', 'Reprobado (presunto)'],
                                 'En curso' => ['en-curso', 'En curso'],
@@ -592,7 +572,7 @@
                         <div class="fila-curso">
                             <div class="celda-curso">{{ $curso['curso'] }}</div>
 
-                            <div>
+                            <div data-label="Nota">
                                 @if ($curso['nota'] === null)
                                     <span class="nota">—</span>
                                 @else
@@ -602,7 +582,7 @@
                                 @endif
                             </div>
 
-                            <div>
+                            <div data-label="Inasistencia">
                                 @if ($curso['inasistencia'] > 0)
                                     <span class="pct {{ $curso['alerta'] }}">{{ number_format($curso['inasistencia'], 1) }} %</span>
                                 @else
@@ -610,11 +590,11 @@
                                 @endif
                             </div>
 
-                            <div>
+                            <div data-label="Estado">
                                 <span class="pill {{ $pildora[0] }}">{{ $pildora[1] }}</span>
                             </div>
 
-                            <div class="sin-dato">{{ $curso['observaciones'] ?: '—' }}</div>
+                            <div class="sin-dato" data-label="Observaciones">{{ $curso['observaciones'] ?: '—' }}</div>
                         </div>
                     @endforeach
                 </div>
@@ -644,9 +624,6 @@
 
                     @foreach ($datos['enCurso'] as $curso)
                         @php
-                            // Sin nota cargada, pero el veredicto ya puede estar
-                            // perdido por inasistencia: se dice lo mismo que el
-                            // servicio, no "en curso" a toda costa.
                             $pildora = match ($curso['estado']) {
                                 'Reprobado (presunto)' => ['presunto', 'Reprobado (presunto)'],
                                 'En curso' => ['en-curso', 'En curso'],
@@ -660,9 +637,9 @@
                                 <em>Cursando</em>
                             </div>
 
-                            <div><span class="nota">—</span></div>
+                            <div data-label="Nota"><span class="nota">—</span></div>
 
-                            <div>
+                            <div data-label="Inasistencia">
                                 @if ($curso['inasistencia'] > 0)
                                     <span class="pct {{ $curso['alerta'] }}">{{ number_format($curso['inasistencia'], 1) }} %</span>
                                 @else
@@ -670,9 +647,9 @@
                                 @endif
                             </div>
 
-                            <div><span class="pill {{ $pildora[0] }}">{{ $pildora[1] }}</span></div>
+                            <div data-label="Estado"><span class="pill {{ $pildora[0] }}">{{ $pildora[1] }}</span></div>
 
-                            <div class="sin-dato">—</div>
+                            <div class="sin-dato" data-label="Observaciones">—</div>
                         </div>
                     @endforeach
                 </div>

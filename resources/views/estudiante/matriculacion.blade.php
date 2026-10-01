@@ -896,74 +896,199 @@
     }
 
 
-    /* ================================
-       RESPONSIVE
-    ================================ */
+/* ================================================
+       RESPONSIVE (REEMPLAZO COMPLETO DE @MEDIA)
+    ================================================ */
 
     @media (max-width: 900px) {
-
         .module-card {
-            padding: 25px;
-
-            align-items: flex-start;
+            padding: 22px;
+            align-items: center;
         }
 
         .module-icon {
-            width: 90px;
-            height: 90px;
-
-            font-size: 38px;
+            width: 80px;
+            height: 80px;
+            font-size: 34px;
         }
 
         .module-icon svg {
-            width: 80px;
-            height: 80px;
+            width: 70px;
+            height: 70px;
         }
 
         .module-info h1 {
-            font-size: 28px;
+            font-size: 26px;
         }
-
-        .table-header,
-        .subject-row {
-            grid-template-columns:
-                38%
-                35%
-                27%;
-        }
-
     }
 
-    @media (max-width: 700px) {
+    @media (max-width: 768px) {
+        /* 0. Seguro anti-desbordamiento global */
+        html, body {
+            overflow-x: hidden !important;
+            max-width: 100vw !important;
+        }
 
+        /* 1. Ajuste del contenedor principal (usamos auto en vez de 100% para evitar sumar márgenes) */
         .matriculacion-wrap {
-            width: calc(100% - 40px);
-
-            margin-top: 20px;
+            width: auto !important;
+            margin: 20px 15px 35px 15px !important; 
+            padding: 0 !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important;
         }
 
+        /* 2. Tarjeta superior del módulo */
         .module-card {
+            width: auto !important;
             flex-direction: column;
+            text-align: center;
+            padding: 20px 15px !important;
+            gap: 15px;
+            border-radius: 20px !important;
+            box-sizing: border-box !important;
         }
 
-        .academic-card {
-            overflow-x: auto;
+        .module-card::after {
+            display: none !important;
         }
 
-        .table-header,
-        .subject-row {
-            min-width: 800px;
+        .module-data {
+            align-items: center;
+            width: 100%;
+        }
+
+        .module-info h1 {
+            font-size: 22px !important; 
+            word-break: break-word !important;
         }
 
         .module-description {
-            line-height: 1.5;
+            font-size: 14px !important;
         }
-    }
 
-    @media (max-width: 480px) {
+        /* 3. Sección de la Oferta Académica */
+        .academic-card {
+            width: auto !important;
+            padding: 0 !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            margin-top: 20px !important;
+            box-sizing: border-box !important;
+        }
 
-        .matriculacion-wrap {
-            width: calc(100% - 20px);
+        .academic-title {
+            justify-content: center;
+            margin-bottom: 15px;
+            text-align: center;
+            flex-wrap: wrap !important; /* Evita que el icono y texto se empujen */
+        }
+
+        .academic-title h2 {
+            font-size: 20px !important;
+            white-space: normal !important;
+        }
+
+        .table-header {
+            display: none !important;
+        }
+
+        /* 4. Transformación de filas */
+        .subject-row {
+            display: flex !important;
+            flex-direction: column !important;
+            width: auto !important; 
+            margin: 0 0 15px 0 !important;
+            padding: 16px 15px !important;
+            background: #ffffff !important;
+            border: 1px solid #dce8fb !important;
+            border-radius: 18px !important;
+            box-shadow: 0 4px 10px rgba(70, 100, 160, 0.08) !important;
+            box-sizing: border-box !important;
+        }
+
+        /* 5. Fila 1 y 2: Asignatura y Cupos */
+        .subject, .spaces {
+            display: flex !important;
+            flex-wrap: wrap !important; /* Si el contenido es muy largo, bajará a otra línea */
+            justify-content: space-between !important;
+            align-items: center !important;
+            width: 100% !important;       
+            gap: 10px !important;
+            padding-bottom: 10px !important;
+            margin-bottom: 10px !important;
+            border-bottom: 1px solid #edf0f5 !important;
+            box-sizing: border-box !important;
+        }
+
+        .subject::before {
+            content: "ASIGNATURA";
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            color: #6b82b5 !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .spaces::before {
+            content: "CUPOS";
+            font-size: 11px !important;
+            font-weight: 800 !important;
+            color: #6b82b5 !important;
+            letter-spacing: 0.5px !important;
+        }
+
+        .subject > span, .spaces > span:first-of-type {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;      
+            text-align: right !important; 
+            font-size: 13px !important;   
+            color: #223d91 !important;
+            font-weight: 700 !important;
+            line-height: 1.3 !important;
+            word-break: break-word !important; /* Corta la palabra estrictamente si no cabe */
+        }
+
+        .spaces > span:first-of-type {
+            font-weight: 600 !important;
+        }
+
+        .subject-icon {
+            display: none !important; 
+        }
+
+        /* 6. Fila 3: Botones de Acción */
+        .action {
+            display: flex !important;
+            flex-direction: column !important;
+            width: 100% !important;       
+            justify-content: center !important;
+            align-items: stretch !important;
+            gap: 8px !important;
+            box-sizing: border-box !important;
+        }
+
+        .action form {
+            width: 100% !important;
+            display: block !important;
+        }
+
+        .action .btn-enroll,
+        .action .btn-remove,
+        .action .btn-exit-list {
+            width: 100% !important;
+            min-width: 0 !important;
+            height: 42px !important;
+            font-size: 13px !important;
+            border-radius: 12px !important;
+            justify-content: center !important;
+            box-sizing: border-box !important;
+        }
+
+        .action .waiting {
+            text-align: center !important;
+            width: 100% !important;
+            font-size: 12px !important;
         }
     }
 </style>
