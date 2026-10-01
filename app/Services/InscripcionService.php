@@ -45,8 +45,9 @@ class InscripcionService
                 throw new Exception('El estudiante posee deudas pendientes y no puede inscribirse.');
             }
 
-            // 4. Ya está inscrito en el curso
-            if ($this->yaInscrito($estudiante, $curso)) {
+            // 4. Ya está inscrito en el curso en ESTE cuatrimestre (en otro
+            //    periodo es una repetición válida: reprobar no elimina la materia)
+            if ($this->yaInscrito($estudiante, $curso, $cuatrimestre)) {
                 throw new Exception('El estudiante ya está inscrito en esta asignatura.');
             }
 
@@ -106,8 +107,18 @@ class InscripcionService
                 return;
             }
 
+            // Solo se desinscribe la matrícula del periodo vigente: una fila
+            // histórica de otro cuatrimestre es un curso ya cursado, no algo
+            // que se pueda quitar con este botón.
+            $cuatrimestre = $this->cuatrimestreVigente();
+
+            if (! $cuatrimestre) {
+                return;
+            }
+
             $inscripcion = Inscripcion::where('id_estudiante', $estudiante->id_usuario)
                 ->where('id_curso', $curso->id_curso)
+                ->where('id_cuatrimestre', $cuatrimestre->id_cuatrimestre)
                 ->first();
 
             if ($inscripcion) {
@@ -155,8 +166,8 @@ class InscripcionService
         foreach ($enCola as $item) {
             $estudiante = $item->estudiante;
 
-            // Fila redundante: ya está inscrito → se elimina
-            if ($this->yaInscrito($estudiante, $curso)) {
+            // Fila redundante: ya está inscrito en el periodo → se elimina
+            if ($this->yaInscrito($estudiante, $curso, $cuatrimestre)) {
                 $item->delete();
 
                 continue;
@@ -202,12 +213,18 @@ class InscripcionService
     }
 
     /**
-     * ¿El estudiante ya está inscrito en el curso?
+     * ¿El estudiante ya está inscrito en el curso en un cuatrimestre dado?
+     *
+     * Se filtra por cuatrimestre a propósito: desde que se permite repetir
+     * asignaturas reprobadas, la misma persona puede tener una inscripción
+     * antigua en el curso y una nueva en el vigente; lo que no puede tener es
+     * dos filas en el mismo periodo (lo refuerza la unicidad de la tabla).
      */
-    private function yaInscrito(Estudiante $estudiante, Curso $curso): bool
+    private function yaInscrito(Estudiante $estudiante, Curso $curso, Cuatrimestre $cuatrimestre): bool
     {
         return Inscripcion::where('id_estudiante', $estudiante->id_usuario)
             ->where('id_curso', $curso->id_curso)
+            ->where('id_cuatrimestre', $cuatrimestre->id_cuatrimestre)
             ->exists();
     }
 

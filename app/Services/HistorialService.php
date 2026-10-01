@@ -34,7 +34,8 @@ class HistorialService
      *     periodos: Collection<int, array>,
      *     enCurso: Collection<int, array>,
      *     enCursoCuatrimestre: Cuatrimestre|null,
-     *     resumen: array
+     *     resumen: array,
+     *     repetidos: Collection<int, int>
      * }
      */
     public function historial(Estudiante $estudiante): array
@@ -66,11 +67,20 @@ class HistorialService
                 ->values()
             : collect();
 
+        // Cursos que aparecen en mas de un cuatrimestre: el historial debe
+        // decir que se repitieron, no ocultarlo como un caso raro.
+        $repetidos = $periodos->flatMap(fn ($p) => $p['cursos']->all())
+            ->concat($enCurso)
+            ->groupBy('id_curso')
+            ->filter(fn ($g) => $g->count() > 1)
+            ->keys();
+
         return [
             'periodos' => $periodos,
             'enCurso' => $enCurso,
             'enCursoCuatrimestre' => $cuatrimestreEnCurso,
             'resumen' => $this->resumen($periodos),
+            'repetidos' => $repetidos,
         ];
     }
 
@@ -90,6 +100,7 @@ class HistorialService
             ->orderBy('curso.nombre')
             ->select([
                 'calificacion.id_cuatrimestre',
+                'calificacion.id_curso',
                 'calificacion.nota',
                 'calificacion.observaciones',
                 'curso.nombre as curso',
@@ -123,6 +134,7 @@ class HistorialService
             ->orderBy('curso.nombre')
             ->select([
                 'inscripcion.id_cuatrimestre',
+                'inscripcion.id_curso',
                 'curso.nombre as curso',
             ])
             ->selectRaw('null as nota')
@@ -153,6 +165,7 @@ class HistorialService
         return [
             'cuatrimestre' => $cuatrimestre,
             'id_cuatrimestre' => (int) $fila->id_cuatrimestre,
+            'id_curso' => (int) $fila->id_curso,
             'curso' => $fila->curso,
             'nota' => $nota,
             'observaciones' => $fila->observaciones,
@@ -242,5 +255,39 @@ class HistorialService
             ->whereColumn('asistencia.id_cuatrimestre', $tabla.'.id_cuatrimestre');
 
         return $soloFaltas ? $sub->where('asistencia.presente', false) : $sub;
+    }
+
+    /**
+     * ¿Completó la carrera?
+     *
+     * Regla institucional para el certificado: egresa quien aprobó TODOS los
+     * cursos del pensum de su carrera. Solo cuentan los que la misma regla del
+     * módulo del profesor considera aprobados (nota >= 6 y sin exceso de
+     * faltas), así el certificado habla el mismo idioma que el aula.
+     *
+     * Quien aún no tiene carrera o cuyo pensum no tiene cursos, no egresa.
+     */
+    public function esEgresado(Estudiante $estudiante, ?array $historial = null): bool
+    {
+        $carrera = $estudiante->carrera;
+
+        if (! $carrera) {
+            return false;
+        }
+
+        $cursosDeLaCarrera = $carrera->cursos()->pluck('curso.id_curso');
+
+        if ($cursosDeLaCarrera->isEmpty()) {
+            return false;
+        }
+
+        $historial ??= $this->historial($estudiante);
+
+        $aprobados = collect($historial['periodos'])
+            ->flatMap(fn ($p) => $p['cursos']->all())
+            ->reject(fn ($f) => $f['estado'] !== 'Aprobado')
+            ->pluck('id_curso');
+
+        return $cursosDeLaCarrera->diff($aprobados)->isEmpty();
     }
 }

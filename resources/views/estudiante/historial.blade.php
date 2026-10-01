@@ -132,6 +132,26 @@
         opacity: 0.85;
     }
 
+    .btn-certificado--bloqueado {
+        background: linear-gradient(100deg, #aab6d8, #bcc8e6);
+        box-shadow: none;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
+
+    .badge-repetida {
+        display: inline-block;
+        margin-left: 10px;
+        padding: 2px 10px;
+        border-radius: 11px;
+        background: #fff3e0;
+        color: #b26a00;
+        font-size: 11px;
+        font-weight: 800;
+        letter-spacing: 0.4px;
+        vertical-align: middle;
+    }
+
     /* ── Resumen ───────────────────────────────────────────────────── */
 
     .resumen {
@@ -474,10 +494,17 @@
                 </p>
             </div>
 
-            <a href="{{ route('estudiante.certificado') }}" class="btn-certificado" target="_blank" rel="noopener">
-                <i class="fa-solid fa-file-pdf"></i>
-                Certificado <small>(PDF)</small>
-            </a>
+            @if ($esEgresado ?? false)
+                <a href="{{ route('estudiante.certificado') }}" class="btn-certificado" target="_blank" rel="noopener">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    Certificado <small>(PDF)</small>
+                </a>
+            @else
+                <span class="btn-certificado btn-certificado--bloqueado" title="Se emite al completar todos los cursos de tu carrera">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    Certificado <small>(al terminar la carrera)</small>
+                </span>
+            @endif
         </div>
 
         @php $resumen = $datos['resumen']; @endphp
@@ -570,7 +597,11 @@
                             };
                         @endphp
                         <div class="fila-curso">
-                            <div class="celda-curso">{{ $curso['curso'] }}</div>
+                            <div class="celda-curso">{{ $curso['curso'] }}
+                                @if ($datos['repetidos']->contains($curso['id_curso']))
+                                    <span class="badge-repetida" title="Cursada en más de un cuatrimestre">Repetida</span>
+                                @endif
+                            </div>
 
                             <div data-label="Nota">
                                 @if ($curso['nota'] === null)
@@ -634,6 +665,9 @@
                         <div class="fila-curso">
                             <div class="celda-curso">
                                 {{ $curso['curso'] }}
+                                @if ($datos['repetidos']->contains($curso['id_curso']))
+                                    <span class="badge-repetida" title="Cursada en más de un cuatrimestre">Repetida</span>
+                                @endif
                                 <em>Cursando</em>
                             </div>
 

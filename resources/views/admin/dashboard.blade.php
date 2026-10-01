@@ -326,6 +326,96 @@
         @endif
     </div>
 
+    {{-- ============ RENDIMIENTO POR ESTUDIANTE ============ --}}
+    @php
+        $rendEstConDatos = array_filter(
+            $rendimientoPorEstudiante,
+            fn ($f) => $f['promedio'] !== null || ($f['aprobadas'] + $f['reprobadas']) > 0
+        );
+    @endphp
+    <div class="bg-white border border-[#e0e8f5] rounded-[24px] shadow-[0_8px_25px_rgba(70,100,160,0.08)] p-5 sm:p-7">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+            <div class="flex items-center gap-3">
+                <i class="fa-solid fa-ranking-star text-[22px] text-[#6382dc]"></i>
+                <h2 class="text-xl sm:text-2xl font-['Georgia'] font-bold text-[#171c7c]">Rendimiento por estudiante</h2>
+            </div>
+            <span class="sm:ml-auto px-3 py-1.5 rounded-full bg-[#eef2fc] text-[#4c6fe0] text-xs font-bold whitespace-nowrap">{{ $periodoChip }}</span>
+        </div>
+        <p class="text-[13px] text-[#7a8db5] mb-4">Promedio, aprobadas y reprobadas de cada estudiante con matrícula o notas en el periodo.</p>
+
+        @if ($rendEstConDatos)
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-[12px] uppercase tracking-wide text-[#7a8db5] border-b border-[#eef3fb]">
+                            <th class="py-3 pr-4 font-semibold">Estudiante</th>
+                            <th class="py-3 pr-4 font-semibold">Carrera</th>
+                            <th class="py-3 pr-4 font-semibold text-right">Promedio</th>
+                            <th class="py-3 pr-4 font-semibold text-right">Aprobadas</th>
+                            <th class="py-3 font-semibold text-right">Reprobadas</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-[#36487a]">
+                        @foreach ($rendimientoPorEstudiante as $fila)
+                            @if ($fila['promedio'] === null && ($fila['aprobadas'] + $fila['reprobadas']) === 0)
+                                @continue
+                            @endif
+                            <tr class="border-b border-[#f2f6fd] last:border-0">
+                                <td class="py-3 pr-4 font-semibold text-[#171c7c]">{{ $fila['estudiante'] }}</td>
+                                <td class="py-3 pr-4">{{ $fila['carrera'] }}</td>
+                                <td class="py-3 pr-4 text-right font-bold text-[#2f55c4]">{{ $fila['promedio'] !== null ? number_format($fila['promedio'], 2) : '—' }}</td>
+                                <td class="py-3 pr-4 text-right text-[#0a9560]">{{ $fila['aprobadas'] }}</td>
+                                <td class="py-3 text-right text-[#ec3e67]">{{ $fila['reprobadas'] }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <div class="flex flex-col items-center justify-center gap-3 min-h-[150px] p-5 text-center text-[#8a9cc0]">
+                <i class="fa-solid fa-inbox text-3xl opacity-55"></i>
+                <p class="text-sm max-w-[300px]">En {{ $periodo }} todavía no hay estudiantes con matrícula ni notas registradas.</p>
+            </div>
+        @endif
+    </div>
+
+    {{-- ============ ESTUDIANTES CON DEUDA ============ --}}
+    <div class="bg-white border border-[#e0e8f5] rounded-[24px] shadow-[0_8px_25px_rgba(70,100,160,0.08)] p-5 sm:p-7">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3 mb-2">
+            <h2 class="text-xl sm:text-2xl font-['Georgia'] font-bold text-[#171c7c]">Estudiantes con deuda</h2>
+            <span class="px-3 py-1.5 rounded-full bg-[#ffe7ec] text-[#ec3e67] text-xs font-bold w-fit">{{ $deudores->count() }}</span>
+        </div>
+        <p class="text-[13px] text-[#7a8db5] mb-4">Tienen bloqueada la matrícula mientras no regularicen su estado de cuenta.</p>
+
+        @if ($deudores->isNotEmpty())
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm">
+                    <thead>
+                        <tr class="text-[12px] uppercase tracking-wide text-[#7a8db5] border-b border-[#eef3fb]">
+                            <th class="py-3 pr-4 font-semibold">Estudiante</th>
+                            <th class="py-3 pr-4 font-semibold">Cédula</th>
+                            <th class="py-3 font-semibold">Carrera</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-[#36487a]">
+                        @foreach ($deudores as $d)
+                            <tr class="border-b border-[#f2f6fd] last:border-0">
+                                <td class="py-3 pr-4 font-semibold text-[#171c7c]">{{ $d->usuario?->nombres }} {{ $d->usuario?->apellidos }}</td>
+                                <td class="py-3 pr-4">{{ $d->cedula }}</td>
+                                <td class="py-3">{{ $d->carrera?->nombre }}</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @else
+            <div class="flex flex-col items-center justify-center gap-3 min-h-[150px] p-5 text-center text-[#8a9cc0]">
+                <i class="fa-solid fa-circle-check text-3xl text-[#0a9560]"></i>
+                <p class="text-sm">No hay estudiantes con deuda registrada.</p>
+            </div>
+        @endif
+    </div>
+
 </div>
 
 @endsection

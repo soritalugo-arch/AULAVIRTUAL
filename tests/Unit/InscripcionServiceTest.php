@@ -5,6 +5,7 @@ use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
 use App\Models\Horario;
+use App\Models\Inscripcion;
 use App\Models\Lista_espera;
 use App\Models\Usuario;
 use App\Services\InscripcionService;
@@ -156,6 +157,41 @@ test('no permite inscribirse dos veces en el mismo curso', function () {
 
     expect(fn () => $service->inscribir($estudiante, $curso))
         ->toThrow(Exception::class, 'El estudiante ya está inscrito en esta asignatura.');
+});
+
+test('permite volver a cursar una asignatura reprobada en otro cuatrimestre', function () {
+    $service = new InscripcionService;
+    $carrera = crearCarreraPrueba();
+    $estudiante = crearEstudiantePrueba('Ana', 'ana@test.com', false, $carrera);
+
+    $curso = enOfertaDe(Curso::create([
+        'nombre' => 'Bases de Datos I',
+        'limite_estudiantes' => 30,
+    ]), $carrera);
+
+    // La cursó (y la reprobó) en un periodo ya cerrado.
+    $pasado = Cuatrimestre::create(['fecha_inicio' => '2025-01-05', 'fecha_fin' => '2025-04-30']);
+
+    Inscripcion::create([
+        'id_estudiante' => $estudiante->getKey(),
+        'id_curso' => $curso->getKey(),
+        'id_cuatrimestre' => $pasado->id_cuatrimestre,
+        'fecha_inscripcion' => '2025-01-15',
+    ]);
+
+    // En el vigente puede volver a matricularse: no es una fila duplicada, es
+    // una repetición válida en otro periodo.
+    $service->inscribir($estudiante, $curso);
+
+    $this->assertDatabaseHas('inscripcion', [
+        'id_estudiante' => $estudiante->getKey(),
+        'id_curso' => $curso->getKey(),
+        'id_cuatrimestre' => cuatrimestreVigentePrueba()->id_cuatrimestre,
+    ])->assertDatabaseHas('inscripcion', [
+        'id_estudiante' => $estudiante->getKey(),
+        'id_curso' => $curso->getKey(),
+        'id_cuatrimestre' => $pasado->id_cuatrimestre,
+    ]);
 });
 
 test('no permite entrar dos veces a la lista de espera del mismo curso', function () {

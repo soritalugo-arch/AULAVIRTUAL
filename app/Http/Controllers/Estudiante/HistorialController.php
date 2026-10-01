@@ -25,18 +25,30 @@ class HistorialController extends Controller
     public function index(Request $request)
     {
         $estudiante = $this->estudiante();
+        $datos = $this->historial->historial($estudiante);
 
         return view('estudiante.historial', [
             'estudiante' => $estudiante,
-            'datos' => $this->historial->historial($estudiante),
+            'datos' => $datos,
+            'esEgresado' => $this->historial->esEgresado($estudiante, $datos),
         ]);
     }
 
-    /** Certificado de notas en PDF, listo para imprimir. */
+    /**
+     * Certificado de notas en PDF, listo para imprimir.
+     *
+     * Requisito legal: se emite cuando el estudiante TERMINA su carrera, no
+     * antes. El boton de la vista ya se deshabilita para quien no egreso, pero
+     * la ruta tambien lo exige, por si alguien escribe la URL a mano.
+     */
     public function certificado(): Response
     {
         $estudiante = $this->estudiante();
         $datos = $this->historial->historial($estudiante);
+
+        if (! $this->historial->esEgresado($estudiante, $datos)) {
+            abort(403, 'El certificado se emite cuando el estudiante termina su carrera.');
+        }
 
         $pdf = $this->pdf()
             ->loadView('reportes.certificado', [

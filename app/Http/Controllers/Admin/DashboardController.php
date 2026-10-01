@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Estudiante;
 use App\Services\ReporteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +46,13 @@ class DashboardController extends Controller
             'inscripcionPorCurso' => $panel['inscripcionPorCurso'],
             'rendimientoPorCurso' => $panel['rendimientoPorCurso'],
             'asistenciaPorCurso' => $panel['asistenciaPorCurso'],
+            // Secciones nuevas: el detalle por estudiante y el bloque de deuda,
+            // ambas derivadas de datos que ya existian.
+            'rendimientoPorEstudiante' => $reportes->rendimientoPorEstudiante($idCuatrimestre),
+            'deudores' => Estudiante::with(['usuario:id_usuario,nombres,apellidos', 'carrera:id_carrera,nombre'])
+                ->where('deuda', true)
+                ->orderBy('id_usuario')
+                ->get(),
         ]);
     }
 

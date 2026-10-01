@@ -493,6 +493,8 @@ it('muestra al estudiante su historial con sus datos y el enlace al certificado'
     $curso = cursoParaHistorial('Bases de Datos', $q1);
     matricular($estudiante, $curso, $q1);
     ponerNota($estudiante, $curso, $q1, 9, 'Participación constante');
+    // Aprobó todos los cursos de su pensum: egresa y su botón se habilita.
+    $estudiante->carrera->cursos()->attach($curso->id_curso);
     fijarClasesProgramadas($curso, $q1, 10);
     falta($estudiante, $curso, $q1, '2026-01-05');
     for ($i = 6; $i <= 14; $i++) {
@@ -555,6 +557,7 @@ it('descarga el certificado en pdf con las notas del estudiante', function () {
     $curso = cursoParaHistorial('Bases de Datos', $q1);
     matricular($estudiante, $curso, $q1);
     ponerNota($estudiante, $curso, $q1, 9);
+    $estudiante->carrera->cursos()->attach($curso->id_curso);
 
     $respuesta = $this->actingAs($estudiante->usuario)->get(route('estudiante.certificado'));
 
@@ -563,6 +566,38 @@ it('descarga el certificado en pdf con las notas del estudiante', function () {
 
     // Firma de archivo real, no un HTML de error disfrazado.
     expect($respuesta->getContent())->toStartWith('%PDF-');
+});
+
+it('no emite el certificado a quien aún no completa la carrera', function () {
+    $estudiante = estudianteConCarrera();
+
+    $q1 = cerradoParaHistorial();
+    $curso = cursoParaHistorial('Bases de Datos', $q1);
+    matricular($estudiante, $curso, $q1);
+    ponerNota($estudiante, $curso, $q1, 9);
+
+    // El pensum de su carrera tiene además una materia que dejó pendiente:
+    // aprobó una, pero todavía no egresa.
+    $estudiante->carrera->cursos()->attach(
+        Curso::create(['nombre' => 'Auditoría (pendiente)', 'limite_estudiantes' => 30])->id_curso
+    );
+
+    $this->actingAs($estudiante->usuario)->get(route('estudiante.certificado'))->assertForbidden();
+});
+
+it('bloquea el botón del certificado en el historial mientras no egresa', function () {
+    $estudiante = estudianteConCarrera();
+
+    $q1 = cerradoParaHistorial();
+    $curso = cursoParaHistorial('Bases de Datos', $q1);
+    matricular($estudiante, $curso, $q1);
+    ponerNota($estudiante, $curso, $q1, 5);
+
+    $html = $this->actingAs($estudiante->usuario)->get(route('estudiante.historial'))->getContent();
+
+    // Sin aprobar la carrera no sale el enlace descargable.
+    expect($html)->not->toContain(route('estudiante.certificado'))
+        ->and($html)->toContain('al terminar la carrera');
 });
 
 it('no deja el recorte de la fuente dependiendo del temporal del sistema', function () {
@@ -603,6 +638,12 @@ it('no infla el certificado incrustando la fuente completa', function () {
 
 it('nombra el certificado con la cedula y lo abre en el navegador', function () {
     $estudiante = estudianteConCarrera();
+
+    $q1 = cerradoParaHistorial();
+    $curso = cursoParaHistorial('Bases de Datos', $q1);
+    matricular($estudiante, $curso, $q1);
+    ponerNota($estudiante, $curso, $q1, 6);
+    $estudiante->carrera->cursos()->attach($curso->id_curso);
 
     $respuesta = $this->actingAs($estudiante->usuario)->get(route('estudiante.certificado'));
 
@@ -689,6 +730,7 @@ it('imprime el pdf aunque los nombres traigan tildes y enye', function () {
     $curso = cursoParaHistorial('Diseño y ñandú', $q1);
     matricular($estudiante, $curso, $q1);
     ponerNota($estudiante, $curso, $q1, 7, 'Observación: áéíóúñ');
+    $estudiante->carrera->cursos()->attach($curso->id_curso);
 
     $respuesta = $this->actingAs($estudiante->usuario)->get(route('estudiante.certificado'));
 
