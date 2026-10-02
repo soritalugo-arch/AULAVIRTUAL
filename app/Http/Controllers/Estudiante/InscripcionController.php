@@ -38,26 +38,23 @@ class InscripcionController extends Controller
             ->where('fecha_fin', '>=', now())
             ->first();
 
-        // Cuatrimestre del plan en el que va el estudiante: solo las materias
-        // de esa etapa le corresponden en esta inscripción. Quien completó el
-        // plan (null) no tiene materias que inscribir.
-        $etapaActual = $this->historial->etapaActual($estudiante);
+        // Ventana de cuatrimestres del plan que le tocan en esta inscripción:
+        // un solo cuatrimestre (X) cuando no arrastra materias raspadas, o dos
+        // (X-Y) cuando repite lo pendiente y adelanta el siguiente. Quien
+        // completó el plan (null) no tiene materias que inscribir.
+        $ventana = $this->historial->ventanaEtapas($estudiante);
 
-        $totalEtapas = $carrera
-            ? $carrera->cursos()->withPivot('etapa')->get()
-                ->pluck('pivot.etapa')
-                ->filter()
-                ->max()
-            : null;
+        $totalEtapas = $ventana['totalEtapas'] ?? null;
+        $formato = $ventana['formato'] ?? null;
 
-        // Oferta académica: solo las materias de la etapa del plan y del
-        // cuatrimestre vigente, por la carrera del estudiante
-        $cursos = $carrera && $cuatrimestreVigente && $etapaActual !== null
+        // Oferta académica: solo las materias de la ventana de cuatrimestres del
+        // plan y del cuatrimestre vigente, por la carrera del estudiante
+        $cursos = $carrera && $cuatrimestreVigente && $ventana
             ? Curso::with(['horarios', 'profesores'])
                 ->withCount('inscripciones')
                 ->whereHas('carreras', fn ($q) => $q
                     ->whereKey($carrera->id_carrera)
-                    ->where('curso_carrera.etapa', $etapaActual))
+                    ->whereIn('curso_carrera.etapa', $ventana['etapas']))
                 ->whereHas('cuatrimestres', fn ($q) => $q->whereKey($cuatrimestreVigente->id_cuatrimestre))
                 ->get()
             : collect();
@@ -74,7 +71,8 @@ class InscripcionController extends Controller
             'misInscripcionesIds',
             'misListaEsperaIds',
             'cuatrimestreVigente',
-            'etapaActual',
+            'ventana',
+            'formato',
             'totalEtapas'
         ));
     }

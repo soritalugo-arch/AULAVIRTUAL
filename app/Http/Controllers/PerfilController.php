@@ -34,6 +34,9 @@ class PerfilController extends Controller
             $datos['cedula'] = $usuario->estudiante->cedula;
             $datos['deuda'] = $usuario->estudiante->deuda;
             $datos['egresado'] = $historial->esEgresado($usuario->estudiante);
+            // Ventana de cuatrimestres del plan (formato X o X-Y) y conteos de
+            // materias para el cuadro "Datos de carrera".
+            $datos['ventana'] = $historial->ventanaEtapas($usuario->estudiante);
         }
 
         if ($rol === 'profesor' && $usuario->profesor) {

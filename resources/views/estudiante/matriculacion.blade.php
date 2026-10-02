@@ -1242,10 +1242,10 @@
 
                 <div>
                     <i class="fa-regular fa-calendar"></i>
-                    <span>Tu cuatrimestre del plan:</span>
+                    <span>Vas en:</span>
                     <strong>
-                        {{ $etapaActual
-                            ? $etapaActual . ' de ' . ($totalEtapas ?: $etapaActual)
+                        {{ $formato
+                            ? $formato . ' de ' . ($totalEtapas ?: $formato)
                             : 'Completaste tu carrera' }}
                     </strong>
                 </div>
@@ -1261,6 +1261,12 @@
                 </div>
 
             </div>
+
+            @if ($ventana && $ventana['desde'] !== $ventana['hasta'])
+                <p class="module-description">
+                    Repites las materias que te quedaron pendientes y adelantas materias del siguiente cuatrimestre del plan.
+                </p>
+            @endif
 
         </div>
 

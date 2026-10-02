@@ -211,3 +211,121 @@ it('profesor no puede guardar notas mientras el período está en matrícula', f
 
     $this->assertDatabaseCount('calificacion', 0);
 });
+
+it('una materia raspada del 1ro abre la ventana 1-2: repite lo pendiente y adelanta el 2do', function () {
+    $carrera = Carrera::create(['nombre' => 'Informática', 'duracion' => 5]);
+    $etapa1a = materiaEtapa($carrera, 'Matemática Básica', 1);
+    $etapa2a = materiaEtapa($carrera, 'Inglés Técnico', 2);
+    $etapa2b = materiaEtapa($carrera, 'Fundamentos de Programación', 2);
+    materiaEtapa($carrera, 'Seminario de Grado', 5);
+    $cuatrimestre = cuatrimestreEtapaVigente();
+    ofrecerEnVigente($cuatrimestre, $etapa1a, $etapa2a, $etapa2b);
+
+    ['usuario' => $usuario, 'estudiante' => $estudiante] = estudianteEtapa($carrera, 'raspada.uno@aula.edu');
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1a->id_curso,
+        'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
+        'nota' => 4, // raspó Matemática Básica del 1er cuatrimestre
+    ]);
+
+    $this->actingAs($usuario)
+        ->get(route('estudiante.matriculacion'))
+        ->assertSee('1-2 de 5')
+        ->assertSee('Matemática Básica')
+        ->assertSee('Inglés Técnico')
+        ->assertSee('Fundamentos de Programación')
+        ->assertDontSee('Seminario de Grado');
+});
+
+it('al raspár una materia dos veces se queda congelado en 1-2 y no ve el 3ro', function () {
+    $carrera = Carrera::create(['nombre' => 'Informática', 'duracion' => 5]);
+    $etapa1a = materiaEtapa($carrera, 'Matemática Básica', 1);
+    $etapa2a = materiaEtapa($carrera, 'Inglés Técnico', 2);
+    materiaEtapa($carrera, 'Seminario de Grado', 5);
+    $anterior = Cuatrimestre::create([
+        'fecha_inicio' => now()->subMonths(4)->toDateString(),
+        'fecha_fin' => now()->subMonths(2)->toDateString(),
+    ]);
+    $cuatrimestre = cuatrimestreEtapaVigente();
+    $etapa1a->cuatrimestres()->attach($anterior);
+    $etapa2a->cuatrimestres()->attach($anterior);
+    ofrecerEnVigente($cuatrimestre, $etapa1a, $etapa2a);
+
+    ['usuario' => $usuario, 'estudiante' => $estudiante] = estudianteEtapa($carrera, 'raspada.dos@aula.edu');
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1a->id_curso,
+        'id_cuatrimestre' => $anterior->id_cuatrimestre,
+        'nota' => 4, // 1ra vez que raspó
+    ]);
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1a->id_curso,
+        'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
+        'nota' => 4, // 2da vez: se queda en el bucle 1-2
+    ]);
+
+    $this->actingAs($usuario)
+        ->get(route('estudiante.matriculacion'))
+        ->assertSee('1-2 de 5')
+        ->assertSee('Matemática Básica')
+        ->assertSee('Inglés Técnico')
+        ->assertDontSee('Seminario de Grado');
+});
+
+it('el servicio permite repetir la materia raspada y adelantar la del siguiente cuatrimestre, no más allá', function () {
+    $carrera = Carrera::create(['nombre' => 'Informática', 'duracion' => 5]);
+    $etapa1a = materiaEtapa($carrera, 'Matemática Básica', 1);
+    $etapa2a = materiaEtapa($carrera, 'Inglés Técnico', 2);
+    $etapa3a = materiaEtapa($carrera, 'Base de Datos I', 3);
+    $cuatrimestre = cuatrimestreEtapaVigente();
+    ofrecerEnVigente($cuatrimestre, $etapa1a, $etapa2a, $etapa3a);
+
+    ['estudiante' => $estudiante] = estudianteEtapa($carrera, 'servicio.raspada@aula.edu');
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1a->id_curso,
+        'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
+        'nota' => 4,
+    ]);
+
+    $servicio = app(InscripcionService::class);
+
+    expect(fn () => $servicio->inscribir($estudiante, $etapa1a))->not->toThrow(Exception::class);
+    expect(fn () => $servicio->inscribir($estudiante, $etapa2a))->not->toThrow(Exception::class);
+    expect(fn () => $servicio->inscribir($estudiante, $etapa3a))
+        ->toThrow(Exception::class, 'no corresponde al cuatrimestre del plan');
+});
+
+it('mis datos muestran el cuadro de carrera con el formato y los conteos', function () {
+    $carrera = Carrera::create(['nombre' => 'Informática', 'duracion' => 5]);
+    $etapa1a = materiaEtapa($carrera, 'Matemática Básica', 1);
+    $etapa1b = materiaEtapa($carrera, 'Ofimática', 1);
+    $etapa2a = materiaEtapa($carrera, 'Inglés Técnico', 2);
+    materiaEtapa($carrera, 'Seminario de Grado', 5);
+    $cuatrimestre = cuatrimestreEtapaVigente();
+    ofrecerEnVigente($cuatrimestre, $etapa1a, $etapa1b, $etapa2a);
+
+    ['usuario' => $usuario, 'estudiante' => $estudiante] = estudianteEtapa($carrera, 'datos.carrera@aula.edu');
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1b->id_curso,
+        'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
+        'nota' => 8, // aprobada
+    ]);
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1a->id_curso,
+        'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
+        'nota' => 4, // reprobada
+    ]);
+
+    $this->actingAs($usuario)
+        ->get(route('perfil'))
+        ->assertOk()
+        ->assertSee('Datos de carrera')
+        ->assertSee('1-2 de 5')
+        ->assertSee('Materias aprobadas')
+        ->assertSee('Materias reprobadas');
+});

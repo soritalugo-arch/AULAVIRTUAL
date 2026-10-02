@@ -276,12 +276,13 @@ class InscripcionService
     }
 
     /**
-     * Valida que el curso sea una materia del cuatrimestre del plan actual.
+     * Valida que el curso sea una materia de la ventana de cuatrimestres actual.
      *
-     * El estudiante solo puede inscribir las materias de la etapa en la que va:
-     * quien está en el cuatrimestre 4 del plan ve solo las 2 o 3 materias de
-     * esa etapa. Una carrera sin etapas definidas conserva el comportamiento
-     * anterior (todas sus materias son inscribibles).
+     * El estudiante solo puede inscribir las materias que le tocan ahora: un
+     * cuatrimestre (X) cuando no arrastra materias, o dos (X-Y) cuando repite
+     * lo raspado y adelanta el siguiente. Una carrera sin etapas definidas
+     * conserva el comportamiento anterior (todas sus materias son
+     * inscribibles).
      */
     private function validarEtapaDelPlan(Estudiante $estudiante, Curso $curso): void
     {
@@ -300,18 +301,19 @@ class InscripcionService
             return;
         }
 
-        $etapa = app(HistorialService::class)->etapaActual($estudiante);
+        $ventana = app(HistorialService::class)->ventanaEtapas($estudiante);
 
-        if ($etapa === null) {
+        if ($ventana === null) {
             throw new Exception('Ya completaste tu carrera: no tienes materias pendientes.');
         }
 
-        $esDeLaEtapa = $curso->carreras()
+        $esDeLaVentana = $curso->carreras()
             ->whereKey($carrera->id_carrera)
-            ->wherePivot('etapa', $etapa)
+            ->wherePivot('etapa', '>=', $ventana['desde'])
+            ->wherePivot('etapa', '<=', $ventana['hasta'])
             ->exists();
 
-        if (! $esDeLaEtapa) {
+        if (! $esDeLaVentana) {
             throw new Exception('Esta asignatura no corresponde al cuatrimestre del plan en el que estás.');
         }
     }
