@@ -102,7 +102,7 @@ class DashboardController extends Controller
 
         // El período en curso es el único que se puede cambiar de momento; los
         // demás se muestran solo como referencia (pasado y próximo).
-        $vigente = $periodos->first(fn (Cuatrimestre $p) => now()->between($p->fecha_inicio, $p->fecha_fin));
+        $vigente = $periodos->first(fn (Cuatrimestre $p) => $p->esPresente()) ?? Cuatrimestre::cuatrimestrePresente();
 
         return view('admin.periodo', $ctx + [
             'periodos' => $periodos,
@@ -115,16 +115,21 @@ class DashboardController extends Controller
     {
         $data = $request->validate([
             'id_cuatrimestre' => 'required|exists:cuatrimestre,id_cuatrimestre',
-            'estado' => 'required|in:matriculacion,en_curso,cerrado',
+            'estado' => 'required|in:pre_matricula,matriculacion,en_curso,finalizado,cerrado',
         ]);
+
+        if ($data['estado'] === 'cerrado') {
+            $data['estado'] = Cuatrimestre::ESTADO_FINALIZADO;
+        }
 
         Cuatrimestre::whereKey($data['id_cuatrimestre'])
             ->update(['estado' => $data['estado']]);
 
         $etiquetas = [
-            'matriculacion' => 'matrícula abierta',
-            'en_curso' => 'en cursado',
-            'cerrado' => 'cerrado',
+            Cuatrimestre::ESTADO_PRE_MATRICULA => 'pre-matrícula',
+            Cuatrimestre::ESTADO_MATRICULA => 'matrícula abierta',
+            Cuatrimestre::ESTADO_EN_CURSO => 'en cursado',
+            Cuatrimestre::ESTADO_FINALIZADO => 'finalizado',
         ];
 
         return back()->with('success', 'El cuatrimestre ahora está en "'
@@ -248,12 +253,20 @@ class DashboardController extends Controller
      */
     private function cuatrimestrePorDefecto($cuatrimestres): int
     {
-        $vigente = $cuatrimestres->first(
-            fn ($c) => $c->fecha_inicio->lte(today()) && $c->fecha_fin->gte(today())
-        );
+        $presente = Cuatrimestre::cuatrimestrePresente();
+
+        if ($presente && $cuatrimestres->contains('id_cuatrimestre', $presente->id_cuatrimestre)) {
+            return $presente->id_cuatrimestre;
+        }
+
+        $presente = $cuatrimestres->first(fn ($c) => in_array($c->estado, Cuatrimestre::estadosPresentes(), true));
+
+        if ($presente) {
+            return $presente->id_cuatrimestre;
+        }
 
         $empezado = $cuatrimestres->first(fn ($c) => $c->fecha_inicio->lte(today()));
 
-        return ($vigente ?? $empezado ?? $cuatrimestres->first())->id_cuatrimestre;
+        return ($empezado ?? $cuatrimestres->first())->id_cuatrimestre;
     }
 }
