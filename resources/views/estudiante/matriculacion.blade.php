@@ -12,6 +12,9 @@
     <li>
         <a href="{{ route('estudiante.historial') }}" class="nav-link {{ request()->routeIs('estudiante.historial', 'estudiante.certificado') ? 'active' : '' }}">Mi Historial</a>
     </li>
+    <li>
+        <a href="{{ route('estudiante.plan') }}" class="nav-link {{ request()->routeIs('estudiante.plan') ? 'active' : '' }}">Plan de Estudios</a>
+    </li>
 @endsection
 
 @section('contenido')

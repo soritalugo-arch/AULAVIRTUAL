@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Calificacion;
+use App\Models\Carrera;
 use App\Models\Estudiante;
 use App\Services\HistorialService;
 use App\Services\ReporteService;
@@ -81,6 +82,42 @@ class DashboardController extends Controller
                 ->where('deuda', true)
                 ->orderBy('id_usuario')
                 ->get(),
+        ]);
+    }
+
+    /**
+     * Plan de estudios: la rectora elige una carrera y ve su recorrido,
+     * cuatrimestre a cuatrimestre, sin datos de ningun estudiante.
+     */
+    public function planEstudios(Request $request, ReporteService $reportes)
+    {
+        $ctx = $this->contexto($request, $reportes);
+
+        $carreras = Carrera::orderBy('nombre')->get();
+
+        $seleccionada = $request->filled('carrera')
+            ? $carreras->firstWhere('id_carrera', $request->integer('carrera')) ?? $carreras->first()
+            : $carreras->first();
+
+        $materias = $seleccionada
+            ? $seleccionada->cursos()->withPivot('etapa')->get()
+                ->sortBy([['pivot.etapa', 'asc'], ['nombre', 'asc']])
+                ->groupBy('pivot.etapa')
+            : collect();
+
+        $etapas = collect();
+        $totalEtapas = $materias->keys()->max() ?? 0;
+        for ($etapa = 1; $etapa <= $totalEtapas; $etapa++) {
+            $etapas->push([
+                'numero' => $etapa,
+                'materias' => $materias->get($etapa, collect()),
+            ]);
+        }
+
+        return view('admin.plan', $ctx + [
+            'carreras' => $carreras,
+            'seleccionada' => $seleccionada,
+            'etapas' => $etapas,
         ]);
     }
 

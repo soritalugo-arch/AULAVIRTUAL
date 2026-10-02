@@ -33,6 +33,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/rendimiento/estudiante/{estudiante}', [DashboardController::class, 'fichaEstudiante'])->name('admin.rendimiento.estudiante');
     Route::get('/admin/asistencia',    [DashboardController::class, 'asistencia'])->name('admin.asistencia');
     Route::get('/admin/deudas',        [DashboardController::class, 'deudas'])->name('admin.deudas');
+    Route::get('/admin/plan-estudios', [DashboardController::class, 'planEstudios'])->name('admin.plan');
 });
 
 // ─── Rutas del Profesor ──────────────────────────────────────────────────────

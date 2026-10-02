@@ -95,7 +95,7 @@ class CalificacionSeeder extends Seeder
         }
 
         foreach (array_values(CursoSeeder::CATALOGO) as $i => $item) {
-            foreach ($item['carreras'] as $nombre) {
+            foreach ($item['carreras'] as $nombre => $etapa) {
                 $mapa[$nombre][] = $cursos[$i]->id_curso;
             }
         }
@@ -108,7 +108,7 @@ class CalificacionSeeder extends Seeder
         $cursos = [];
 
         foreach (array_values(CursoSeeder::CATALOGO) as $i => $item) {
-            if (in_array(DatabaseSeeder::CARRERA_EGRESADA, $item['carreras'], true)) {
+            if (array_key_exists(DatabaseSeeder::CARRERA_EGRESADA, $item['carreras'])) {
                 $cursos[] = $cursoPorNombre[$item['nombre']];
             }
         }

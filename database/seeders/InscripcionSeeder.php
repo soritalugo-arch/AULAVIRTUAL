@@ -133,7 +133,7 @@ class InscripcionSeeder extends Seeder
         }
 
         foreach (array_values(CursoSeeder::CATALOGO) as $i => $item) {
-            foreach ($item['carreras'] as $nombre) {
+            foreach ($item['carreras'] as $nombre => $etapa) {
                 $mapa[$nombre]->push($cursos[$i]);
             }
         }

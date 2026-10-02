@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Estudiante\HistorialController;
+use App\Http\Controllers\Estudiante\PlanEstudiosController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -22,4 +23,7 @@ Route::middleware(['auth', 'role:estudiante'])->group(function () {
 
     Route::get('/estudiante/historial/certificado', [HistorialController::class, 'certificado'])
         ->name('estudiante.certificado');
+
+    Route::get('/estudiante/plan-estudios', [PlanEstudiosController::class, 'index'])
+        ->name('estudiante.plan');
 });
