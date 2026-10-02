@@ -2,6 +2,7 @@
 
 use App\Models\Cuatrimestre;
 use App\Models\Curso;
+use App\Models\Estudiante;
 use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -88,4 +89,35 @@ it('requiere autenticacion y rol de admin', function () {
 
     $visitante = Usuario::factory()->create();
     $this->actingAs($visitante)->get(route('admin.dashboard'))->assertForbidden();
+});
+
+it('muestra en su seccion los estudiantes con deuda', function () {
+    $admin = crearAdmin();
+    $c = Cuatrimestre::create(['fecha_inicio' => '2026-01-05', 'fecha_fin' => '2026-04-30']);
+
+    Estudiante::create([
+        'id_usuario' => Usuario::factory()->create()->id_usuario,
+        'cedula' => '99000001',
+        'fecha_nacimiento' => '2000-01-01',
+        'deuda' => true,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.deudas', ['cuatrimestre' => $c->id_cuatrimestre]))
+        ->assertOk()
+        ->assertSee('Estudiantes con deuda')
+        ->assertSee('99000001');
+
+    // Un estudiante sin deuda no aparece en la lista.
+    Estudiante::create([
+        'id_usuario' => Usuario::factory()->create()->id_usuario,
+        'cedula' => '99000002',
+        'fecha_nacimiento' => '2000-01-01',
+        'deuda' => false,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.deudas', ['cuatrimestre' => $c->id_cuatrimestre]))
+        ->assertOk()
+        ->assertDontSee('99000002');
 });

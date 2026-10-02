@@ -784,12 +784,19 @@ it('acota todas las cifras al cuatrimestre seleccionado', function () {
         ->and($servicio->panel(null)['kpis']['totalCalificaciones'])->toBe(1);
 });
 
-it('renderiza los cuatro graficos con los datos del cuatrimestre', function () {
+it('renderiza los cuatro graficos en sus respectivas secciones', function () {
     $admin = adminPanel();
     $q = periodoPanel('2026-01-05', '2026-04-30');
     $curso = cursoPanel($q);
     $carrera = carreraPanel('Informatica');
     $alumno = alumnoPanel($carrera, '93000001');
+
+    Inscripcion::create([
+        'id_estudiante' => $alumno->id_usuario,
+        'id_curso' => $curso->id_curso,
+        'id_cuatrimestre' => $q->id_cuatrimestre,
+        'fecha_inscripcion' => $q->fecha_inicio->copy()->subDay()->toDateString(),
+    ]);
 
     Calificacion::create([
         'id_estudiante' => $alumno->id_usuario,
@@ -798,14 +805,35 @@ it('renderiza los cuatro graficos con los datos del cuatrimestre', function () {
         'nota' => 10,
     ]);
 
+    foreach (range(1, 10) as $dia) {
+        Asistencia::create([
+            'id_estudiante' => $alumno->id_usuario,
+            'id_curso' => $curso->id_curso,
+            'id_cuatrimestre' => $q->id_cuatrimestre,
+            'fecha' => $q->fecha_inicio->copy()->addDays($dia - 1)->toDateString(),
+            'presente' => $dia > 2,
+        ]);
+    }
+
+    // Inscripciones: ocupado vs cupo y la torta por carrera.
     $this->actingAs($admin)
-        ->get(route('admin.dashboard', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->get(route('admin.inscripciones', ['cuatrimestre' => $q->id_cuatrimestre]))
         ->assertOk()
-        ->assertSee('grafCarrera')
-        ->assertSee('grafCupos')
-        ->assertSee('grafRendimiento')
-        ->assertSee('grafAsistencia')
+        ->assertSee('<canvas id="grafCupos"', false)
+        ->assertSee('<canvas id="grafCarrera"', false)
         ->assertSee('chart.umd.min.js', false);
+
+    // Rendimiento: aprobados / reprobados / en curso.
+    $this->actingAs($admin)
+        ->get(route('admin.rendimiento', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->assertOk()
+        ->assertSee('<canvas id="grafRendimiento"', false);
+
+    // Asistencia: porcentaje de inasistencia por curso.
+    $this->actingAs($admin)
+        ->get(route('admin.asistencia', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->assertOk()
+        ->assertSee('<canvas id="grafAsistencia"', false);
 });
 
 it('identifica el cuatrimestre en cada grafico', function () {
@@ -816,13 +844,24 @@ it('identifica el cuatrimestre en cada grafico', function () {
     cursoPanel($q1);
     cursoPanel($q2, nombre: 'Curso Solo Q2');
 
-    $html = $this->actingAs($admin)
-        ->get(route('admin.dashboard', ['cuatrimestre' => $q2->id_cuatrimestre]))
+    $chip = 'Q'.str_pad($q2->id_cuatrimestre, 2, '0', STR_PAD_LEFT)
+        .' · '.$q2->fecha_inicio->format('d/m/y');
+
+    // Inscripciones lleva dos chips (cupo por curso y la torta por carrera).
+    $htmlInsc = $this->actingAs($admin)
+        ->get(route('admin.inscripciones', ['cuatrimestre' => $q2->id_cuatrimestre]))
         ->getContent();
 
-    // Cada grafico lleva su chip: cuatro graficos, cuatro chips con el periodo.
-    expect(substr_count($html, 'Q'.str_pad($q2->id_cuatrimestre, 2, '0', STR_PAD_LEFT)))
-        ->toBeGreaterThanOrEqual(4);
+    expect(substr_count($htmlInsc, $chip))->toBeGreaterThanOrEqual(2);
+
+    // Rendimiento y Asistencia llevan un chip cada una.
+    foreach (['admin.rendimiento', 'admin.asistencia'] as $ruta) {
+        $html = $this->actingAs($admin)
+            ->get(route($ruta, ['cuatrimestre' => $q2->id_cuatrimestre]))
+            ->getContent();
+
+        expect(substr_count($html, $chip))->toBeGreaterThanOrEqual(1);
+    }
 });
 
 it('no ofrece la opcion de ver todos los cuatrimestres juntos', function () {
@@ -858,13 +897,18 @@ it('abre en el cuatrimestre vigente y no en uno futuro todavia vacio', function 
     $chip = fn ($q) => 'Q'.str_pad($q->id_cuatrimestre, 2, '0', STR_PAD_LEFT)
         .' · '.$q->fecha_inicio->format('d/m/y');
 
-    // El encabezado y los cuatro graficos dicen el vigente, no el futuro: el
-    // selector si lista los tres, pero abrir el panel en un periodo sin
-    // movimientos seria mostrarle a la rectora una pantalla en blanco.
+    // El encabezado del Inicio dice el vigente, no el futuro: el selector si
+    // lista los tres, pero abrir el panel en un periodo sin movimientos seria
+    // mostrarle a la rectora una pantalla en blanco.
     expect($html)->toContain(
         'Cuatrimestre '.str_pad($vigente->id_cuatrimestre, 2, '0', STR_PAD_LEFT)
-    )->and(substr_count($html, $chip($vigente)))->toBeGreaterThanOrEqual(4)
-        ->and($html)->not->toContain($chip($futuro));
+    )->and($html)->not->toContain($chip($futuro));
+
+    // Las secciones tambien abren en el vigente, con su chip en el grafico.
+    $htmlInsc = $this->actingAs($admin)->get(route('admin.inscripciones'))->getContent();
+
+    expect($htmlInsc)->toContain($chip($vigente))
+        ->and($htmlInsc)->not->toContain($chip($futuro));
 });
 
 it('rechaza un cuatrimestre que no existe en vez de caer al vigente', function () {
@@ -888,12 +932,15 @@ it('avisa que un cuatrimestre aun no tiene informacion en vez de pintar graficos
     $this->actingAs($admin)
         ->get(route('admin.dashboard', ['cuatrimestre' => $q->id_cuatrimestre]))
         ->assertOk()
-        ->assertSee('Aún no hay información registrada en este cuatrimestre')
-        // Ningun grafico se dibuja: no habria nada que mirar.
-        ->assertDontSee('id="grafCupos"', false)
-        ->assertDontSee('id="grafRendimiento"', false)
-        ->assertDontSee('id="grafAsistencia"', false)
-        ->assertDontSee('id="grafCarrera"', false);
+        ->assertSee('Aún no hay información registrada en este cuatrimestre');
+
+    // Cada seccion cae a su propio estado vacio: ningun canvas se pinta.
+    foreach (['admin.inscripciones', 'admin.rendimiento', 'admin.asistencia'] as $ruta) {
+        $this->actingAs($admin)
+            ->get(route($ruta, ['cuatrimestre' => $q->id_cuatrimestre]))
+            ->assertOk()
+            ->assertDontSee('<canvas id="graf', false);
+    }
 });
 
 it('no saca el aviso cuando el cuatrimestre si tiene notas registradas', function () {
@@ -913,11 +960,20 @@ it('no saca el aviso cuando el cuatrimestre si tiene notas registradas', functio
     $this->actingAs($admin)
         ->get(route('admin.dashboard', ['cuatrimestre' => $q->id_cuatrimestre]))
         ->assertOk()
-        ->assertDontSee('Aún no hay información registrada en este cuatrimestre')
-        // El grafico de cupos si cae al estado vacio, pero por su propia cuenta.
-        ->assertDontSee('id="grafCupos"', false)
-        ->assertSee('todavía no hay inscripciones registradas')
-        ->assertSee('id="grafRendimiento"', false);
+        ->assertDontSee('Aún no hay información registrada en este cuatrimestre');
+
+    // El grafico de cupos cae al estado vacio por su propia cuenta...
+    $this->actingAs($admin)
+        ->get(route('admin.inscripciones', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->assertOk()
+        ->assertDontSee('<canvas id="grafCupos"', false)
+        ->assertSee('todavía no hay inscripciones registradas');
+
+    // ...mientras rendimiento si pinta su grafico (la nota existe).
+    $this->actingAs($admin)
+        ->get(route('admin.rendimiento', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->assertOk()
+        ->assertSee('<canvas id="grafRendimiento"', false);
 });
 
 it('no deja el grafico de cupos en gris cuando el periodo no tiene matricula', function () {
@@ -931,9 +987,9 @@ it('no deja el grafico de cupos en gris cuando el periodo no tiene matricula', f
     cursoPanel($q, cupo: 30);
 
     $this->actingAs($admin)
-        ->get(route('admin.dashboard', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->get(route('admin.inscripciones', ['cuatrimestre' => $q->id_cuatrimestre]))
         ->assertOk()
-        ->assertDontSee('id="grafCupos"', false)
+        ->assertDontSee('<canvas id="grafCupos"', false)
         ->assertSee('todavía no hay inscripciones registradas')
         // Y dice cuantos cursos hay, para que el cero tenga contexto.
         ->assertSee('ningún lugar de los 2 cursos en oferta');
@@ -949,9 +1005,9 @@ it('no dibuja el grafico de asistencia si ningun curso tiene registros', functio
     cursoPanel($q, clases: 10);
 
     $this->actingAs($admin)
-        ->get(route('admin.dashboard', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->get(route('admin.asistencia', ['cuatrimestre' => $q->id_cuatrimestre]))
         ->assertOk()
-        ->assertDontSee('id="grafAsistencia"', false)
+        ->assertDontSee('<canvas id="grafAsistencia"', false)
         ->assertSee('fa-inbox', false);
 });
 
@@ -975,9 +1031,9 @@ it('dibuja el grafico de asistencia aunque algunos cursos no tengan datos', func
     }
 
     $html = $this->actingAs($admin)
-        ->get(route('admin.dashboard', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->get(route('admin.asistencia', ['cuatrimestre' => $q->id_cuatrimestre]))
         ->assertOk()
-        ->assertSee('id="grafAsistencia"', false)
+        ->assertSee('<canvas id="grafAsistencia"', false)
         ->getContent();
 
     // Con un solo curso con dato, el subtexto lo dice en vez de mentir.
@@ -989,9 +1045,9 @@ it('muestra el estado vacio cuando el cuatrimestre no tiene datos', function () 
     $q = periodoPanel('2026-01-05', '2026-04-30');
 
     $this->actingAs($admin)
-        ->get(route('admin.dashboard', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->get(route('admin.inscripciones', ['cuatrimestre' => $q->id_cuatrimestre]))
         ->assertOk()
-        ->assertSee('Todav')
+        ->assertSee('todavía')
         ->assertSee('fa-inbox', false);
 });
 

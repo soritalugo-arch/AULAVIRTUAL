@@ -22,7 +22,12 @@ Route::middleware('guest')->group(function () {
 Route::post('logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
-    Route::get('/admin', [DashboardController::class, 'index'])->name('admin.dashboard');
+    // Panel de la Rectora: una página por función, unidas por el menú lateral.
+    Route::get('/admin',               [DashboardController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/inscripciones', [DashboardController::class, 'inscripciones'])->name('admin.inscripciones');
+    Route::get('/admin/rendimiento',   [DashboardController::class, 'rendimiento'])->name('admin.rendimiento');
+    Route::get('/admin/asistencia',    [DashboardController::class, 'asistencia'])->name('admin.asistencia');
+    Route::get('/admin/deudas',        [DashboardController::class, 'deudas'])->name('admin.deudas');
 });
 
 // ─── Rutas del Profesor ──────────────────────────────────────────────────────

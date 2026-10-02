@@ -9,51 +9,97 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 /**
- * Panel de la Rectora: resumen visual de la institucion.
+ * Panel de la Rectora: zona con menu lateral y una pagina por funcion.
  *
  * El panel siempre muestra un solo cuatrimestre, nunca la suma de todos: los
- * graficos por curso comparan occupancy, rendimiento e inasistencia, y mezclar
- * periodos en la misma barra produce cifras que no significan nada (un curso
- * de 2026 junto a uno de 2027 no comparte escala). Por eso no existe la opcion
- * "Todos".
+ * graficos comparan ocupacion, rendimiento e inasistencia por curso, y mezclar
+ * periodos en la misma barra produce cifras que no significan nada. Por eso no
+ * existe la opcion "Todos".
+ *
+ * Cada pagina pide solo los datos que usa (un reporte por metodo, no panel()
+ * completo): abrir "Deudas" no dispara los cinco reportes del panel.
  */
 class DashboardController extends Controller
 {
+    /** Inicio / Resumen: numeros del dia y alertas rapidas. */
     public function index(Request $request, ReporteService $reportes)
     {
-        $cuatrimestres = $reportes->cuatrimestres();
+        $ctx = $this->contexto($request, $reportes);
 
-        $idCuatrimestre = $request->filled('cuatrimestre')
-            ? $cuatrimestres
-                ->firstWhere('id_cuatrimestre', $request->integer('cuatrimestre'))?->id_cuatrimestre
-                ?? abort(404)
-            : $this->cuatrimestrePorDefecto($cuatrimestres);
+        $cursosEnRiesgo = collect(
+            $reportes->asistenciaPorCurso($ctx['idCuatrimestre'])
+        )->filter(fn ($f) => $f['alerta'] === 'peligro')->count();
 
-        // Suma de clases programadas de los cursos del periodo.
-        // Las filas sin total_clases no aportan (suman 0).
-        $totalClases = (int) DB::table('curso_cuatrimestre')
-            ->where('cuatrimestre_id', $idCuatrimestre)
-            ->sum('total_clases');
+        return view('admin.inicio', $ctx + [
+            'kpis' => $reportes->kpis($ctx['idCuatrimestre']),
+            'deudoresCount' => Estudiante::where('deuda', true)->count(),
+            'cursosEnRiesgo' => $cursosEnRiesgo,
+        ]);
+    }
 
-        $panel = $reportes->panel($idCuatrimestre);
+    /** Inscripciones: cupo por curso y estudiantes por carrera. */
+    public function inscripciones(Request $request, ReporteService $reportes)
+    {
+        $ctx = $this->contexto($request, $reportes);
 
-        return view('admin.dashboard', [
-            'cuatrimestres' => $cuatrimestres,
-            'idCuatrimestre' => $idCuatrimestre,
-            'totalClases' => $totalClases,
-            'kpis' => $panel['kpis'],
-            'inscritosPorCarrera' => $panel['inscritosPorCarrera'],
-            'inscripcionPorCurso' => $panel['inscripcionPorCurso'],
-            'rendimientoPorCurso' => $panel['rendimientoPorCurso'],
-            'asistenciaPorCurso' => $panel['asistenciaPorCurso'],
-            // Secciones nuevas: el detalle por estudiante y el bloque de deuda,
-            // ambas derivadas de datos que ya existian.
-            'rendimientoPorEstudiante' => $reportes->rendimientoPorEstudiante($idCuatrimestre),
+        return view('admin.inscripciones', $ctx + [
+            'inscripcionPorCurso' => $reportes->inscripcionPorCurso($ctx['idCuatrimestre']),
+            'inscritosPorCarrera' => $reportes->inscritosPorCarrera($ctx['idCuatrimestre']),
+        ]);
+    }
+
+    /** Rendimiento: por curso en grafico y por estudiante en tabla. */
+    public function rendimiento(Request $request, ReporteService $reportes)
+    {
+        $ctx = $this->contexto($request, $reportes);
+
+        return view('admin.rendimiento', $ctx + [
+            'rendimientoPorCurso' => $reportes->rendimientoPorCurso($ctx['idCuatrimestre']),
+            'rendimientoPorEstudiante' => $reportes->rendimientoPorEstudiante($ctx['idCuatrimestre']),
+        ]);
+    }
+
+    /** Asistencia: porcentaje de inasistencia por curso, con semaforo. */
+    public function asistencia(Request $request, ReporteService $reportes)
+    {
+        $ctx = $this->contexto($request, $reportes);
+
+        return view('admin.asistencia', $ctx + [
+            'asistenciaPorCurso' => $reportes->asistenciaPorCurso($ctx['idCuatrimestre']),
+        ]);
+    }
+
+    /** Deudas: estudiantes con la matricula bloqueada. */
+    public function deudas(Request $request, ReporteService $reportes)
+    {
+        $ctx = $this->contexto($request, $reportes);
+
+        return view('admin.deudas', $ctx + [
             'deudores' => Estudiante::with(['usuario:id_usuario,nombres,apellidos', 'carrera:id_carrera,nombre'])
                 ->where('deuda', true)
                 ->orderBy('id_usuario')
                 ->get(),
         ]);
+    }
+
+    /**
+     * Datos comunes a todas las paginas: cuatrimestres para el filtro, el
+     * periodo elegido y el total de clases programadas de ese periodo.
+     */
+    private function contexto(Request $request, ReporteService $reportes): array
+    {
+        $cuatrimestres = $reportes->cuatrimestres();
+
+        $idCuatrimestre = $request->filled('cuatrimestre')
+            ? ($cuatrimestres->firstWhere('id_cuatrimestre', $request->integer('cuatrimestre'))?->id_cuatrimestre
+                ?? abort(404))
+            : $this->cuatrimestrePorDefecto($cuatrimestres);
+
+        $totalClases = (int) DB::table('curso_cuatrimestre')
+            ->where('cuatrimestre_id', $idCuatrimestre)
+            ->sum('total_clases');
+
+        return compact('cuatrimestres', 'idCuatrimestre', 'totalClases');
     }
 
     /**
