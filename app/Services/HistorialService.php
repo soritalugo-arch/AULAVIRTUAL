@@ -172,6 +172,7 @@ class HistorialService
             (int) $fila->faltas,
             (int) $fila->total_clases,
             (int) $fila->clases_dictadas,
+            $terminado,
         );
 
         // Con parciales manda el promedio de las cuatro: es la nota que ve el

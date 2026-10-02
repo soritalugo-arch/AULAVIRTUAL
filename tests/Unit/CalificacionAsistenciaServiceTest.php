@@ -165,7 +165,7 @@ test('total de clases programadas se lee de la pivot curso_cuatrimestre', functi
     expect($servicio->totalClasesProgramadas($curso->getKey(), $cuatrimestre->getKey()))->toBe(12);
 });
 
-test('porcentaje de inasistencia usa el total programado cuando existe', function () {
+test('con el cuatrimestre terminado el porcentaje sale del total programado', function () {
     $servicio = new CalificacionAsistenciaService;
     $curso = cursoDeLaCarreraPrueba();
     $cuatrimestre = $curso->cuatrimestres()->first();
@@ -191,7 +191,37 @@ test('porcentaje de inasistencia usa el total programado cuando existe', functio
     }
 
     expect($servicio->clasesDictadas($curso->getKey(), $cuatrimestre->getKey()))->toBe(5);
-    expect($servicio->porcentajeInasistencia($estudiante->getKey(), $curso->getKey(), $cuatrimestre->getKey()))->toBe(25.0);
+
+    // Terminado el período: 3 faltas de las 12 clases programadas, 25 %.
+    expect($servicio->porcentajeInasistencia($estudiante->getKey(), $curso->getKey(), $cuatrimestre->getKey(), true))->toBe(25.0)
+        // En curso: se divide entre las 5 dictadas, 60 %.
+        ->and($servicio->porcentajeInasistencia($estudiante->getKey(), $curso->getKey(), $cuatrimestre->getKey(), false))->toBe(60.0);
+});
+
+test('mientras el cuatrimestre sigue abierto el porcentaje sale de las clases dictadas', function () {
+    $servicio = new CalificacionAsistenciaService;
+
+    // 12 clases programadas pero solo 5 dictadas todavia, y 3 faltas.
+    // Mientras el período sigue abierto el divisor son las dictadas: 3/5 = 60 %.
+    // Con el total programado seria 3/12 = 25 %, que todavia no se puede saber.
+    expect($servicio->inasistenciaDesdeConteos(3, 12, 5, false))->toBe(60.0)
+        // Una vez terminado el período manda el total programado: 3/12 = 25 %.
+        ->and($servicio->inasistenciaDesdeConteos(3, 12, 5, true))->toBe(25.0);
+});
+
+test('el denominador de inasistencia cae al otro total si falta uno de los dos', function () {
+    $servicio = new CalificacionAsistenciaService;
+
+    // En curso sin total cargado se usa lo dictado.
+    expect($servicio->inasistenciaDesdeConteos(2, 0, 8, false))->toBe(25.0)
+        // Terminado sin total cargado se usa igual lo dictado.
+        ->and($servicio->inasistenciaDesdeConteos(2, 0, 8, true))->toBe(25.0)
+        // En curso sin ninguna clase dictada todavia se usa lo programado, para
+        // que el porcentaje no salte de golpe cuando empiece la primera clase.
+        ->and($servicio->inasistenciaDesdeConteos(2, 8, 0, false))->toBe(25.0)
+        // Sin ningun total no hay nada que dividir.
+        ->and($servicio->inasistenciaDesdeConteos(2, 0, 0, false))->toBe(0.0)
+        ->and($servicio->inasistenciaDesdeConteos(2, 0, 0, true))->toBe(0.0);
 });
 
 test('porcentaje de inasistencia sin clases registradas es 0', function () {

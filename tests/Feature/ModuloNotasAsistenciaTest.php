@@ -1,6 +1,7 @@
 <?php
 
 use App\Mail\NotaPublicada;
+use App\Models\Asistencia;
 use App\Models\Calificacion;
 use App\Models\Cuatrimestre;
 use App\Models\Curso;
@@ -148,8 +149,8 @@ test('profesor guarda las parciales de un estudiante inscrito y calcula el prome
     $estudiante = estudianteNotasFeature();
     inscribirEstudianteEn($estudiante, $curso);
 
-    // Dos parciales de 7 y 8: las otras dos cuentan como cero (opción A), así
-    // que el promedio es (7 + 8 + 0 + 0) / 4 = 3.75.
+    // Dos parciales en puntos: 17.5 y 20 de 25. Las otras dos cuentan como cero
+    // (opción A), así que el promedio es (17.5 + 20 + 0 + 0) / 10 = 3.75.
     $this->actingAs($usuario)
         ->post(route('profesor.notas.guardar'), [
             'id_curso' => $curso->getKey(),
@@ -157,8 +158,8 @@ test('profesor guarda las parciales de un estudiante inscrito y calcula el prome
             'notas' => [
                 [
                     'id_estudiante' => $estudiante->getKey(),
-                    'parcial1' => 7,
-                    'parcial2' => 8,
+                    'parcial1' => 17.5,
+                    'parcial2' => 20,
                     'observaciones' => 'cumple',
                 ],
             ],
@@ -169,8 +170,8 @@ test('profesor guarda las parciales de un estudiante inscrito y calcula el prome
         'id_estudiante' => $estudiante->getKey(),
         'id_curso' => $curso->getKey(),
         'id_cuatrimestre' => $cuatrimestre->getKey(),
-        'parcial1' => 7,
-        'parcial2' => 8,
+        'parcial1' => 17.5,
+        'parcial2' => 20,
         'observaciones' => 'cumple',
     ]);
 
@@ -227,16 +228,16 @@ test('las cuatro parciales completas promedian sobre diez y aprueban', function 
             'notas' => [
                 [
                     'id_estudiante' => $estudiante->getKey(),
-                    'parcial1' => 8,
-                    'parcial2' => 7,
-                    'parcial3' => 9,
-                    'parcial4' => 8,
+                    'parcial1' => 20,
+                    'parcial2' => 17.5,
+                    'parcial3' => 22.5,
+                    'parcial4' => 20,
                 ],
             ],
         ])
         ->assertRedirect();
 
-    // (8 + 7 + 9 + 8) / 4 = 8
+    // 20 + 17.5 + 22.5 + 20 = 80 de 100, y 80 / 10 = 8 de promedio.
     $this->assertDatabaseHas('calificacion', [
         'id_estudiante' => $estudiante->getKey(),
         'id_curso' => $curso->getKey(),
@@ -244,6 +245,60 @@ test('las cuatro parciales completas promedian sobre diez y aprueban', function 
         'promedio' => 8.0,
         'tiene_parciales' => true,
     ]);
+
+    $calificacion = Calificacion::where('id_estudiante', $estudiante->getKey())
+        ->where('id_curso', $curso->getKey())
+        ->where('id_cuatrimestre', $cuatrimestre->getKey())
+        ->first();
+
+    expect($calificacion->acumulado())->toBe(80.0);
+});
+
+test('ninguna parcial puede pasarse de 25 puntos ni del acumulado de 100', function () {
+    ['usuario' => $usuario, 'profesor' => $profesor] = crearProfesorConAcceso();
+    $curso = crearCursoDeProfesor($profesor);
+    $cuatrimestre = $curso->cuatrimestres()->first();
+    $estudiante = estudianteNotasFeature();
+    inscribirEstudianteEn($estudiante, $curso);
+
+    // 26 ya se sale del parcial: el servidor lo rechaza aunque el navegador
+    // dejara escribirlo.
+    $this->actingAs($usuario)
+        ->post(route('profesor.notas.guardar'), [
+            'id_curso' => $curso->getKey(),
+            'id_cuatrimestre' => $cuatrimestre->getKey(),
+            'notas' => [
+                ['id_estudiante' => $estudiante->getKey(), 'parcial1' => 25.5],
+            ],
+        ])
+        ->assertSessionHasErrors('notas.0.parcial1');
+
+    $this->assertDatabaseCount('calificacion', 0);
+
+    // Con las cuatro en el tope el acumulado queda justo en 100.
+    $this->actingAs($usuario)
+        ->post(route('profesor.notas.guardar'), [
+            'id_curso' => $curso->getKey(),
+            'id_cuatrimestre' => $cuatrimestre->getKey(),
+            'notas' => [
+                [
+                    'id_estudiante' => $estudiante->getKey(),
+                    'parcial1' => 25,
+                    'parcial2' => 25,
+                    'parcial3' => 25,
+                    'parcial4' => 25,
+                ],
+            ],
+        ])
+        ->assertRedirect();
+
+    $calificacion = Calificacion::where('id_estudiante', $estudiante->getKey())
+        ->where('id_curso', $curso->getKey())
+        ->where('id_cuatrimestre', $cuatrimestre->getKey())
+        ->first();
+
+    expect($calificacion->acumulado())->toBe(100.0)
+        ->and((float) $calificacion->promedio)->toBe(10.0);
 });
 
 test('dejar la nota en blanco elimina la calificacion existente', function () {
@@ -258,7 +313,7 @@ test('dejar la nota en blanco elimina la calificacion existente', function () {
         'id_curso' => $curso->getKey(),
         'id_cuatrimestre' => $cuatrimestre->getKey(),
         'nota' => 8,
-        'parcial1' => 8,
+        'parcial1' => 20,
         'tiene_parciales' => true,
     ]);
 
@@ -293,8 +348,8 @@ test('la tabla de notas muestra una casilla por parcial y el promedio del alumno
         'id_estudiante' => $estudiante->getKey(),
         'id_curso' => $curso->getKey(),
         'id_cuatrimestre' => $cuatrimestre->getKey(),
-        'parcial1' => 8,
-        'parcial3' => 6,
+        'parcial1' => 20,
+        'parcial3' => 15,
         'promedio' => 3.5,
         'tiene_parciales' => true,
     ]);
@@ -306,11 +361,78 @@ test('la tabla de notas muestra una casilla por parcial y el promedio del alumno
 
     // Una casilla por parcial, con el valor ya puesto en la que el profe capturó.
     expect(substr_count($html, 'name="notas[0][parcial'))->toBe(4)
-        ->and($html)->toContain('value="8.0"')
-        ->and($html)->toContain('value="6.0"')
+        ->and($html)->toContain('value="20.0"')
+        ->and($html)->toContain('value="15.0"')
         // El promedio se muestra calculado, con dos decimales.
         ->and($html)->toContain('3.50')
         ->and($html)->toContain('data-promedio');
+});
+
+test('la tabla muestra el acumulado sobre 100 junto al promedio y el buscador', function () {
+    ['usuario' => $usuario, 'profesor' => $profesor] = crearProfesorConAcceso();
+    $curso = crearCursoDeProfesor($profesor);
+    $cuatrimestre = $curso->cuatrimestres()->first();
+    $estudiante = estudianteNotasFeature();
+    inscribirEstudianteEn($estudiante, $curso);
+
+    // 80 de 100 es un promedio de 8: el alumno aprueba y las dos celdas van
+    // en verde.
+    Calificacion::create([
+        'id_estudiante' => $estudiante->getKey(),
+        'id_curso' => $curso->getKey(),
+        'id_cuatrimestre' => $cuatrimestre->getKey(),
+        'parcial1' => 20,
+        'parcial2' => 20,
+        'parcial3' => 20,
+        'parcial4' => 20,
+        'promedio' => 8.0,
+        'tiene_parciales' => true,
+    ]);
+
+    $html = $this->actingAs($usuario)
+        ->get(route('profesor.notas', $curso->getKey()))
+        ->assertOk()
+        ->getContent();
+
+    expect($html)->toContain('ACUMULADO')
+        ->and($html)->toContain('data-acumulado')
+        ->and($html)->toContain('80.00')
+        ->and($html)->toContain('8.00')
+        // Las dos celdas en verde porque el alumno aprueba.
+        ->and($html)->toContain('promedio aprobado')
+        // Buscador por nombre y encabezados ordenables por nombre y promedio.
+        ->and($html)->toContain('data-buscar')
+        ->and($html)->toContain('data-orden="nombre"')
+        ->and($html)->toContain('data-orden="promedio"')
+        // La leyenda vieja de los 25 % ya no está.
+        ->and($html)->not->toContain('Cuatro parciales de 25 % cada una');
+});
+
+test('la casilla de faltas se pinta en la propia celda segun el nivel de alerta', function () {
+    ['usuario' => $usuario, 'profesor' => $profesor] = crearProfesorConAcceso();
+    $curso = crearCursoDeProfesor($profesor);
+    $cuatrimestre = $curso->cuatrimestres()->first();
+    $estudiante = estudianteNotasFeature();
+    inscribirEstudianteEn($estudiante, $curso);
+
+    // 2 faltas de 8 clases son 25 %: la casilla va en amarillo de atención.
+    foreach (range(1, 8) as $dia) {
+        Asistencia::create([
+            'id_estudiante' => $estudiante->getKey(),
+            'id_curso' => $curso->getKey(),
+            'id_cuatrimestre' => $cuatrimestre->getKey(),
+            'fecha' => now()->startOfWeek()->addDays($dia)->toDateString(),
+            'presente' => $dia > 2,
+        ]);
+    }
+
+    $html = $this->actingAs($usuario)
+        ->get(route('profesor.notas', $curso->getKey()))
+        ->assertOk()
+        ->getContent();
+
+    expect($html)->toContain('faltas-cell advertencia')
+        ->and($html)->toContain('absence warning');
 });
 
 test('el alumno recibe un correo por cada parcial que se registra o se corrige', function () {
@@ -331,24 +453,24 @@ test('el alumno recibe un correo por cada parcial que se registra o se corrige',
     ]);
 
     // La primera parcial se avisa.
-    $guardar(['parcial1' => 8]);
+    $guardar(['parcial1' => 20]);
     Mail::assertQueued(NotaPublicada::class, 1);
 
     // La segunda también: es una evaluación nueva.
-    $guardar(['parcial1' => 8, 'parcial2' => 9]);
+    $guardar(['parcial1' => 20, 'parcial2' => 22.5]);
     Mail::assertQueued(NotaPublicada::class, 2);
 
     // Reenviar el formulario sin tocar nada no vuelve a escribirle al alumno.
-    $guardar(['parcial1' => 8, 'parcial2' => 9]);
+    $guardar(['parcial1' => 20, 'parcial2' => 22.5]);
     Mail::assertQueued(NotaPublicada::class, 2);
 
     // Corregir una parcial sí vuelve a avisar, y el correo nombra cuál.
-    $guardar(['parcial1' => 7, 'parcial2' => 9]);
+    $guardar(['parcial1' => 17.5, 'parcial2' => 22.5]);
     Mail::assertQueued(NotaPublicada::class, fn (NotaPublicada $correo) => $correo->parciales === ['Parcial 1']);
 
     // El navegador manda las cuatro casillas siempre, las vacías como "": eso
     // no puede contar como una parcial nueva ni disparar otro correo.
-    $guardar(['parcial1' => 7, 'parcial2' => 9, 'parcial3' => '', 'parcial4' => '']);
+    $guardar(['parcial1' => 17.5, 'parcial2' => 22.5, 'parcial3' => '', 'parcial4' => '']);
     Mail::assertQueued(NotaPublicada::class, 3);
 
     // Borrar todas las parciales elimina la nota; al alumno no se le avisa de
@@ -375,7 +497,7 @@ test('una parcial fuera de la escala se rechaza y no se guarda nada', function (
             'id_curso' => $curso->getKey(),
             'id_cuatrimestre' => $cuatrimestre->getKey(),
             'notas' => [
-                ['id_estudiante' => $estudiante->getKey(), 'parcial2' => 12],
+                ['id_estudiante' => $estudiante->getKey(), 'parcial2' => 30],
             ],
         ])
         ->assertSessionHasErrors('notas.0.parcial2');
@@ -395,7 +517,7 @@ test('el profesor ve cual parcial se salio de la escala en vez de un guardado en
             'id_curso' => $curso->getKey(),
             'id_cuatrimestre' => $cuatrimestre->getKey(),
             'notas' => [
-                ['id_estudiante' => $estudiante->getKey(), 'parcial2' => 12],
+                ['id_estudiante' => $estudiante->getKey(), 'parcial2' => 30],
             ],
         ]);
 

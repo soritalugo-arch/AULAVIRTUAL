@@ -107,19 +107,37 @@ class CalificacionAsistenciaService
 
         return $total === null ? null : (int) $total;
     }
-    // faltas / clases programadas * 100 cuando el total programado existe;
-    // si no, faltas / clases dictadas * 100; retorna 0 si no hay clases
-    public function porcentajeInasistencia(int $idEstudiante, int $idCurso, int $idCuatrimestre): float
+    /**
+     * Porcentaje de inasistencia del estudiante en el curso.
+     *
+     * @param  bool  $cuatrimestreTerminado  si el período ya pasó su fecha de
+     *                                         fin, el denominador pasa a ser el
+     *                                         total de clases programadas.
+     */
+    public function porcentajeInasistencia(int $idEstudiante, int $idCurso, int $idCuatrimestre, bool $cuatrimestreTerminado = true): float
     {
         return $this->inasistenciaDesdeConteos(
             $this->faltasEstudiante($idEstudiante, $idCurso, $idCuatrimestre),
             $this->totalClasesProgramadas($idCurso, $idCuatrimestre) ?? 0,
             $this->clasesDictadas($idCurso, $idCuatrimestre),
+            $cuatrimestreTerminado,
         );
     }
 
     /**
      * Porcentaje de inasistencia a partir de conteos ya resueltos.
+     *
+     * El denominador depende de si el período sigue abierto:
+     *
+     *  - Mientras el cuatrimestre está en curso se divide entre las clases
+     *    DICTADAS. El alumno no puede faltar a una clase que todavía no se dio,
+     *    así que mientras quedan clases por delante el porcentaje no se
+     *    subestima ni se infla.
+     *  - Una vez terminado el período se divide entre el total PROGRAMADO: ya
+     *    no hay clases pendientes y el número final es el de la materia.
+     *
+     * Si falta uno de los dos totales (una materia sin horario cargado, o que
+     * todavía no empezó) se usa el otro. Si no hay ninguno, 0.
      *
      * Es la misma regla que porcentajeInasistencia(), pero sin las consultas por
      * curso. El historial del estudiante trae faltas y clases de todos sus
@@ -131,9 +149,11 @@ class CalificacionAsistenciaService
      * @param  int  $programadas  total_clases de la pivot, 0 si no está definido
      * @param  int  $dictadas  fechas distintas con asistencia registrada
      */
-    public function inasistenciaDesdeConteos(int $faltas, int $programadas, int $dictadas): float
+    public function inasistenciaDesdeConteos(int $faltas, int $programadas, int $dictadas, bool $cuatrimestreTerminado = true): float
     {
-        $denominador = $programadas > 0 ? $programadas : $dictadas;
+        $denominador = $cuatrimestreTerminado
+            ? ($programadas > 0 ? $programadas : $dictadas)
+            : ($dictadas > 0 ? $dictadas : $programadas);
 
         if ($denominador <= 0) {
             return 0.0;

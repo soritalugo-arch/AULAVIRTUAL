@@ -49,10 +49,12 @@ class AsistenciaController extends Controller
             ->get();
         $clasesRegistradas = $this->servicio->clasesDictadas($cursoId, $idCuatr);
         $totalClases       = $this->servicio->totalClasesProgramadas($cursoId, $idCuatr) ?? $clasesRegistradas;
-        $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $clasesRegistradas, $totalClases, $asistenciasHoy) {
+        $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $clasesRegistradas, $totalClases, $asistenciasHoy, $cuatrimestreTerminado) {
             $est        = $ins->estudiante;
             $faltas     = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
-            $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr);
+            // Mientras el período sigue abierto el porcentaje sale de las clases
+            // dictadas; una vez terminado, del total programado.
+            $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr, $cuatrimestreTerminado);
             return [
                 'id'                 => $est->id_usuario,
                 'nombre'             => $est->usuario->nombres . ' ' . $est->usuario->apellidos,

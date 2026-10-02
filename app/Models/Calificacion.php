@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\ParcialService;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -50,6 +51,17 @@ class Calificacion extends Model
             $this->parcial3,
             $this->parcial4,
         ];
+    }
+
+    /**
+     * Acumulado sobre 100: la suma de las cuatro parciales.
+     *
+     * Las filas anteriores a las parciales no lo tienen (no existe de donde
+     * sumarlo): devuelven null y las vistas muestran un guion.
+     */
+    public function acumulado(): ?float
+    {
+        return ParcialService::acumulado($this->parciales());
     }
 
     /**

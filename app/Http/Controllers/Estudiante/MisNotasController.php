@@ -30,7 +30,9 @@ class MisNotasController extends Controller
                 ->where('id_estudiante', $estudiante->id_usuario)
                 ->where('id_cuatrimestre', $idCuatr)
                 ->first();
-            $porcentaje = $this->servicio->porcentajeInasistencia($estudiante->id_usuario, $curso->id_curso, $idCuatr);
+            // Mientras el período sigue abierto el porcentaje sale de las clases
+            // dictadas; una vez terminado, del total programado.
+            $porcentaje = $this->servicio->porcentajeInasistencia($estudiante->id_usuario, $curso->id_curso, $idCuatr, $cuatrimestreTerminado);
             $clasesRegistradas = $this->servicio->clasesDictadas($curso->id_curso, $idCuatr);
             // Lo que ve el alumno es su promedio de las cuatro parciales, el
             // mismo numero que calcula el profesor.

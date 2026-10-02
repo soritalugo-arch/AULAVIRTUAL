@@ -71,7 +71,9 @@ class CalificacionController extends Controller
                 ->where('id_cuatrimestre', $idCuatr)
                 ->first();
             $faltas     = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
-            $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr);
+            // Mientras el período sigue abierto el porcentaje sale de las clases
+            // dictadas; una vez terminado, del total programado.
+            $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr, $cuatrimestreTerminado);
             // Lo que manda es el promedio de las parciales; la nota final solo
             // aparece si la fila todavia no tiene parciales (datos anteriores).
             $notaEfectiva = $calificacion?->notaEfectiva();
@@ -81,6 +83,9 @@ class CalificacionController extends Controller
                 'nombre'             => $est->usuario->nombres . ' ' . $est->usuario->apellidos,
                 'nota'               => $notaEfectiva,
                 'parciales'          => $calificacion?->parciales() ?? [null, null, null, null],
+                // El acumulado sobre 100 (la suma de las cuatro parciales) y el
+                // promedio sobre 10 salen de las parciales, no se escriben.
+                'acumulado'          => $calificacion?->acumulado(),
                 'observaciones'      => $calificacion?->observaciones,
                 'clasesRegistradas'  => $clasesRegistradas,
                 'totalClases'        => $totalClases,
@@ -121,12 +126,14 @@ class CalificacionController extends Controller
             'id_cuatrimestre'       => 'required|exists:cuatrimestre,id_cuatrimestre',
             'notas'                 => 'required|array',
             'notas.*.id_estudiante' => 'required|exists:estudiante,id_usuario',
-            // Cuatro parciales de 25 %; decimales permitidos (7.5) y vacias
-            // porque el profesor carga de a una.
-            'notas.*.parcial1'      => 'nullable|numeric|min:1|max:10',
-            'notas.*.parcial2'      => 'nullable|numeric|min:1|max:10',
-            'notas.*.parcial3'      => 'nullable|numeric|min:1|max:10',
-            'notas.*.parcial4'      => 'nullable|numeric|min:1|max:10',
+            // Cada parcial se captura en PUNTOS sobre 25 (el 25 % de la materia),
+            // con decimales permitidos (18.5) y vacias porque el profesor carga
+            // de a una. El tope es el del parcial: el acumulado nunca puede
+            // pasarse de 100 porque 4 x 25 = 100.
+            'notas.*.parcial1'      => 'nullable|numeric|min:0|max:25',
+            'notas.*.parcial2'      => 'nullable|numeric|min:0|max:25',
+            'notas.*.parcial3'      => 'nullable|numeric|min:0|max:25',
+            'notas.*.parcial4'      => 'nullable|numeric|min:0|max:25',
             'notas.*.observaciones' => 'nullable|string|max:500',
         ]);
 

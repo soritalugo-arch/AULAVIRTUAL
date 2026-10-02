@@ -7,6 +7,7 @@ use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
 use App\Models\Usuario;
+use App\Services\ParcialService;
 use Illuminate\Database\Seeder;
 
 class CalificacionSeeder extends Seeder
@@ -147,23 +148,28 @@ class CalificacionSeeder extends Seeder
     }
 
     /**
-     * Cuatro parciales que promedian exactamente la nota pedida.
+     * Cuatro parciales en puntos (0 a 25) que suman justo el acumulado pedido.
      *
-     * Los desvios suman siempre cero, asi que el promedio de las cuatro da la
-     * nota que el sistema guardaba antes de existir las parciales. Cada
-     * estudiante/curso toma un patron distinto (determinista por id) para que
-     * los alumnos no salgan todos con 8,8,8,8.
+     * La nota que maneja el seeder es el promedio sobre 10, asi que el acumulado
+     * que hay que repartir es esa nota por diez (un 8 son 80 puntos de 100). Los
+     * desvios suman siempre cero, de modo que el promedio de las cuatro da
+     * exactamente la nota que el sistema guardaba antes de existir las parciales.
      *
-     * La amplitud se ajusta a lo que permite la escala (a 10 no se puede subir
-     * sin salirse), para que el tope no rompa la suma cero y el promedio siga
-     * dando justo la nota. Un alumno de 10 sale con 10,10,10,10.
+     * Cada estudiante/curso toma un patron distinto (determinista por id) para
+     * que los alumnos no salgan todos con la misma nota. La amplitud se ajusta
+     * a lo que permite la escala, para que el tope de 25 no rompa la suma cero: un
+     * alumno de 10 sale con 25,25,25,25.
      *
      * @return array{0: float, 1: float, 2: float, 3: float}
      */
     private function parcialesQuePromedian(int $nota, int $sid, int $cid): array
     {
-        // Margen hasta los bordes: a 10 no se puede subir, a 1 no se puede bajar.
-        $amplitud = min(1.0, 10 - $nota, $nota - 1);
+        // El acumulado de 100 se reparte en cuatro parciales de 25.
+        $acumulado = $nota * 10;
+        $base = $acumulado / 4;
+
+        // Margen hasta los bordes: a 25 no se puede subir, a 0 no se puede bajar.
+        $amplitud = min(5.0, ParcialService::MAXIMO_PARCIAL - $base, $base);
 
         $patrones = [
             [0.0, 0.0, 0.0, 0.0],
@@ -174,7 +180,7 @@ class CalificacionSeeder extends Seeder
 
         $desvios = $patrones[($sid + $cid) % count($patrones)];
 
-        return array_map(fn (float $desvio) => $nota + $desvio, $desvios);
+        return array_map(fn (float $desvio) => round($base + $desvio, 1), $desvios);
     }
 
     /**
