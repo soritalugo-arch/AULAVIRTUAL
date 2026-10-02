@@ -14,6 +14,8 @@
                 'admin.asistencia'    => ['Asistencia', 'fa-calendar-check'],
                 'admin.deudas'        => ['Deudas', 'fa-money-bill-transfer'],
                 'admin.asignaciones.index'  => ['Asignaciones', 'fa-chalkboard-user'],
+                'admin.plan'          => ['Plan de Estudios', 'fa-book'],
+                'admin.periodo'       => ['Periodo Académico', 'fa-calendar-days'],
             ];
         @endphp
 

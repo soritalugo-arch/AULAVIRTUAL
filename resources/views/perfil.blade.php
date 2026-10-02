@@ -96,6 +96,43 @@
                 </div>
             </div>
         </div>
+
+        {{-- Datos de carrera: el cuatrimestre del plan (X o X-Y) y los conteos --}}
+        <div class="bg-white border border-[#e0e8f5] rounded-[24px] shadow-[0_8px_25px_rgba(70,100,160,0.08)] p-5 sm:p-7 mt-6">
+            <div class="flex flex-wrap items-center gap-3 mb-3">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-layer-group text-[22px] text-[#6382dc]"></i>
+                    <h2 class="text-xl sm:text-2xl font-['Georgia'] font-bold text-[#171c7c]">Datos de carrera</h2>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <div class="text-[11px] font-bold tracking-widest uppercase text-[#9aabd0]">Cuatrimestre del plan</div>
+                    <div class="text-[15px] font-semibold text-[#24356e] mt-0.5">
+                        @if ($datos['egresado'])
+                            Carrera completada
+                        @elseif (! empty($datos['ventana']))
+                            {{ $datos['ventana']['formato'] }} de {{ $datos['ventana']['totalEtapas'] }}
+                        @else
+                            —
+                        @endif
+                    </div>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold tracking-widest uppercase text-[#9aabd0]">Materias aprobadas</div>
+                    <div class="text-[15px] font-semibold text-[#24356e] mt-0.5">{{ $datos['ventana']['aprobadas'] ?? 0 }}</div>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold tracking-widest uppercase text-[#9aabd0]">Materias reprobadas</div>
+                    <div class="text-[15px] font-semibold text-[#24356e] mt-0.5">{{ $datos['ventana']['reprobadas'] ?? 0 }}</div>
+                </div>
+                <div>
+                    <div class="text-[11px] font-bold tracking-widest uppercase text-[#9aabd0]">Por cursar</div>
+                    <div class="text-[15px] font-semibold text-[#24356e] mt-0.5">{{ $datos['ventana']['pendientes'] ?? 0 }}</div>
+                </div>
+            </div>
+        </div>
     @endif
 
     {{-- Bloque del profesor --}}

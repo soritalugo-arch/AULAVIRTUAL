@@ -238,6 +238,45 @@
 
 
     /* =====================================================
+       MENSAJE DE ERROR
+    ===================================================== */
+
+    .alert-error {
+        position: relative;
+
+        z-index: 2;
+
+        margin-bottom: 22px;
+
+        padding: 13px 18px;
+
+        display: flex;
+
+        align-items: flex-start;
+
+        gap: 9px;
+
+        border-radius: 16px;
+
+        background: #ffe6ec;
+
+        border: 1px solid #ffc6d5;
+
+        color: #c31f4c;
+
+        font-size: 14px;
+
+        font-weight: 500;
+    }
+
+    .alert-error ul {
+        margin: 0;
+
+        padding-left: 18px;
+    }
+
+
+    /* =====================================================
        LEYENDA DE FALTAS
     ===================================================== */
 
@@ -344,7 +383,7 @@
 
         table-layout: fixed;
 
-        min-width: 860px;
+        min-width: 1080px;
     }
 
     /* ENCABEZADO */
@@ -375,33 +414,50 @@
 
     th:nth-child(1),
     td:nth-child(1) {
-        width: 27%;
+        width: 18%;
     }
 
     th:nth-child(2),
     td:nth-child(2) {
-        width: 14%;
+        width: 10%;
 
         text-align: center;
     }
 
     th:nth-child(3),
     td:nth-child(3) {
-        width: 14%;
+        width: 11%;
 
         text-align: center;
     }
+
+    /* Las cuatro parciales */
 
     th:nth-child(4),
-    td:nth-child(4) {
-        width: 13%;
+    td:nth-child(4),
+    th:nth-child(5),
+    td:nth-child(5),
+    th:nth-child(6),
+    td:nth-child(6),
+    th:nth-child(7),
+    td:nth-child(7) {
+        width: 8%;
 
         text-align: center;
     }
 
-    th:nth-child(5),
-    td:nth-child(5) {
-        width: 32%;
+    /* Promedio calculado */
+
+    th:nth-child(8),
+    td:nth-child(8) {
+        width: 9%;
+
+        text-align: center;
+    }
+
+    th:nth-child(9),
+    td:nth-child(9) {
+        width: 24%;
     }
 
     /* FILAS */
@@ -505,6 +561,166 @@
         color: #d42642;
     }
 
+    /* La casilla de faltas avisa sola: amarilla al llegar al 25 % y envuelta
+       en rojo al pasar el 30 %. El aviso es la propia casilla, sin correo. */
+
+    .faltas-cell {
+        text-align: center;
+    }
+
+    .faltas-cell.advertencia {
+        background: rgba(255, 241, 201, 0.55);
+    }
+
+    .faltas-cell.peligro {
+        background: rgba(255, 224, 232, 0.55);
+    }
+
+    .faltas-cell.peligro .absence {
+        outline: 2px solid #d42642;
+
+        outline-offset: 2px;
+    }
+
+    /* BUSCADOR Y ORDEN DE LA TABLA */
+
+    .barra-notas {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: space-between;
+
+        flex-wrap: wrap;
+
+        gap: 12px;
+
+        margin-bottom: 16px;
+    }
+
+    .buscador-notas {
+        position: relative;
+
+        flex: 1 1 260px;
+
+        max-width: 340px;
+    }
+
+    .buscador-notas input {
+        width: 100%;
+
+        height: 38px;
+
+        padding: 0 36px 0 36px;
+
+        border: 1px solid #c6d3ee;
+
+        border-radius: 19px;
+
+        background: #ffffff;
+
+        color: #172f55;
+
+        font-size: 13.5px;
+
+        outline: none;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .buscador-notas input:focus {
+        border-color: #5686ef;
+
+        box-shadow: 0 0 0 3px rgba(86, 134, 239, 0.14);
+    }
+
+    .buscador-notas i {
+        position: absolute;
+
+        top: 50%;
+
+        left: 14px;
+
+        transform: translateY(-50%);
+
+        color: #8ba0c8;
+
+        font-size: 13px;
+
+        pointer-events: none;
+    }
+
+    .buscador-notas .limpiar-busqueda {
+        position: absolute;
+
+        top: 50%;
+
+        right: 6px;
+
+        transform: translateY(-50%);
+
+        display: none;
+
+        width: 26px;
+
+        height: 26px;
+
+        border: none;
+
+        border-radius: 50%;
+
+        background: #eef2fa;
+
+        color: #4a628f;
+
+        font-size: 11px;
+
+        cursor: pointer;
+    }
+
+    .buscador-notas.buscando .limpiar-busqueda {
+        display: block;
+    }
+
+    .vacio-busqueda {
+        padding: 26px 10px;
+
+        text-align: center;
+
+        color: #7a8db5;
+
+        font-size: 13.5px;
+
+        font-weight: 600;
+    }
+
+    th.ordenable {
+        cursor: pointer;
+
+        user-select: none;
+
+        white-space: nowrap;
+    }
+
+    th.ordenable:hover {
+        color: #2f6fd0;
+    }
+
+    th.ordenable .flecha {
+        margin-left: 5px;
+
+        color: #b9c6e2;
+
+        font-size: 10px;
+    }
+
+    th.ordenable.asc .flecha,
+    th.ordenable.desc .flecha {
+        color: #2f6fd0;
+    }
+
     /* ESTADO */
 
     .status {
@@ -590,6 +806,114 @@
         box-shadow:
             0 0 0 3px rgba(86, 134, 239, 0.14),
             inset 0 1px 2px rgba(86, 122, 190, 0.05);
+    }
+
+    /* INPUT DE PARCIAL: cuatro por alumno, mas angosto que el de nota */
+
+    .parcial-input {
+        width: 100%;
+
+        max-width: 62px;
+
+        height: 34px;
+
+        padding: 0 4px;
+
+        border: 1px solid #c6d3ee;
+
+        border-radius: 11px;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #f2f6ff
+            );
+
+        color: #172f55;
+
+        text-align: center;
+
+        font-size: 13px;
+
+        outline: none;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .parcial-input:focus {
+        border-color: #5686ef;
+
+        background: #ffffff;
+
+        box-shadow:
+            0 0 0 3px rgba(86, 134, 239, 0.14);
+    }
+
+    /* Etiqueta de la parcial, arriba del input (version movil) */
+
+    .parcial-label {
+        display: none;
+
+        font-size: 10px;
+
+        font-weight: 700;
+
+        color: #8ba0c8;
+
+        text-transform: uppercase;
+    }
+
+    /* PROMEDIO: se calcula solo, no es un campo editable */
+
+    .promedio-cell {
+        text-align: center;
+    }
+
+    .promedio {
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        min-width: 52px;
+
+        padding: 5px 8px;
+
+        border-radius: 13px;
+
+        background: #eef2fa;
+
+        color: #4a628f;
+
+        font-size: 13.5px;
+
+        font-weight: 700;
+    }
+
+    .promedio.aprobado {
+        background: #d9f9e8;
+        color: #0a9560;
+    }
+
+    .promedio.reprobado {
+        background: #ffe0e8;
+        color: #ec3e67;
+    }
+
+    /* Grupo de las cuatro parciales */
+
+    .parciales-celda {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 6px;
     }
 
     /* INPUT DE OBSERVACIÓN */
@@ -1088,7 +1412,11 @@
         td:nth-child(1)::before { content: "Estudiante"; align-self: start; margin-top: 4px; }
         td:nth-child(2)::before { content: "% Faltas"; }
         td:nth-child(3)::before { content: "Estado"; }
-        td:nth-child(4)::before { content: "Nota (1-10)"; }
+        td:nth-child(4)::before { content: "Parcial 1"; }
+        td:nth-child(5)::before { content: "Parcial 2"; }
+        td:nth-child(6)::before { content: "Parcial 3"; }
+        td:nth-child(7)::before { content: "Parcial 4"; }
+        td:nth-child(8)::before { content: "Promedio"; }
         
         /* Alinear el contenido (los datos) a la derecha */
         td > * {
@@ -1097,19 +1425,19 @@
         }
         
         /* La observación necesita todo el ancho por ser un input largo */
-        td:nth-child(5) {
+        td:nth-child(9) {
             display: flex;
             flex-direction: column;
             align-items: stretch;
             gap: 10px;
         }
         
-        td:nth-child(5)::before {
+        td:nth-child(9)::before {
             content: "Observación";
             position: static;
         }
         
-        td:nth-child(5) > * {
+        td:nth-child(9) > * {
             max-width: 100%;
             text-align: left;
         }
@@ -1209,6 +1537,23 @@
             </div>
         @endif
 
+        {{-- Si una parcial se sale de la escala (o falta el alumno), el profesor
+             tiene que saber qué pasó: sin esto la página se recarga en silencio
+             y parece que se guardó. --}}
+        @if($errors->any())
+            <div class="alert-error">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                    No se pudieron guardar las notas:
+                    <ul>
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        @endif
+
         {{-- Leyenda de faltas --}}
         <div class="legend">
 
@@ -1229,8 +1574,9 @@
 
         </div>
 
-        <p class="registro-clases">
-            Se han registrado <strong>{{ $clasesRegistradas }}</strong> de <strong>{{ $totalClases }}</strong> clases programadas.
+        <p class="registro-clases" style="margin:-10px 0 18px;text-align:left">
+            Cada parcial vale <strong>25 puntos</strong> sobre 100. Se captura del 0 al 25 y el
+            <strong>acumulado</strong> y el <strong>promedio</strong> salen solos; se aprueba con 60 puntos.
         </p>
 
         @if($estudiantes->isEmpty())
@@ -1246,18 +1592,60 @@
             <input type="hidden" name="id_curso"         value="{{ $curso->id_curso }}">
             <input type="hidden" name="id_cuatrimestre"  value="{{ $cuatrimestre->id_cuatrimestre }}">
 
+        <div class="barra-notas">
+
+                <div class="buscador-notas" data-buscador>
+
+                    <i class="fa-solid fa-magnifying-glass"></i>
+
+                    <input
+                        type="search"
+                        placeholder="Buscar un alumno por nombre..."
+                        data-buscar
+                        aria-label="Buscar un alumno por nombre"
+                    >
+
+                    <button type="button" class="limpiar-busqueda" data-limpiar title="Limpiar búsqueda">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+
+                </div>
+
+                <p class="registro-clases" style="margin:0">
+                    Se han registrado <strong>{{ $clasesRegistradas }}</strong> de <strong>{{ $totalClases }}</strong> clases programadas.
+                </p>
+
+            </div>
+
             <div class="table-slot">
 
-                <table>
+                <table data-tabla-notas>
 
                     <thead>
 
                         <tr>
 
-                            <th>ESTUDIANTE</th>
+                            <th class="ordenable" data-orden="nombre">
+                                ESTUDIANTE<span class="flecha"><i class="fa-solid fa-sort"></i></span>
+                            </th>
+
                             <th>% FALTAS</th>
+
                             <th>ESTADO</th>
-                            <th>NOTA (1-10)</th>
+
+                            <th>P1<br>(25 pts)</th>
+                            <th>P2<br>(25 pts)</th>
+                            <th>P3<br>(25 pts)</th>
+                            <th>P4<br>(25 pts)</th>
+
+                            <th class="ordenable" data-orden="promedio">
+                                ACUMULADO<span class="flecha"><i class="fa-solid fa-sort"></i></span>
+                            </th>
+
+                            <th class="ordenable" data-orden="promedio">
+                                PROMEDIO<span class="flecha"><i class="fa-solid fa-sort"></i></span>
+                            </th>
+
                             <th>OBSERVACIÓN</th>
 
                         </tr>
@@ -1279,6 +1667,11 @@
                                 'advertencia' => 'warning',
                                 default       => '',
                             };
+                            $claseCasillaFaltas = match ($est['alerta']) {
+                                'peligro'     => 'peligro',
+                                'advertencia' => 'advertencia',
+                                default       => '',
+                            };
                             $claseEstado = match($est['estado']) {
                                 'Aprobado'  => 'ok',
                                 'Reprobado' => 'fail',
@@ -1289,7 +1682,11 @@
 
                         <input type="hidden" name="notas[{{ $i }}][id_estudiante]" value="{{ $est['id'] }}">
 
-                        <tr class="{{ $claseFila }}">
+                        <tr
+                            class="{{ $claseFila }}"
+                            data-nombre="{{ $est['nombre'] }}"
+                            data-promedio="{{ $est['nota'] !== null ? (float) $est['nota'] : -1 }}"
+                        >
 
                             {{-- Nombre --}}
                             <td>
@@ -1306,8 +1703,9 @@
 
                             </td>
 
-                            {{-- % Faltas --}}
-                            <td>
+                            {{-- % Faltas: la casilla misma se pinta de amarillo al25 %
+                                 y se envuelve en rojo al pasar el 30 %. --}}
+                            <td class="faltas-cell {{ $claseCasillaFaltas }}">
 
                                 <span class="absence {{ $claseFaltas }}">
                                     {{ $est['porcentajeFaltas'] }}%
@@ -1325,19 +1723,51 @@
 
                             </td>
 
-                            {{-- Nota --}}
-                            <td>
+                            {{-- Cuatro parciales de 25 puntos cada una. El acumulado y el promedio de
+                                 las dos columnas siguientes salen solos: en el
+                                 navegador mientras escribe y otra vez al
+                                 guardar, y manda el del servidor. --}}
+                            @foreach (['parcial1', 'parcial2', 'parcial3', 'parcial4'] as $indice => $columna)
+                                <td>
+                                    <span class="parcial-label">Parcial {{ $indice + 1 }}</span>
+                                    <input
+                                        type="number"
+                                        name="notas[{{ $i }}][{{ $columna }}]"
+                                        value="{{ $est['parciales'][$indice] !== null ? number_format((float) $est['parciales'][$indice], 1, '.', '') : '' }}"
+                                        min="0" max="25" step="0.1"
+                                        class="parcial-input"
+                                        data-parcial
+                                        data-parcial-tope="25"
+                                        placeholder="—"
+                                        @disabled(!$puedeEditar)
+                                    >
+                                </td>
+                            @endforeach
 
-                                <input
-                                    type="number"
-                                    name="notas[{{ $i }}][nota]"
-                                    value="{{ $est['nota'] }}"
-                                    min="1" max="10"
-                                    class="form-control"
-                                    placeholder="—"
-                                    
-                                >
+                            {{-- Acumulado sobre 100 y promedio sobre 10: los dos
+                                 en verde cuando el alumno aprueba. --}}
+                            @php
+                                $promedio   = $est['nota'];
+                                $acumulado  = $est['acumulado'] !== null
+                                    ? (float) $est['acumulado']
+                                    : null;
+                                $claseNota  = match (true) {
+                                    $promedio === null => '',
+                                    $promedio >= 6 => 'aprobado',
+                                    default => 'reprobado',
+                                };
+                            @endphp
 
+                            <td class="promedio-cell">
+                                <span class="promedio {{ $claseNota }}" data-acumulado>
+                                    {{ $acumulado !== null ? number_format($acumulado, 2) : '—' }}
+                                </span>
+                            </td>
+
+                            <td class="promedio-cell">
+                                <span class="promedio {{ $claseNota }}" data-promedio>
+                                    {{ $promedio !== null ? number_format((float) $promedio, 2) : '—' }}
+                                </span>
                             </td>
 
                             {{-- Observación --}}
@@ -1349,6 +1779,7 @@
                                     value="{{ $est['observaciones'] }}"
                                     placeholder="Observación opcional..."
                                     class="observation"
+                                    @disabled(!$puedeEditar)
                                 >
 
                             </td>
@@ -1356,6 +1787,15 @@
                         </tr>
 
                         @endforeach
+
+                        {{-- Aparece solo si la búsqueda no deja a nadie en la tabla. --}}
+                        <tr data-sin-resultados hidden>
+                            <td colspan="10">
+                                <div class="vacio-busqueda">
+                                    Ningún alumno coincide con esa búsqueda.
+                                </div>
+                            </td>
+                        </tr>
 
                     </tbody>
 
@@ -1366,10 +1806,17 @@
             {{-- Guardar --}}
             <div class="form-actions">
 
-                <button type="submit" class="btn-save">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    Guardar Notas
-                </button>
+                @if($puedeEditar)
+                    <button type="submit" class="btn-save">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Guardar Notas
+                    </button>
+                @else
+                    <p style="color:#7a8db5;font-size:14px;font-weight:600;margin:0">
+                        <i class="fa-solid fa-circle-info" style="margin-right:6px"></i>
+                        Este período no está en cursado: las notas solo se guardan cuando la rectora lo abre.
+                    </p>
+                @endif
 
             </div>
 
@@ -1419,6 +1866,188 @@
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') closeAllSel();
         });
+    })();
+
+    /* =====================================================
+       ACUMULADO Y PROMEDIO EN VIVO
+       Cada parcial vale 25 puntos sobre 100: el acumulado es la suma de
+       las cuatro y el promedio es ese acumulado dividido entre 10. Las
+       parciales vacías cuentan como cero (opción A), el mismo cálculo que
+       hace el servidor al guardar. Es solo una ayuda visual mientras el
+       profesor escribe: al guardar manda el valor del servidor.
+       ===================================================== */
+
+    (function () {
+        var filas = document.querySelectorAll('tbody tr[data-nombre]');
+
+        for (var f = 0; f < filas.length; f++) {
+            (function (fila) {
+                var parciales = fila.querySelectorAll('[data-parcial]');
+                var salidaAcumulado = fila.querySelector('[data-acumulado]');
+                var salidaPromedio = fila.querySelector('[data-promedio]');
+
+                if (!parciales.length || !salidaAcumulado || !salidaPromedio) return;
+
+                function pintar(salida, texto, aprobado) {
+                    salida.textContent = texto;
+                    salida.className = 'promedio ' + (aprobado ? 'aprobado' : 'reprobado');
+                }
+
+                function recalcular() {
+                    var suma = 0;
+                    var hayAlgo = false;
+
+                    for (var i = 0; i < parciales.length; i++) {
+                        var valor = parseFloat(parciales[i].value);
+
+                        if (!isNaN(valor)) {
+                            suma += valor;
+                            hayAlgo = true;
+                        }
+                    }
+
+                    if (!hayAlgo) {
+                        salidaAcumulado.textContent = '—';
+                        salidaAcumulado.className = 'promedio';
+                        salidaPromedio.textContent = '—';
+                        salidaPromedio.className = 'promedio';
+                        fila.setAttribute('data-promedio', '-1');
+                        return;
+                    }
+
+                    var acumulado = Math.round(suma * 100) / 100;
+                    var promedio  = Math.round((acumulado / 10) * 100) / 100;
+                    var aprueba   = promedio >= 6;
+
+                    pintar(salidaAcumulado, acumulado.toFixed(2), aprueba);
+                    pintar(salidaPromedio, promedio.toFixed(2), aprueba);
+
+                    /* El orden por promedio tiene que ver el número nuevo. */
+                    fila.setAttribute('data-promedio', promedio.toFixed(2));
+                }
+
+                for (var j = 0; j < parciales.length; j++) {
+                    parciales[j].addEventListener('input', recalcular);
+                }
+            })(filas[f]);
+        }
+    })();
+
+    /* =====================================================
+       BUSCAR Y ORDENAR LA TABLA
+       Todo en el navegador: el filtro esconde las filas que no
+       coinciden y el orden mueve las que quedan, sin volver a
+       pedir nada al servidor. Los numbers de las notas no se
+       tocan, siguen siendo lo que el profesor escribió.
+       ===================================================== */
+
+    (function () {
+        var tabla = document.querySelector('[data-tabla-notas]');
+
+        if (!tabla) return;
+
+        var cuerpo   = tabla.querySelector('tbody');
+        var filas    = Array.prototype.slice.call(cuerpo.querySelectorAll('tr[data-nombre]'));
+        var sinFilas = cuerpo.querySelector('[data-sin-resultados]');
+        var buscador = document.querySelector('[data-buscar]');
+        var caja     = document.querySelector('[data-buscador]');
+        var limpiar  = document.querySelector('[data-limpiar]');
+        var cabeceras = Array.prototype.slice.call(tabla.querySelectorAll('th.ordenable'));
+        var orden = { columna: null, sentido: 'asc' };
+
+        /* Para que "Peña" se encuentre escribiendo "pena": se comparan los
+           nombres sin tildes ni mayusculas. */
+        function normalizar(texto) {
+            return (texto || '')
+                .toString()
+                .toLowerCase()
+                .normalize('NFD')
+                .replace(/[̀-ͯ]/g, '');
+        }
+
+        function visibles() {
+            var termino = normalizar(buscador ? buscador.value : '').trim();
+            var quedan = 0;
+
+            for (var i = 0; i < filas.length; i++) {
+                var coincide = termino === ''
+                    || normalizar(filas[i].getAttribute('data-nombre')).indexOf(termino) !== -1;
+
+                filas[i].hidden = !coincide;
+
+                if (coincide) quedan++;
+            }
+
+            if (sinFilas) sinFilas.hidden = quedan > 0;
+
+            if (caja) caja.classList.toggle('buscando', termino !== '');
+
+            ordenar();
+        }
+
+        function ordenar() {
+            if (!orden.columna) return;
+
+            var columna = orden.columna;
+            var factor  = orden.sentido === 'asc' ? 1 : -1;
+
+            /* Se ordena sobre una copia: sort() mueve el orden de las filas
+               del DOM, pero los indices del array se mantienen porque el
+               foreach va sobre una copia. */
+            var ordenadas = filas.slice().sort(function (a, b) {
+                if (columna === 'nombre') {
+                    return normalizar(a.getAttribute('data-nombre')).localeCompare(
+                        normalizar(b.getAttribute('data-nombre'))
+                    ) * factor;
+                }
+
+                return (parseFloat(a.getAttribute('data-promedio')) - parseFloat(b.getAttribute('data-promedio'))) * factor;
+            });
+
+            for (var i = 0; i < ordenadas.length; i++) {
+                cuerpo.insertBefore(ordenadas[i], sinFilas);
+            }
+        }
+
+        if (buscador) {
+            buscador.addEventListener('input', visibles);
+        }
+
+        if (limpiar) {
+            limpiar.addEventListener('click', function () {
+                if (!buscador) return;
+
+                buscador.value = '';
+                buscador.focus();
+                visibles();
+            });
+        }
+
+        for (var c = 0; c < cabeceras.length; c++) {
+            (function (th) {
+                th.addEventListener('click', function () {
+                    var columna = th.getAttribute('data-orden');
+
+                    /* Volver a apretar la misma columna da vuelta el sentido. */
+                    if (orden.columna === columna) {
+                        orden.sentido = orden.sentido === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        orden.columna = columna;
+                        orden.sentido = columna === 'nombre' ? 'asc' : 'desc';
+                    }
+
+                    for (var k = 0; k < cabeceras.length; k++) {
+                        cabeceras[k].classList.remove('asc', 'desc');
+                    }
+
+                    th.classList.add(orden.sentido);
+                    th.querySelector('.flecha').innerHTML =
+                        '<i class="fa-solid fa-sort' + (orden.sentido === 'asc' ? '-up' : '-down') + '"></i>';
+
+                    ordenar();
+                });
+            })(cabeceras[c]);
+        }
     })();
 </script>
 

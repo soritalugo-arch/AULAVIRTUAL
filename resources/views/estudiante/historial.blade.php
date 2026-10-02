@@ -10,6 +10,7 @@
     <li><a href="{{ route('estudiante.matriculacion') }}" class="nav-link {{ request()->routeIs('estudiante.matriculacion') ? 'active' : '' }}">Matriculación</a></li>
     <li><a href="{{ route('estudiante.notas') }}" class="nav-link {{ request()->routeIs('estudiante.notas') ? 'active' : '' }}">Mis Notas</a></li>
     <li><a href="{{ route('estudiante.historial') }}" class="nav-link {{ request()->routeIs('estudiante.historial', 'estudiante.certificado') ? 'active' : '' }}">Mi Historial</a></li>
+    <li><a href="{{ route('estudiante.plan') }}" class="nav-link {{ request()->routeIs('estudiante.plan') ? 'active' : '' }}">Plan de Estudios</a></li>
 @endsection
 
 @section('contenido')
@@ -266,6 +267,27 @@
         font-weight: 600;
     }
 
+    .btn-boleta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 15px;
+        border-radius: 20px;
+        border: 1.5px solid #4f72b4;
+        background: white;
+        color: #4f72b4;
+        font-size: 12.5px;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: 0.2s ease;
+    }
+
+    .btn-boleta:hover {
+        background: #eaf1fb;
+    }
+
     /* ── Tabla ─────────────────────────────────────────────────────── */
 
     .fila-cabecera,
@@ -326,6 +348,17 @@
 
     .nota.aprobado { background: #d9f9e8; color: #079263; }
     .nota.reprobado { background: #ffe0e8; color: #d23a5f; }
+
+    /* Desglose de las cuatro parciales bajo la nota (promedio) */
+    .parciales {
+        display: block;
+        margin-top: 5px;
+        color: #8ba0c8;
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        line-height: 1.5;
+    }
 
     .pct { font-weight: 600; }
     .pct.ok { color: #0d9261; }
@@ -577,6 +610,12 @@
                                 · {{ $periodo['reprobados'] }} reprobado{{ $periodo['reprobados'] === 1 ? '' : 's' }}
                             @endif
                         </span>
+                        @if ($periodo['cuatrimestre']->estado === 'cerrado')
+                            <a href="{{ route('estudiante.boleta', $periodo['cuatrimestre']->id_cuatrimestre) }}" class="btn-boleta" title="Boleta imprimible de este lapso académico">
+                                <i class="fa-solid fa-print"></i>
+                                Boleta
+                            </a>
+                        @endif
                     </div>
 
                     <div class="fila-cabecera">
@@ -609,7 +648,15 @@
                                 @else
                                     <span
                                         class="nota {{ $pildora[0] === 'aprobado' ? 'aprobado' : 'reprobado' }}"
-                                    >{{ $curso['nota'] }}</span>
+                                    >{{ number_format((float) $curso['nota'], 2) }}</span>
+                                    {{-- Las cuatro parciales de 25 % de las que sale el promedio --}}
+                                    @if ($curso['tiene_parciales'] ?? false)
+                                        <small class="parciales">
+                                            @foreach ($curso['parciales'] as $i => $parcial)
+                                                P{{ $i + 1 }}: {{ $parcial !== null ? number_format((float) $parcial, 1) : '—' }}
+                                            @endforeach
+                                        </small>
+                                    @endif
                                 @endif
                             </div>
 

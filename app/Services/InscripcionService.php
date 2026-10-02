@@ -33,11 +33,26 @@ class InscripcionService
                 throw new Exception('La asignatura no pertenece a la carrera del estudiante.');
             }
 
+            // 1b. Debe ser una materia del cuatrimestre del plan en el que el
+            // estudiante está: quien va por el cuatrimestre 4 solo puede
+            // inscribir las 2 o 3 materias de esa etapa, no las de la carrera
+            // entera. Carreras sin etapas definidas conservan el
+            // comportamiento anterior (todas sus materias son inscribibles).
+            $this->validarEtapaDelPlan($estudiante, $curso);
+
             // 2. La asignatura debe ofrecerse en el cuatrimestre vigente
             $cuatrimestre = $this->cuatrimestreVigente();
 
             if (! $cuatrimestre || ! $curso->cuatrimestres()->whereKey($cuatrimestre->id_cuatrimestre)->exists()) {
                 throw new Exception('La asignatura no está disponible en el cuatrimestre vigente.');
+            }
+
+            // 2b. Solo se inscribe mientras el período está en MATRÍCULA. Una
+            // vez que comienzan las clases (en_curso) la inscripción se cierra,
+            // y en un período cerrado no se toca nada: así el momento de
+            // inscribirse nunca se mezcla con el momento de cursar.
+            if ($cuatrimestre->estado !== Cuatrimestre::ESTADO_MATRICULA) {
+                throw new Exception('La matrícula para este período está cerrada.');
             }
 
             // 3. Bloqueo por deuda pendiente
@@ -114,6 +129,10 @@ class InscripcionService
 
             if (! $cuatrimestre) {
                 return;
+            }
+
+            if ($cuatrimestre->estado !== Cuatrimestre::ESTADO_MATRICULA) {
+                throw new Exception('La matrícula para este período está cerrada.');
             }
 
             $inscripcion = Inscripcion::where('id_estudiante', $estudiante->id_usuario)
@@ -199,6 +218,12 @@ class InscripcionService
      */
     public function quitarDeListaEspera(Estudiante $estudiante, Curso $curso): bool
     {
+        $cuatrimestre = $this->cuatrimestreVigente();
+
+        if ($cuatrimestre && $cuatrimestre->estado !== Cuatrimestre::ESTADO_MATRICULA) {
+            throw new Exception('La matrícula para este período está cerrada.');
+        }
+
         return DB::transaction(function () use ($estudiante, $curso) {
             $curso = Curso::query()->whereKey($curso->id_curso)->lockForUpdate()->first();
 
@@ -248,6 +273,49 @@ class InscripcionService
         }
 
         return $curso->carreras()->whereKey($estudiante->id_carrera)->exists();
+    }
+
+    /**
+     * Valida que el curso sea una materia de la ventana de cuatrimestres actual.
+     *
+     * El estudiante solo puede inscribir las materias que le tocan ahora: un
+     * cuatrimestre (X) cuando no arrastra materias, o dos (X-Y) cuando repite
+     * lo raspado y adelanta el siguiente. Una carrera sin etapas definidas
+     * conserva el comportamiento anterior (todas sus materias son
+     * inscribibles).
+     */
+    private function validarEtapaDelPlan(Estudiante $estudiante, Curso $curso): void
+    {
+        $carrera = $estudiante->carrera;
+
+        if (! $carrera) {
+            return;
+        }
+
+        $conEtapas = $carrera->cursos()
+            ->withPivot('etapa')
+            ->get()
+            ->contains(fn ($c) => $c->pivot->etapa !== null);
+
+        if (! $conEtapas) {
+            return;
+        }
+
+        $ventana = app(HistorialService::class)->ventanaEtapas($estudiante);
+
+        if ($ventana === null) {
+            throw new Exception('Ya completaste tu carrera: no tienes materias pendientes.');
+        }
+
+        $esDeLaVentana = $curso->carreras()
+            ->whereKey($carrera->id_carrera)
+            ->wherePivot('etapa', '>=', $ventana['desde'])
+            ->wherePivot('etapa', '<=', $ventana['hasta'])
+            ->exists();
+
+        if (! $esDeLaVentana) {
+            throw new Exception('Esta asignatura no corresponde al cuatrimestre del plan en el que estás.');
+        }
     }
 
     /**

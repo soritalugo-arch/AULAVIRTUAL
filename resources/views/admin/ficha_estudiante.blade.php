@@ -99,7 +99,7 @@
                     <thead>
                         <tr class="text-[12px] uppercase tracking-wide text-[#7a8db5] border-b border-[#eef3fb]">
                             <th class="py-3 pr-4 font-semibold">Materia</th>
-                            <th class="py-3 pr-4 font-semibold text-right">Nota</th>
+                            <th class="py-3 pr-4 font-semibold text-right">Promedio</th>
                             <th class="py-3 pr-4 font-semibold text-right">Inasistencia</th>
                             <th class="py-3 font-semibold">Estado</th>
                         </tr>
@@ -108,7 +108,7 @@
                         @foreach ($materias as $m)
                             <tr class="border-b border-[#f2f6fd] last:border-0">
                                 <td class="py-3 pr-4 font-semibold text-[#171c7c]">{{ $m['curso'] }}</td>
-                                <td class="py-3 pr-4 text-right font-bold text-[#2f55c4]">{{ $m['nota'] !== null ? $m['nota'] : '—' }}</td>
+                                <td class="py-3 pr-4 text-right font-bold text-[#2f55c4]">{{ $m['nota'] !== null ? number_format((float) $m['nota'], 2) : '—' }}</td>
                                 <td class="py-3 pr-4 text-right">{{ $m['inasistencia'] }}%</td>
                                 <td class="py-3">
                                     <span class="px-2.5 py-1 rounded-full text-[11px] font-bold {{ $claseEstado($m['estado']) }}">{{ $m['estado'] }}</span>

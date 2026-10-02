@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Estudiante;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cuatrimestre;
 use App\Models\Estudiante;
 use App\Services\HistorialService;
 use Barryvdh\DomPDF\PDF;
@@ -31,6 +32,35 @@ class HistorialController extends Controller
             'estudiante' => $estudiante,
             'datos' => $datos,
             'esEgresado' => $this->historial->esEgresado($estudiante, $datos),
+        ]);
+    }
+
+    /**
+     * Boleta del lapso académico (período), vista imprimible en pantalla.
+     *
+     * Se emite solo para períodos cerrados: ahí las notas y la asistencia ya
+     * son definitivas. La boleta es por lapso académico (el cuatrimestre del
+     * período), no por cuatrimestre del plan; el certificado PDF enriquecido
+     * sigue siendo exclusivo de los egresados.
+     */
+    public function boleta(Cuatrimestre $cuatrimestre)
+    {
+        $estudiante = $this->estudiante();
+        $datos = $this->historial->historial($estudiante);
+
+        $periodo = collect($datos['periodos'])->first(
+            fn (array $p) => $p['cuatrimestre']->id_cuatrimestre === $cuatrimestre->id_cuatrimestre
+        );
+
+        if (! $periodo || $cuatrimestre->estado !== Cuatrimestre::ESTADO_CERRADO) {
+            abort(404, 'No hay una boleta emitida para ese lapso.');
+        }
+
+        return view('estudiante.boleta', [
+            'estudiante' => $estudiante,
+            'cuatrimestre' => $cuatrimestre,
+            'datos' => $datos,
+            'periodo' => $periodo,
         ]);
     }
 

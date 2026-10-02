@@ -102,6 +102,12 @@ class HistorialService
                 'calificacion.id_cuatrimestre',
                 'calificacion.id_curso',
                 'calificacion.nota',
+                'calificacion.promedio',
+                'calificacion.tiene_parciales',
+                'calificacion.parcial1',
+                'calificacion.parcial2',
+                'calificacion.parcial3',
+                'calificacion.parcial4',
                 'calificacion.observaciones',
                 'curso.nombre as curso',
             ])
@@ -138,6 +144,12 @@ class HistorialService
                 'curso.nombre as curso',
             ])
             ->selectRaw('null as nota')
+            ->selectRaw('null as promedio')
+            ->selectRaw('null as tiene_parciales')
+            ->selectRaw('null as parcial1')
+            ->selectRaw('null as parcial2')
+            ->selectRaw('null as parcial3')
+            ->selectRaw('null as parcial4')
             ->selectRaw('null as observaciones')
             ->selectRaw('curso_cuatrimestre.total_clases as total_clases')
             ->selectSub($this->conteoAsistencia('inscripcion', true), 'faltas')
@@ -160,18 +172,33 @@ class HistorialService
             (int) $fila->faltas,
             (int) $fila->total_clases,
             (int) $fila->clases_dictadas,
+            $terminado,
         );
+
+        // Con parciales manda el promedio de las cuatro: es la nota que ve el
+        // alumno y la que el sistema promedia, no un entero viejo.
+        $tieneParciales = (bool) ($fila->tiene_parciales ?? false);
+        $promedio = $tieneParciales && $fila->promedio !== null
+            ? (float) $fila->promedio
+            : ($nota !== null ? (float) $nota : null);
 
         return [
             'cuatrimestre' => $cuatrimestre,
             'id_cuatrimestre' => (int) $fila->id_cuatrimestre,
             'id_curso' => (int) $fila->id_curso,
             'curso' => $fila->curso,
-            'nota' => $nota,
+            'nota' => $promedio,
+            'tiene_parciales' => $tieneParciales,
+            'parciales' => [
+                $fila->parcial1 ?? null,
+                $fila->parcial2 ?? null,
+                $fila->parcial3 ?? null,
+                $fila->parcial4 ?? null,
+            ],
             'observaciones' => $fila->observaciones,
             'inasistencia' => $inasistencia,
             'alerta' => $this->reglas->nivelAlerta($inasistencia),
-            'estado' => $this->reglas->estadoEstudiante($nota, $inasistencia, $terminado),
+            'estado' => $this->reglas->estadoEstudiante($promedio, $inasistencia, $terminado),
         ];
     }
 
@@ -289,6 +316,161 @@ class HistorialService
             ->pluck('id_curso');
 
         return $cursosDeLaCarrera->diff($aprobados)->isEmpty();
+    }
+
+    /**
+     * Materias aprobadas de toda la carrera, con el mismo veredicto del aula.
+     *
+     * Al estar basado en historial(), solo cuenta como aprobado lo que la regla
+     * del profesor (nota >= 6 y sin exceso de faltas) decide aprobar, de modo
+     * que nadie avanza de cuatrimestre con un curso que la pantalla del aula
+     * todavía considera reprobado.
+     *
+     * @return Collection<int, int>
+     */
+    public function cursosAprobados(Estudiante $estudiante): Collection
+    {
+        $historial = $this->historial($estudiante);
+
+        return collect($historial['periodos'])
+            ->flatMap(fn ($p) => $p['cursos']->all())
+            ->filter(fn ($f) => $f['estado'] === 'Aprobado')
+            ->pluck('id_curso');
+    }
+
+    /**
+     * Ventana de cuatrimestres del plan que el estudiante puede ver e inscribir.
+     *
+     * Regla de avance por arrastres (materias raspadas):
+     *
+     *  - Sin materias raspadas: la ventana es un solo cuatrimestre, el primero
+     *    del plan que todavía no está aprobado por completo. Para pasar al
+     *    siguiente hay que aprobar TODAS sus materias.
+     *  - Con materias raspadas (un intento reprobado y todavía sin aprobar): la
+     *    ventana se abre a dos cuatrimestres: el de la materia raspada más
+     *    atrasada y el siguiente. Así el estudiante repite lo que le faltó y
+     *    adelanta materias del cuatrimestre siguiente, pero no ve más allá
+     *    hasta aprobar todo lo pendiente: si sigue raspando se queda congelado
+     *    repitiendo el mismo bucle sin avanzar.
+     *
+     * Devuelve null cuando el estudiante no tiene carrera, cuando el pensum no
+     * define etapas (matrícula sin restricción por cuatrimestre) o cuando
+     * completó todo el plan (egresada/egresado).
+     *
+     * @return array{
+     *     desde: int, hasta: int, etapas: array<int, int>,
+     *     formato: string, totalEtapas: int,
+     *     aprobadas: int, reprobadas: int, pendientes: int
+     * }|null
+     */
+    public function ventanaEtapas(Estudiante $estudiante): ?array
+    {
+        $carrera = $estudiante?->carrera;
+
+        if (! $carrera) {
+            return null;
+        }
+
+        $cursos = $carrera->cursos()->withPivot('etapa')->get();
+
+        if ($cursos->isEmpty()) {
+            return null;
+        }
+
+        $porEtapa = $cursos
+            ->filter(fn ($c) => $c->pivot->etapa !== null)
+            ->sortBy([['pivot.etapa', 'asc'], ['nombre', 'asc']])
+            ->groupBy('pivot.etapa');
+
+        if ($porEtapa->isEmpty()) {
+            return null; // pensum sin etapas: matrícula sin restricción por cuatrimestre
+        }
+
+        $totalEtapas = (int) $porEtapa->keys()->max();
+
+        // Un solo recorrido del historial para saber qué está aprobado y qué se
+        // raspó en algún momento (evita consultar el historial por materia).
+        $filas = collect($this->historial($estudiante)['periodos'])
+            ->flatMap(fn ($p) => $p['cursos']->all());
+
+        $aprobados = $filas
+            ->filter(fn ($f) => $f['estado'] === 'Aprobado')
+            ->pluck('id_curso')
+            ->unique();
+
+        $raspadas = $filas
+            ->filter(fn ($f) => str_starts_with((string) $f['estado'], 'Reprobado'))
+            ->pluck('id_curso')
+            ->unique();
+
+        $pendientesPorEtapa = collect();
+        $raspadasPorEtapa = collect();
+        $aprobadas = 0;
+
+        for ($etapa = 1; $etapa <= $totalEtapas; $etapa++) {
+            $materias = $porEtapa->get($etapa, collect());
+
+            $pendientes = $materias->reject(fn ($c) => $aprobados->contains($c->id_curso));
+            $pendientesPorEtapa[$etapa] = $pendientes->values();
+
+            $raspadasPorEtapa[$etapa] = $pendientes
+                ->filter(fn ($c) => $raspadas->contains($c->id_curso))
+                ->values();
+
+            $aprobadas += $materias->count() - $pendientes->count();
+        }
+
+        $primeraPendiente = $pendientesPorEtapa
+            ->search(fn ($materias) => $materias->isNotEmpty());
+
+        if ($primeraPendiente === false) {
+            return null; // completó el plan completo (egresada/egresado)
+        }
+
+        // Con algo raspado la ventana se abre un cuatrimestre más (1-2, 2-3...):
+        // se repite lo pendiente y se adelanta el siguiente, sin pasar de ahí.
+        $primeraRaspada = $raspadasPorEtapa
+            ->search(fn ($materias) => $materias->isNotEmpty());
+
+        if ($primeraRaspada !== false) {
+            $desde = (int) $primeraRaspada;
+            $hasta = min($desde + 1, $totalEtapas);
+        } else {
+            $desde = (int) $primeraPendiente;
+            $hasta = $desde;
+        }
+
+        $reprobadas = $raspadasPorEtapa
+            ->map(fn ($materias) => $materias->count())
+            ->sum();
+
+        $pendientes = collect(range($desde, $hasta))
+            ->sum(fn ($etapa) => $pendientesPorEtapa[$etapa]->count());
+
+        return [
+            'desde' => $desde,
+            'hasta' => $hasta,
+            'etapas' => range($desde, $hasta),
+            'formato' => $desde === $hasta ? (string) $desde : $desde.'-'.$hasta,
+            'totalEtapas' => $totalEtapas,
+            'aprobadas' => $aprobadas,
+            'reprobadas' => $reprobadas,
+            'pendientes' => $pendientes,
+        ];
+    }
+
+    /**
+     * Cuatrimestre base del estudiante: el primero del plan sin aprobar del todo.
+     *
+     * Con una materia raspada devuelve la etapa de esa materia; sin raspadas,
+     * la primera etapa con pendientes. Es el "desde" de la ventana de etapas.
+     *
+     * Devuelve null si el estudiante no tiene carrera, si su carrera no define
+     * etapas en el pensum, o si completó todo el plan (egresada/egresado).
+     */
+    public function etapaActual(Estudiante $estudiante): ?int
+    {
+        return $this->ventanaEtapas($estudiante)['desde'] ?? null;
     }
 
     /**

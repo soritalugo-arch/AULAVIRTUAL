@@ -321,7 +321,7 @@
                                     @if ($curso['nota'] === null)
                                         <span class="punto">—</span>
                                     @else
-                                        <span class="nota {{ $pildora[0] === 'aprobado' ? 'aprobado' : 'reprobado' }}">{{ $curso['nota'] }}</span>
+                                        <span class="nota {{ $pildora[0] === 'aprobado' ? 'aprobado' : 'reprobado' }}">{{ number_format((float) $curso['nota'], 2) }}</span>
                                     @endif
                                 </td>
                                 <td class="c-inasistencia">{{ number_format($curso['inasistencia'], 1) }} %</td>

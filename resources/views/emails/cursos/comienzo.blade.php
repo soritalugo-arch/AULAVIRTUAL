@@ -6,8 +6,8 @@ Te recordamos que tu curso está a punto de iniciar.
 **Materia:** {{ $curso }}  
 **Fecha de Inicio:** {{ $fechaInicio }}
 
-<x-mail::button :url="url('/estudiante/mi-horario')">
-Ver mi Horario y Aulas
+<x-mail::button :url="route('estudiante.notas')">
+Ver mis notas y asistencia
 </x-mail::button>
 
 ¡Mucho éxito en este nuevo ciclo!

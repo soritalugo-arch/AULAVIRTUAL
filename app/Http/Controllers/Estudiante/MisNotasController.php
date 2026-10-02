@@ -30,23 +30,35 @@ class MisNotasController extends Controller
                 ->where('id_estudiante', $estudiante->id_usuario)
                 ->where('id_cuatrimestre', $idCuatr)
                 ->first();
-            $porcentaje = $this->servicio->porcentajeInasistencia($estudiante->id_usuario, $curso->id_curso, $idCuatr);
+            // Mientras el período sigue abierto el porcentaje sale de las clases
+            // dictadas; una vez terminado, del total programado.
+            $porcentaje = $this->servicio->porcentajeInasistencia($estudiante->id_usuario, $curso->id_curso, $idCuatr, $cuatrimestreTerminado);
             $clasesRegistradas = $this->servicio->clasesDictadas($curso->id_curso, $idCuatr);
+            // Lo que ve el alumno es su promedio de las cuatro parciales, el
+            // mismo numero que calcula el profesor.
+            $notaEfectiva = $calificacion?->notaEfectiva();
+
             return [
                 'curso'            => $curso->nombre,
                 'cuatrimestre'     => $idCuatr,
                 'cuatrimestreTerminado' => $cuatrimestreTerminado,
-                'nota'             => $calificacion?->nota,
+                'nota'             => $notaEfectiva,
+                'parciales'        => $calificacion?->parciales() ?? [null, null, null, null],
                 'observaciones'    => $calificacion?->observaciones,
                 'clasesRegistradas' => $clasesRegistradas,
                 'totalClases'      => $this->servicio->totalClasesProgramadas($curso->id_curso, $idCuatr) ?? $clasesRegistradas,
                 'porcentajeFaltas' => $porcentaje,
-                'estado'           => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje, $cuatrimestreTerminado),
+                'estado'           => $this->servicio->estadoEstudiante($notaEfectiva, $porcentaje, $cuatrimestreTerminado),
                 'alerta'           => $this->servicio->nivelAlerta($porcentaje),
                 'promedioCurso'    => $this->servicio->promedioPorCurso($curso->id_curso, $idCuatr),
             ];
         })->filter()->values();
         $cuatrimestreTerminado = $vigente ? $vigente->fecha_fin->lt(now()) : true;
-        return view('estudiante.notas', compact('resumen', 'cuatrimestreTerminado'));
+
+        // Momento del período: mientras la matrícula está abierta, las clases
+        // aún no comienzan y no puede haber notas nuevas del período vigente.
+        $matriculacionAbierta = $vigente?->estado === 'matriculacion';
+
+        return view('estudiante.notas', compact('resumen', 'cuatrimestreTerminado', 'matriculacionAbierta'));
     }
 }

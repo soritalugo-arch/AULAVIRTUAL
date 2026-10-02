@@ -24,6 +24,7 @@ class Carrera extends Model
 
     public function cursos()
     {
-        return $this->belongsToMany(Curso::class, 'curso_carrera', 'carrera_id', 'curso_id');
+        return $this->belongsToMany(Curso::class, 'curso_carrera', 'carrera_id', 'curso_id')
+            ->withPivot('etapa');
     }
 }

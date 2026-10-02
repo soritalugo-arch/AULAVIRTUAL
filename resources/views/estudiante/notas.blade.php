@@ -6,6 +6,7 @@
     <li><a href="{{ route('estudiante.matriculacion') }}" class="nav-link {{ request()->routeIs('estudiante.matriculacion') ? 'active' : '' }}">Matriculación</a></li>
     <li><a href="{{ route('estudiante.notas') }}" class="nav-link {{ request()->routeIs('estudiante.notas') ? 'active' : '' }}">Mis Notas</a></li>
     <li><a href="{{ route('estudiante.historial') }}" class="nav-link {{ request()->routeIs('estudiante.historial', 'estudiante.certificado') ? 'active' : '' }}">Mi Historial</a></li>
+    <li><a href="{{ route('estudiante.plan') }}" class="nav-link {{ request()->routeIs('estudiante.plan') ? 'active' : '' }}">Plan de Estudios</a></li>
 @endsection
 
 @section('contenido')
@@ -206,11 +207,12 @@
         min-height: 72px;
         padding: 0 25px;
         display: grid;
-        grid-template-columns: 25% 12% 13% 15% 20% 15%;
+        /* Curso + 4 parciales + promedio + faltas + estado + promedio del curso + observacion */
+        grid-template-columns: 18% 5.5% 5.5% 5.5% 5.5% 9% 10% 12% 16% 12%;
         align-items: center;
         background: #f1f6ff;
         color: #6b82b5;
-        font-size: 13px;
+        font-size: 12px;
         font-weight: 700;
     }
 
@@ -226,10 +228,38 @@
         min-height: 110px;
         padding: 10px 25px;
         display: grid;
-        grid-template-columns: 25% 12% 13% 15% 20% 15%;
+        grid-template-columns: 18% 5.5% 5.5% 5.5% 5.5% 9% 10% 12% 16% 12%;
         align-items: center;
         background: rgba(255, 255, 255, 0.90);
         border-top: 1px solid #e4ebf6;
+    }
+
+    /* =====================================================
+       LAS CUATRO PARCIALES
+    ===================================================== */
+
+    .parcial {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .parcial-valor {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-width: 38px;
+        padding: 5px 6px;
+        border-radius: 11px;
+        background: #eef2fa;
+        color: #4a628f;
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    .parcial-valor.vacio {
+        background: #f6f8fd;
+        color: #a7b7d3;
     }
 
     /* =====================================================
@@ -325,7 +355,7 @@
         }
         .table-header,
         .course-row {
-            grid-template-columns: 23% 12% 13% 14% 19% 19%;
+            grid-template-columns: 16% 6% 6% 6% 6% 10% 10% 13% 15% 12%;
         }
     }
 
@@ -404,7 +434,7 @@
         }
 
         /* Ajustes internos para que se vean bien alineados en tarjeta */
-        .grade, .absences, .average {
+        .grade, .absences, .average, .parcial {
             flex-direction: row; /* Alineación horizontal en tarjeta */
             gap: 10px;
         }
@@ -450,6 +480,16 @@
 </style>
 
 <div class="notas-wrap">
+
+    @if($matriculacionAbierta)
+        <div style="background:#e8f0ff;border:1px solid #c5d8fa;border-radius:16px;color:#2f55c4;padding:16px 20px;margin-bottom:22px;display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600">
+            <i class="fa-solid fa-circle-info" style="font-size:18px"></i>
+            <span>
+                Este cuatrimestre está en período de matrícula: las clases aún no comienzan.
+                Las notas aparecerán aquí cuando la rectora dé inicio al cursado.
+            </span>
+        </div>
+    @endif
 
     @php
         $mapaIconos = [
@@ -546,7 +586,11 @@
             <!-- CABECERA -->
             <div class="table-header">
                 <div>CURSO</div>
-                <div>NOTA</div>
+                <div>P1</div>
+                <div>P2</div>
+                <div>P3</div>
+                <div>P4</div>
+                <div>PROMEDIO</div>
                 <div>% FALTAS</div>
                 <div>ESTADO</div>
                 <div>PROMEDIO DEL CURSO</div>
@@ -586,11 +630,22 @@
                         </div>
                     </div>
 
-                    <!-- NOTA (agregado data-label) -->
-                    <div class="grade" data-label="NOTA">
+                    <!-- Las cuatro parciales de 25 % y el promedio que sale de ellas -->
+                    @foreach (['parcial1', 'parcial2', 'parcial3', 'parcial4'] as $indice => $columna)
+                        <div class="parcial" data-label="P{{ $indice + 1 }}">
+                            @if ($item['parciales'][$indice] !== null)
+                                <span class="parcial-valor">{{ number_format((float) $item['parciales'][$indice], 1) }}</span>
+                            @else
+                                <span class="parcial-valor vacio">—</span>
+                            @endif
+                        </div>
+                    @endforeach
+
+                    <!-- PROMEDIO (agregado data-label) -->
+                    <div class="grade" data-label="PROMEDIO">
                         @if($tieneNota)
                             <div class="grade-value {{ $item['nota'] >= 6 ? 'pass' : 'fail' }}">
-                                {{ $item['nota'] }}
+                                {{ number_format((float) $item['nota'], 2) }}
                             </div>
                         @else
                             <div class="grade-value">—</div>

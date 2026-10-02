@@ -394,6 +394,131 @@
 
 
     /* =====================================================
+       AVISOS FLASH
+    ===================================================== */
+
+    .flash-banner {
+        position: relative;
+
+        z-index: 2;
+
+        display: flex;
+
+        align-items: flex-start;
+
+        gap: 10px;
+
+        padding: 14px 18px;
+
+        margin-bottom: 24px;
+
+        border-radius: 16px;
+
+        font-size: 14px;
+
+        font-weight: 600;
+
+        line-height: 1.5;
+    }
+
+    .flash-banner i {
+        margin-top: 2px;
+    }
+
+    .flash-success {
+        background: #e8f7ee;
+
+        border: 1px solid #bfe8cd;
+
+        color: #1d7a46;
+    }
+
+    .flash-error {
+        background: #fdeeee;
+
+        border: 1px solid #f4c7c7;
+
+        color: #b42318;
+    }
+
+
+    /* =====================================================
+       HORARIO DEL CURSO
+    ===================================================== */
+
+    .course-schedule {
+        position: relative;
+
+        z-index: 2;
+
+        display: flex;
+
+        flex-wrap: wrap;
+
+        gap: 8px;
+
+        margin: 16px 0 4px 80px;
+    }
+
+    .schedule-chip {
+        display: inline-flex;
+
+        align-items: center;
+
+        gap: 7px;
+
+        padding: 6px 12px;
+
+        border-radius: 999px;
+
+        background: #f0f5ff;
+
+        border: 1px solid #d9e6ff;
+
+        color: #3b5cd6;
+
+        font-size: 12px;
+
+        font-weight: 700;
+    }
+
+
+    /* =====================================================
+       AVISO MIENTRAS LA MATRÍCULA ESTÁ ABIERTA
+    ===================================================== */
+
+    .course-pending {
+        display: flex;
+
+        align-items: center;
+
+        gap: 10px;
+
+        grid-column: 1 / -1;
+
+        min-height: 40px;
+
+        padding: 12px 16px;
+
+        border-radius: 16px;
+
+        background: #f0f5ff;
+
+        border: 1px dashed #c2d8ff;
+
+        color: #4a68c0;
+
+        font-size: 13px;
+
+        font-weight: 600;
+    }
+
+    .course-pending i {
+        color: #3b5cd6;
+    }
+
+
+    /* =====================================================
        RESPONSIVE
     ===================================================== */
     
@@ -410,6 +535,9 @@
             padding: 40px;
         }
         .course-actions {
+            margin-left: 0;
+        }
+        .course-schedule {
             margin-left: 0;
         }
     }
@@ -433,6 +561,10 @@
             margin-left: 0;
             display: flex; /* En lugar de grid para distribuir mejor */
             gap: 12px;
+        }
+        
+        .course-schedule {
+            margin-left: 0;
         }
         
         .btn-notes, .btn-attendance {
@@ -550,6 +682,22 @@
 
         return 'fa-book-open';
     };
+
+    // Hora "bien redactada": 18:00:00 -> 6:00 pm
+    $formatoHora = function (?string $hora): string {
+        if (! $hora) {
+            return '';
+        }
+
+        try {
+            return \Carbon\Carbon::createFromFormat('H:i:s', $hora)->format('g:i a');
+        } catch (\Throwable $e) {
+            return $hora;
+        }
+    };
+
+    // Durante la matrícula el profesor solo ve su horario, no a sus estudiantes.
+    $enMatricula = $momento && $momento->estado === 'matriculacion';
 @endphp
 
 <div class="cursos-wrap">
@@ -562,9 +710,27 @@
 
             <h1>Mis Cursos</h1>
 
-            <p>Selecciona un curso para gestionar notas o asistencia.</p>
+            @if ($enMatricula)
+                <p>La matrícula está abierta: por ahora solo ves el horario de tus cursos. Cuando el período esté en cursado verás a tus estudiantes y podrás calificar.</p>
+            @else
+                <p>Selecciona un curso para gestionar notas o asistencia.</p>
+            @endif
 
         </div>
+
+        @if (session('success'))
+            <div class="flash-banner flash-success">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>{{ session('success') }}</span>
+            </div>
+        @endif
+
+        @if (session('error'))
+            <div class="flash-banner flash-error">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span>{{ session('error') }}</span>
+            </div>
+        @endif
 
         @if($cursos->isEmpty())
 
@@ -600,17 +766,39 @@
 
                     </div>
 
+                    @if ($curso->horarios->isNotEmpty())
+                    <div class="course-schedule">
+
+                        @foreach ($curso->horarios as $horario)
+                            <span class="schedule-chip">
+                                <i class="fa-regular fa-clock"></i>
+                                {{ $horario->dia_semana }} ·
+                                {{ $formatoHora($horario->hora_inicio) }}
+                                a {{ $formatoHora($horario->hora_fin) }}
+                            </span>
+                        @endforeach
+
+                    </div>
+                    @endif
+
                     <div class="course-actions">
 
-                        <a href="{{ route('profesor.notas', $curso->id_curso) }}" class="btn-notes">
-                            <i class="fa-solid fa-file-lines"></i>
-                            Notas
-                        </a>
+                        @if ($enMatricula)
+                            <div class="course-pending">
+                                <i class="fa-solid fa-users-slash"></i>
+                                Verás a tus estudiantes cuando el período esté en cursado.
+                            </div>
+                        @else
+                            <a href="{{ route('profesor.notas', $curso->id_curso) }}" class="btn-notes">
+                                <i class="fa-solid fa-file-lines"></i>
+                                Notas
+                            </a>
 
-                        <a href="{{ route('profesor.asistencia', $curso->id_curso) }}" class="btn-attendance">
-                            <i class="fa-solid fa-user-group"></i>
-                            Asistencia
-                        </a>
+                            <a href="{{ route('profesor.asistencia', $curso->id_curso) }}" class="btn-attendance">
+                                <i class="fa-solid fa-user-group"></i>
+                                Asistencia
+                            </a>
+                        @endif
 
                     </div>
 

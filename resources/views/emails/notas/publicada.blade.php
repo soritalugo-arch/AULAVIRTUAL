@@ -1,16 +1,24 @@
 <x-mail::message>
 # Hola, {{ $estudiante }}.
 
-Tu profesor ha publicado una nueva calificación en el sistema.
+Tu profesor registró una evaluación nueva en el sistema.
 
-**Materia:** {{ $curso }}  
-**Calificación Final:** {{ $calificacion }}
+**Materia:** {{ $curso }}
 
-<x-mail::button :url="url('/estudiante/historial-academico')">
-Ver Historial Académico
+@if (filled($parciales))
+**Evaluación:** {{ implode(', ', $parciales) }}
+@endif
+
+@if ($calificacion !== null)
+**Promedio actual (4 parciales de 25 %):** {{ number_format($calificacion, 2) }} / 10
+@endif
+
+<x-mail::button :url="route('estudiante.notas')">
+    Ver mis notas
 </x-mail::button>
 
-Si tienes dudas, contacta a tu docente.
+El promedio se calcula solo a partir de tus cuatro parciales: cada una pesa el
+25 %. Si tienes dudas, contacta a tu docente.
 
 Saludos cordiales,<br>
 {{ config('app.name') }}

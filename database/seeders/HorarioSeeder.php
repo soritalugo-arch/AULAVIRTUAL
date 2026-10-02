@@ -8,15 +8,16 @@ use Illuminate\Database\Seeder;
 
 class HorarioSeeder extends Seeder
 {
+    // Todas las clases son en la mañana (am), repartidas entre semana y sábado.
     public const SLOTS = [
-        ['dia' => 'Lunes', 'hora_inicio' => '18:00:00', 'hora_fin' => '20:00:00'],
-        ['dia' => 'Martes', 'hora_inicio' => '18:00:00', 'hora_fin' => '20:00:00'],
-        ['dia' => 'Miércoles', 'hora_inicio' => '18:00:00', 'hora_fin' => '20:00:00'],
-        ['dia' => 'Jueves', 'hora_inicio' => '18:00:00', 'hora_fin' => '20:00:00'],
-        ['dia' => 'Viernes', 'hora_inicio' => '18:00:00', 'hora_fin' => '20:00:00'],
+        ['dia' => 'Lunes', 'hora_inicio' => '08:00:00', 'hora_fin' => '10:00:00'],
+        ['dia' => 'Martes', 'hora_inicio' => '09:00:00', 'hora_fin' => '11:00:00'],
+        ['dia' => 'Miércoles', 'hora_inicio' => '08:00:00', 'hora_fin' => '10:00:00'],
+        ['dia' => 'Jueves', 'hora_inicio' => '10:00:00', 'hora_fin' => '12:00:00'],
+        ['dia' => 'Viernes', 'hora_inicio' => '09:00:00', 'hora_fin' => '11:00:00'],
         ['dia' => 'Sábado', 'hora_inicio' => '08:00:00', 'hora_fin' => '10:00:00'],
         ['dia' => 'Sábado', 'hora_inicio' => '10:00:00', 'hora_fin' => '12:00:00'],
-        ['dia' => 'Lunes', 'hora_inicio' => '16:00:00', 'hora_fin' => '18:00:00'],
+        ['dia' => 'Lunes', 'hora_inicio' => '10:00:00', 'hora_fin' => '12:00:00'],
     ];
 
     public function run(): void

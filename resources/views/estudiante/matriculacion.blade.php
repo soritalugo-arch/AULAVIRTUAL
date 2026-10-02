@@ -12,6 +12,9 @@
     <li>
         <a href="{{ route('estudiante.historial') }}" class="nav-link {{ request()->routeIs('estudiante.historial', 'estudiante.certificado') ? 'active' : '' }}">Mi Historial</a>
     </li>
+    <li>
+        <a href="{{ route('estudiante.plan') }}" class="nav-link {{ request()->routeIs('estudiante.plan') ? 'active' : '' }}">Plan de Estudios</a>
+    </li>
 @endsection
 
 @section('contenido')
@@ -1129,6 +1132,9 @@
     @endif
 
     @php
+        // Momento del período: solo en "matrícula" se puede inscribir.
+        $matriculaAbierta = $cuatrimestreVigente?->estado === 'matriculacion';
+
         // Iconos por materia (solo visual)
         $mapaIconos = [
             'programación' => 'fa-code',
@@ -1236,6 +1242,16 @@
 
                 <div>
                     <i class="fa-regular fa-calendar"></i>
+                    <span>Vas en:</span>
+                    <strong>
+                        {{ $formato
+                            ? $formato . ' de ' . ($totalEtapas ?: $formato)
+                            : 'Completaste tu carrera' }}
+                    </strong>
+                </div>
+
+                <div>
+                    <i class="fa-regular fa-calendar"></i>
                     <span>Período vigente:</span>
                     <strong>
                         {{ $cuatrimestreVigente
@@ -1246,9 +1262,30 @@
 
             </div>
 
+            @if ($ventana && $ventana['desde'] !== $ventana['hasta'])
+                <p class="module-description">
+                    Repites las materias que te quedaron pendientes y adelantas materias del cuatrimestre siguiente.
+                </p>
+            @endif
+
         </div>
 
     </section>
+
+
+    <!-- AVISO DEL MOMENTO DEL PERÍODO -->
+    @if(! $matriculaAbierta)
+    <div class="alert-banner alert-info" role="alert">
+        <span class="alert-msg">
+            <i class="fa-solid fa-circle-info"></i>
+            @if($cuatrimestreVigente?->estado === 'en_curso')
+                La matrícula está cerrada: este cuatrimestre ya está en cursado.
+            @else
+                La matrícula está cerrada: este cuatrimestre ya finalizó.
+            @endif
+        </span>
+    </div>
+    @endif
 
 
     <!-- OFERTA ACADÉMICA -->
@@ -1302,7 +1339,11 @@
 
                 <div class="action">
 
-                    @if($enEspera)
+                    @if(! $matriculaAbierta)
+
+                        <span class="waiting">Matrícula cerrada para este período</span>
+
+                    @elseif($enEspera)
 
                         <span class="waiting">En lista de espera</span>
 
@@ -1346,7 +1387,11 @@
         @empty
 
             <div class="subject-empty">
-                No hay asignaturas disponibles para tu carrera en este momento.
+                @if($matriculaAbierta)
+                    No tienes materias pendientes para este cuatrimestre del plan.
+                @else
+                    La matrícula para este período está cerrada.
+                @endif
             </div>
 
         @endforelse

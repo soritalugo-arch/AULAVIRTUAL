@@ -4,9 +4,11 @@
 
     {{-- Cabecera global: título de la sección y filtro de cuatrimestre --}}
     @php
-        $sel = $cuatrimestres->firstWhere('id_cuatrimestre', $idCuatrimestre);
-        $periodo = 'Q' . str_pad($sel->id_cuatrimestre, 2, '0', STR_PAD_LEFT);
-        $periodoChip = $periodo . ' · ' . $sel->fecha_inicio->format('d/m/y') . ' – ' . $sel->fecha_fin->format('d/m/y');
+        // En el panel del período no se usan códigos Q01/Q02 ni el filtro: la
+        // rectora solo elige los tres momentos (matrícula / cursado / cerrado).
+        $esPanelPeriodo = request()->routeIs('admin.periodo');
+        $sel = $esPanelPeriodo ? null : $cuatrimestres->firstWhere('id_cuatrimestre', $idCuatrimestre);
+        $periodoChip = $sel ? 'Q' . str_pad($sel->id_cuatrimestre, 2, '0', STR_PAD_LEFT) . ' · ' . $sel->fecha_inicio->format('d/m/y') . ' – ' . $sel->fecha_fin->format('d/m/y') : null;
     @endphp
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 pb-12 pt-8">
@@ -14,12 +16,15 @@
         <div class="flex flex-col lg:flex-row lg:items-end justify-between gap-5 mb-6">
             <div>
                 <h1 class="text-3xl sm:text-4xl font-bold text-[#171c7c] font-['Georgia']">@yield('tituloPantalla', 'Panel de la Rectora')</h1>
-                <p class="text-[#64789f] text-sm sm:text-base mt-1">
-                    Cuatrimestre {{ str_pad($sel->id_cuatrimestre, 2, '0', STR_PAD_LEFT) }}
-                    · {{ $sel->fecha_inicio->format('d/m/Y') }} a {{ $sel->fecha_fin->format('d/m/Y') }}
-                </p>
+                @if ($sel)
+                    <p class="text-[#64789f] text-sm sm:text-base mt-1">
+                        Cuatrimestre {{ str_pad($sel->id_cuatrimestre, 2, '0', STR_PAD_LEFT) }}
+                        · {{ $sel->fecha_inicio->format('d/m/Y') }} a {{ $sel->fecha_fin->format('d/m/Y') }}
+                    </p>
+                @endif
             </div>
 
+            @unless ($esPanelPeriodo)
             <form method="GET" class="flex flex-wrap items-center gap-3 bg-white/95 border border-[#e0e8f5] rounded-2xl shadow-[0_8px_25px_rgba(70,100,160,0.08)] px-4 sm:px-5 py-3 w-full lg:w-auto">
                 <label for="cuatrimestre" class="text-sm font-semibold text-[#5a6f9c] whitespace-nowrap">Cuatrimestre</label>
                 <select name="cuatrimestre" id="cuatrimestre" onchange="this.form.submit()"
@@ -36,6 +41,7 @@
                     <button type="submit" class="bg-gradient-to-r from-[#4c5bc3] to-[#6e94ee] text-white rounded-xl px-5 py-2.5 text-sm font-semibold shadow-[0_6px_15px_rgba(76,91,195,0.25)]">Ver</button>
                 </noscript>
             </form>
+            @endunless
         </div>
 
         <div class="flex flex-col md:flex-row gap-6">

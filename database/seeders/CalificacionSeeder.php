@@ -7,6 +7,7 @@ use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
 use App\Models\Usuario;
+use App\Services\ParcialService;
 use Illuminate\Database\Seeder;
 
 class CalificacionSeeder extends Seeder
@@ -21,59 +22,119 @@ class CalificacionSeeder extends Seeder
         $pasado = Cuatrimestre::orderBy('fecha_inicio')->first()->id_cuatrimestre;
         $cursos = Curso::orderBy('id_curso')->get();
         $cursoPorNombre = $cursos->keyBy('nombre');
-        $cohortesPorCarrera = $this->cohortesPorCarrera($cursos);
+        $cursoPorId = $cursos->keyBy('id_curso');
+        $materiasDeEtapa = $this->materiasDeEtapa($cursos);
 
         $idPorEmail = Usuario::whereIn('email', [
             DatabaseSeeder::EMAIL_EGRESADA,
             DatabaseSeeder::EMAIL_INASISTENTE,
             DatabaseSeeder::EMAIL_ALERTA,
             DatabaseSeeder::EMAIL_REPITIENTE,
+            DatabaseSeeder::EMAIL_CONFLICTO,
         ])->pluck('id_usuario', 'email');
 
         self::$paresQ1 = [];
 
-        $this->registrarNota($idPorEmail[DatabaseSeeder::EMAIL_EGRESADA], $this->cursosDeEgresada($cursoPorNombre), $pasado, $this->notaEgresada(...));
+        // Nota del período pasado por curso, para un estudiante.
+        $notasDe = function (int $sid, array $cids, callable $nota) use ($cursoPorId, $pasado): void {
+            foreach ($cids as $cid) {
+                self::$paresQ1[$sid][$cid] = $nota($cursoPorId[$cid]);
+            }
+        };
 
-        $this->registrarNota($idPorEmail[DatabaseSeeder::EMAIL_INASISTENTE], [$cursoPorNombre['Fundamentos de Programación']], $pasado, fn () => 8);
-        $this->registrarNota($idPorEmail[DatabaseSeeder::EMAIL_ALERTA], [$cursoPorNombre['Fundamentos de Programación']], $pasado, fn () => 8);
-        $this->registrarNota($idPorEmail[DatabaseSeeder::EMAIL_REPITIENTE], [
-            $cursoPorNombre['Base de Datos I'],
-            $cursoPorNombre['Redes de Computadoras'],
-        ], $pasado, fn ($curso) => $curso->nombre === 'Base de Datos I' ? self::NOTA_REPITIENTE_REPROBADA : 8);
+        // Egresada de Diseño Gráfico: aprobó TODA la carrera en el pasado.
+        $this->registrarNota(
+            $idPorEmail[DatabaseSeeder::EMAIL_EGRESADA],
+            $this->cursosDeEgresada($cursoPorNombre),
+            $pasado,
+            $this->notaEgresada(...)
+        );
 
+        // Informática: cada estudiante tiene aprobadas solo las etapas
+        // ANTERIORES a la suya, para que "en qué cuatrimestre voy" sea real.
+        $e1 = $materiasDeEtapa['Informática'][1] ?? [];
+        $e2 = $materiasDeEtapa['Informática'][2] ?? [];
+
+        // Cuatrimestre 2 del plan: aprobaron el 1ro.
+        $notasDe($idPorEmail[DatabaseSeeder::EMAIL_CONFLICTO], $e1, fn () => 8);
+
+        // Carlos aprobó el 1ro pero reprobó Fundamentos (2do) por inasistencia:
+        // en el vigente lo está repitiendo.
+        $notasDe($idPorEmail[DatabaseSeeder::EMAIL_INASISTENTE], $e1, fn () => 8);
+        $notasDe($idPorEmail[DatabaseSeeder::EMAIL_INASISTENTE], [$cursoPorNombre['Fundamentos de Programación']->id_curso], fn () => 8);
+
+        // Andreina aprobó 1ro y 2do: va por el 3ro.
+        $notasDe($idPorEmail[DatabaseSeeder::EMAIL_ALERTA], array_merge($e1, $e2), fn () => 8);
+
+        // Diego aprobó 1ro y 2do pero reprobó Base de Datos I (3ro): la repite.
+        $notasDe($idPorEmail[DatabaseSeeder::EMAIL_REPITIENTE], array_merge($e1, $e2), fn () => 8);
+        $notasDe($idPorEmail[DatabaseSeeder::EMAIL_REPITIENTE], [$cursoPorNombre['Base de Datos I']->id_curso], fn () => self::NOTA_REPITIENTE_REPROBADA);
+
+        // Estudiantes genéricos: aprueban las etapas anteriores a la suya
+        // (todas con notas aprobadas, 7 a 9) para que la matrícula por etapa
+        // se vea coherente en toda la base.
         $excluidos = $idPorEmail->values()->all();
         $generales = Estudiante::where('deuda', false)
             ->whereNotIn('id_usuario', $excluidos)
             ->orderBy('id_usuario')
             ->pluck('id_usuario');
 
-        $todos = $cursos->pluck('id_curso')->all();
-
         foreach ($generales as $sid) {
-            $enQ2 = InscripcionSeeder::$enrolados[$sid] ?? [];
+            $etapa = InscripcionSeeder::$etapaDeEstudiante[$sid] ?? 1;
             $carrera = InscripcionSeeder::$carreraDeEstudiante[$sid] ?? null;
-            $cohorte = $carrera ? ($cohortesPorCarrera[$carrera] ?? []) : [];
-            $candidatos = array_values(array_diff($cohorte, $enQ2));
+            $raspada = InscripcionSeeder::$cursoRaspadoDeEstudiante[$sid] ?? null;
 
-            if (count($candidatos) < 1) {
-                $candidatos = array_values(array_slice(array_diff($todos, $enQ2), 0, 1));
+            if (! $carrera) {
+                continue;
             }
 
-            $candidatos = array_slice($candidatos, 0, 2);
+            // Sin historial previo y sin arrastre: etapa 1, todavía no tiene notas.
+            if ($etapa < 2 && ! $raspada) {
+                continue;
+            }
 
-            foreach ($candidatos as $cid) {
-                $this->notaGenerica($sid, $cid);
+            $cids = [];
+            for ($e = 1; $e < $etapa; $e++) {
+                $cids = array_merge($cids, $materiasDeEtapa[$carrera][$e] ?? []);
+            }
+
+            if ($raspada) {
+                // Arrastra una materia de su cuatrimestre: las demás de esa
+                // etapa las aprobó, así la ventana X-(X+1) queda coherente y
+                // solo le falta la que repite.
+                $delEtapa = $materiasDeEtapa[$carrera][$etapa] ?? [];
+                $cids = array_merge($cids, array_values(array_diff($delEtapa, [$raspada])));
+
+                foreach ($cids as $cid) {
+                    self::$paresQ1[$sid][$cid] = 7 + (($sid + $cid) % 3);
+                }
+                self::$paresQ1[$sid][$raspada] = self::NOTA_REPITIENTE_REPROBADA;
+            } else {
+                foreach ($cids as $cid) {
+                    self::$paresQ1[$sid][$cid] = 7 + (($sid + $cid) % 3);
+                }
             }
         }
 
         $filas = [];
         foreach (self::$paresQ1 as $sid => $cursosDelEstudiante) {
             foreach ($cursosDelEstudiante as $cid => $nota) {
+                // Las cuatro parciales reparten esa misma nota: el promedio de
+                // los datos de demostracion es exactamente el que se puso, para
+                // que historial, reportes y el panel cuadren entre si.
+                $parciales = $this->parcialesQuePromedian($nota, $sid, $cid);
+
                 $filas[] = [
                     'id_estudiante' => $sid,
                     'id_curso' => $cid,
                     'id_cuatrimestre' => $pasado,
                     'nota' => $nota,
+                    'parcial1' => $parciales[0],
+                    'parcial2' => $parciales[1],
+                    'parcial3' => $parciales[2],
+                    'parcial4' => $parciales[3],
+                    'promedio' => $nota,
+                    'tiene_parciales' => true,
                     'observaciones' => $this->observacionPara($nota),
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -86,7 +147,47 @@ class CalificacionSeeder extends Seeder
         }
     }
 
-    private function cohortesPorCarrera($cursos): array
+    /**
+     * Cuatro parciales en puntos (0 a 25) que suman justo el acumulado pedido.
+     *
+     * La nota que maneja el seeder es el promedio sobre 10, asi que el acumulado
+     * que hay que repartir es esa nota por diez (un 8 son 80 puntos de 100). Los
+     * desvios suman siempre cero, de modo que el promedio de las cuatro da
+     * exactamente la nota que el sistema guardaba antes de existir las parciales.
+     *
+     * Cada estudiante/curso toma un patron distinto (determinista por id) para
+     * que los alumnos no salgan todos con la misma nota. La amplitud se ajusta
+     * a lo que permite la escala, para que el tope de 25 no rompa la suma cero: un
+     * alumno de 10 sale con 25,25,25,25.
+     *
+     * @return array{0: float, 1: float, 2: float, 3: float}
+     */
+    private function parcialesQuePromedian(int $nota, int $sid, int $cid): array
+    {
+        // El acumulado de 100 se reparte en cuatro parciales de 25.
+        $acumulado = $nota * 10;
+        $base = $acumulado / 4;
+
+        // Margen hasta los bordes: a 25 no se puede subir, a 0 no se puede bajar.
+        $amplitud = min(5.0, ParcialService::MAXIMO_PARCIAL - $base, $base);
+
+        $patrones = [
+            [0.0, 0.0, 0.0, 0.0],
+            [$amplitud / 2, $amplitud / 2, -$amplitud / 2, -$amplitud / 2],
+            [$amplitud, -$amplitud / 2, -$amplitud / 2, 0.0],
+            [$amplitud / 2, -$amplitud / 2, $amplitud / 2, -$amplitud / 2],
+        ];
+
+        $desvios = $patrones[($sid + $cid) % count($patrones)];
+
+        return array_map(fn (float $desvio) => round($base + $desvio, 1), $desvios);
+    }
+
+    /**
+     * Materias por carrera y por etapa del plan, como ids:
+     * [carrera => [etapa => [id_curso, ...]]].
+     */
+    private function materiasDeEtapa($cursos): array
     {
         $mapa = [];
 
@@ -95,8 +196,8 @@ class CalificacionSeeder extends Seeder
         }
 
         foreach (array_values(CursoSeeder::CATALOGO) as $i => $item) {
-            foreach ($item['carreras'] as $nombre) {
-                $mapa[$nombre][] = $cursos[$i]->id_curso;
+            foreach ($item['carreras'] as $nombre => $etapa) {
+                $mapa[$nombre][$etapa][] = $cursos[$i]->id_curso;
             }
         }
 
@@ -108,7 +209,7 @@ class CalificacionSeeder extends Seeder
         $cursos = [];
 
         foreach (array_values(CursoSeeder::CATALOGO) as $i => $item) {
-            if (in_array(DatabaseSeeder::CARRERA_EGRESADA, $item['carreras'], true)) {
+            if (array_key_exists(DatabaseSeeder::CARRERA_EGRESADA, $item['carreras'])) {
                 $cursos[] = $cursoPorNombre[$item['nombre']];
             }
         }
@@ -126,21 +227,6 @@ class CalificacionSeeder extends Seeder
     private function notaEgresada($curso): int
     {
         return self::NOTA_EGRESADA + (($curso->id_curso) % 3);
-    }
-
-    private function notaGenerica(int $sid, int $cid): void
-    {
-        $r = ($sid * 7 + $cid * 3) % 10;
-
-        $nota = match (true) {
-            $r < 2 => 9,
-            $r < 5 => 8,
-            $r < 7 => 10,
-            $r < 9 => 7,
-            default => 5,
-        };
-
-        self::$paresQ1[$sid][$cid] = $nota;
     }
 
     private function observacionPara(int $nota): string

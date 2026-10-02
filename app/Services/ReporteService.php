@@ -35,6 +35,14 @@ class ReporteService
     public const SIN_DATOS = 'sin_datos';
 
     /**
+     * La nota que cuenta, en SQL: el promedio de las cuatro parciales cuando la
+     * fila ya lo tiene y la nota final antigua en las que todavia no. Es el
+     * mismo criterio que Calificacion::notaEfectiva(), escrito para que las
+     * agregaciones del panel promedien exactamente lo que ve el alumno.
+     */
+    public const NOTA_SQL = 'COALESCE(promedio, nota)';
+
+    /**
      * Datos completos del panel para un cuatrimestre (null = todos).
      */
     public function panel(?int $idCuatrimestre): array
@@ -60,7 +68,7 @@ class ReporteService
     public function kpis(?int $id, ?array $porCarrera = null, ?array $asistencia = null): array
     {
         $totalCalificaciones = $this->base('calificacion', $id)->count();
-        $aprobadas = $this->base('calificacion', $id)->where('nota', '>=', 6)->count();
+        $aprobadas = $this->base('calificacion', $id)->whereRaw(self::NOTA_SQL.' >= 6')->count();
 
         $totalAsistencias = $this->base('asistencia', $id)->count();
         $faltas = $this->base('asistencia', $id)->where('presente', false)->count();
@@ -71,7 +79,7 @@ class ReporteService
             : Curso::whereIn('id_curso', $cursosIds)->sum('limite_estudiantes');
         $inscritos = $this->base('inscripcion', $id)->count();
 
-        $promedio = $this->base('calificacion', $id)->avg('nota');
+        $promedio = $this->base('calificacion', $id)->avg(DB::raw(self::NOTA_SQL));
         $asistencia = $asistencia ?? $this->asistenciaPorCurso($id);
 
         return [
@@ -199,7 +207,7 @@ class ReporteService
      * El conteo de inscritos entra como withCount, que se resuelve en una
      * subconsulta dentro del SELECT: una sola consulta para los 45 cursos. La
      * forma naive de recorrer los cursos y contar $curso->inscripciones->count()
-     * en un bucle issued una consulta por curso, y con el filtro de periodo
+     * en un bucle emitiria una consulta por curso, y con el filtro de periodo
      * habria que repetirla.
      */
     public function inscripcionPorCurso(?int $id): array
@@ -248,9 +256,9 @@ class ReporteService
         return Estudiante::query()
             ->with(['usuario:id_usuario,nombres,apellidos', 'carrera:id_carrera,nombre'])
             ->withCount(['calificaciones as notas' => $enPeriodo])
-            ->withCount(['calificaciones as aprobadas' => fn ($q) => $enPeriodo($q)->where('nota', '>=', 6)])
-            ->withCount(['calificaciones as reprobadas' => fn ($q) => $enPeriodo($q)->where('nota', '<', 6)])
-            ->withAvg('calificaciones as promedio', 'nota', $enPeriodo)
+            ->withCount(['calificaciones as aprobadas' => fn ($q) => $enPeriodo($q)->whereRaw(self::NOTA_SQL.' >= 6')])
+            ->withCount(['calificaciones as reprobadas' => fn ($q) => $enPeriodo($q)->whereRaw(self::NOTA_SQL.' < 6')])
+            ->withAvg('calificaciones as promedio', DB::raw(self::NOTA_SQL), $enPeriodo)
             // Solo los alumnos con movimiento en el periodo: matricula o nota.
             ->when($id, fn ($q) => $q->where(fn ($w) => $w
                 ->whereHas('inscripciones', fn ($i) => $i->where('id_cuatrimestre', $id))
@@ -284,8 +292,8 @@ class ReporteService
      */
     public function rendimientoPorCurso(?int $id): array
     {
-        $aprobados = $this->conteoPorCurso('calificacion', $id, '*', 'nota >= 6');
-        $reprobados = $this->conteoPorCurso('calificacion', $id, '*', 'nota < 6');
+        $aprobados = $this->conteoPorCurso('calificacion', $id, '*', self::NOTA_SQL.' >= 6');
+        $reprobados = $this->conteoPorCurso('calificacion', $id, '*', self::NOTA_SQL.' < 6');
         $inscritos = $this->conteoPorCurso('inscripcion', $id);
         $conNota = $this->conteoPorCurso('calificacion', $id, 'DISTINCT id_estudiante');
 
