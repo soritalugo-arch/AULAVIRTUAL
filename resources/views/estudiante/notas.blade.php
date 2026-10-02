@@ -452,6 +452,16 @@
 
 <div class="notas-wrap">
 
+    @if($matriculacionAbierta)
+        <div style="background:#e8f0ff;border:1px solid #c5d8fa;border-radius:16px;color:#2f55c4;padding:16px 20px;margin-bottom:22px;display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600">
+            <i class="fa-solid fa-circle-info" style="font-size:18px"></i>
+            <span>
+                Este cuatrimestre está en período de matrícula: las clases aún no comienzan.
+                Las notas aparecerán aquí cuando la rectora dé inicio al cursado.
+            </span>
+        </div>
+    @endif
+
     @php
         $mapaIconos = [
             'programación' => 'fa-code',

@@ -18,6 +18,7 @@ function cuatrimestreVigenteFeature(): Cuatrimestre
     return Cuatrimestre::create([
         'fecha_inicio' => now()->subDays(1)->toDateString(),
         'fecha_fin' => now()->addDays(1)->toDateString(),
+        'estado' => 'en_curso',
     ]);
 }
 
@@ -63,6 +64,7 @@ function crearCursoConHorario(Profesor $profesor, string $dia): Curso
     $cuatrimestre = Cuatrimestre::create([
         'fecha_inicio' => '2026-03-02',
         'fecha_fin' => '2026-03-29',
+        'estado' => 'en_curso',
     ]);
 
     $curso = Curso::create(['nombre' => 'Materia con Horario', 'limite_estudiantes' => 30]);

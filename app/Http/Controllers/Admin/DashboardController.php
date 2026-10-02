@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Calificacion;
 use App\Models\Carrera;
+use App\Models\Cuatrimestre;
 use App\Models\Estudiante;
 use App\Services\HistorialService;
 use App\Services\ReporteService;
@@ -83,6 +84,45 @@ class DashboardController extends Controller
                 ->orderBy('id_usuario')
                 ->get(),
         ]);
+    }
+
+    /**
+     * Período académico: la rectora ve los cuatrimestres y su momento (matrícula,
+     * en cursado o cerrado) y lo cambia con un clic.
+     *
+     * No hace falta esperar días a que "cambie el estado": el instituto abre y
+     * cierra la matrícula así, y al cambiar el estado en el momento, la pantalla
+     * del estudiante pasa de "puedo inscribirme" a "estoy cursando y veo notas".
+     */
+    public function periodo(Request $request, ReporteService $reportes)
+    {
+        $ctx = $this->contexto($request, $reportes);
+
+        return view('admin.periodo', $ctx + [
+            'periodos' => Cuatrimestre::orderBy('fecha_inicio')->get(),
+        ]);
+    }
+
+    /** Cambia el estado (momento) de un cuatrimestre. */
+    public function guardarEstadoPeriodo(Request $request)
+    {
+        $data = $request->validate([
+            'id_cuatrimestre' => 'required|exists:cuatrimestre,id_cuatrimestre',
+            'estado' => 'required|in:matriculacion,en_curso,cerrado',
+        ]);
+
+        Cuatrimestre::whereKey($data['id_cuatrimestre'])
+            ->update(['estado' => $data['estado']]);
+
+        $etiquetas = [
+            'matriculacion' => 'matrícula abierta',
+            'en_curso' => 'en cursado',
+            'cerrado' => 'cerrado',
+        ];
+
+        return back()->with('success', 'El cuatrimestre ahora está en "'
+            . $etiquetas[$data['estado']]
+            . '": la pantalla de estudiantes y profesores ya usa este momento.');
     }
 
     /**

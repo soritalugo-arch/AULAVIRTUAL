@@ -1366,10 +1366,17 @@
             {{-- Guardar --}}
             <div class="form-actions">
 
-                <button type="submit" class="btn-save">
-                    <i class="fa-solid fa-floppy-disk"></i>
-                    Guardar Notas
-                </button>
+                @if($puedeEditar)
+                    <button type="submit" class="btn-save">
+                        <i class="fa-solid fa-floppy-disk"></i>
+                        Guardar Notas
+                    </button>
+                @else
+                    <p style="color:#7a8db5;font-size:14px;font-weight:600;margin:0">
+                        <i class="fa-solid fa-circle-info" style="margin-right:6px"></i>
+                        Este período no está en cursado: las notas solo se guardan cuando la rectora lo abre.
+                    </p>
+                @endif
 
             </div>
 

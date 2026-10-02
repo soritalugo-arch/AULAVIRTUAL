@@ -7,6 +7,7 @@ use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
 use App\Models\Lista_espera;
+use App\Services\HistorialService;
 use App\Services\InscripcionService;
 use Exception;
 use Illuminate\Http\Request;
@@ -16,8 +17,10 @@ class InscripcionController extends Controller
 {
     protected InscripcionService $inscripcionService;
 
-    public function __construct(InscripcionService $inscripcionService)
-    {
+    public function __construct(
+        InscripcionService $inscripcionService,
+        private HistorialService $historial
+    ) {
         $this->inscripcionService = $inscripcionService;
     }
 
@@ -35,11 +38,26 @@ class InscripcionController extends Controller
             ->where('fecha_fin', '>=', now())
             ->first();
 
-        // Oferta académica filtrada por la carrera del estudiante y el cuatrimestre vigente
-        $cursos = $carrera && $cuatrimestreVigente
+        // Cuatrimestre del plan en el que va el estudiante: solo las materias
+        // de esa etapa le corresponden en esta inscripción. Quien completó el
+        // plan (null) no tiene materias que inscribir.
+        $etapaActual = $this->historial->etapaActual($estudiante);
+
+        $totalEtapas = $carrera
+            ? $carrera->cursos()->withPivot('etapa')->get()
+                ->pluck('pivot.etapa')
+                ->filter()
+                ->max()
+            : null;
+
+        // Oferta académica: solo las materias de la etapa del plan y del
+        // cuatrimestre vigente, por la carrera del estudiante
+        $cursos = $carrera && $cuatrimestreVigente && $etapaActual !== null
             ? Curso::with(['horarios', 'profesores'])
                 ->withCount('inscripciones')
-                ->whereHas('carreras', fn ($q) => $q->whereKey($carrera->id_carrera))
+                ->whereHas('carreras', fn ($q) => $q
+                    ->whereKey($carrera->id_carrera)
+                    ->where('curso_carrera.etapa', $etapaActual))
                 ->whereHas('cuatrimestres', fn ($q) => $q->whereKey($cuatrimestreVigente->id_cuatrimestre))
                 ->get()
             : collect();
@@ -50,7 +68,15 @@ class InscripcionController extends Controller
         // Cursos donde el estudiante está en lista de espera
         $misListaEsperaIds = $estudiante->listaEspera()->pluck('id_curso')->toArray();
 
-        return view('estudiante.matriculacion', compact('estudiante', 'cursos', 'misInscripcionesIds', 'misListaEsperaIds', 'cuatrimestreVigente'));
+        return view('estudiante.matriculacion', compact(
+            'estudiante',
+            'cursos',
+            'misInscripcionesIds',
+            'misListaEsperaIds',
+            'cuatrimestreVigente',
+            'etapaActual',
+            'totalEtapas'
+        ));
     }
 
     /**

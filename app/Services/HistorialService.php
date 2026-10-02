@@ -292,6 +292,72 @@ class HistorialService
     }
 
     /**
+     * Materias aprobadas de toda la carrera, con el mismo veredicto del aula.
+     *
+     * Al estar basado en historial(), solo cuenta como aprobado lo que la regla
+     * del profesor (nota >= 6 y sin exceso de faltas) decide aprobar, de modo
+     * que nadie avanza de cuatrimestre con un curso que la pantalla del aula
+     * todavía considera reprobado.
+     *
+     * @return Collection<int, int>
+     */
+    public function cursosAprobados(Estudiante $estudiante): Collection
+    {
+        $historial = $this->historial($estudiante);
+
+        return collect($historial['periodos'])
+            ->flatMap(fn ($p) => $p['cursos']->all())
+            ->filter(fn ($f) => $f['estado'] === 'Aprobado')
+            ->pluck('id_curso');
+    }
+
+    /**
+     * Cuatrimestre del plan en el que está el estudiante.
+     *
+     * Se recorre el pensum por etapas: la primera que todavía tenga alguna
+     * materia sin aprobar es la etapa actual. De ese modo, dos estudiantes de
+     * una misma carrera pueden estar en cuatrimestres distintos y cada uno ve
+     * y se inscribe solo en las materias que le tocan.
+     *
+     * Devuelve null si el estudiante no tiene carrera, si su carrera no define
+     * etapas en el pensum, o si completó todo el plan (egresada/egresado).
+     */
+    public function etapaActual(Estudiante $estudiante): ?int
+    {
+        $carrera = $estudiante?->carrera;
+
+        if (! $carrera) {
+            return null;
+        }
+
+        $cursos = $carrera->cursos()->withPivot('etapa')->get();
+
+        if ($cursos->isEmpty()) {
+            return null;
+        }
+
+        $aprobados = $this->cursosAprobados($estudiante);
+
+        $porEtapa = $cursos
+            ->filter(fn ($c) => $c->pivot->etapa !== null)
+            ->sortBy([['pivot.etapa', 'asc'], ['nombre', 'asc']])
+            ->groupBy('pivot.etapa');
+
+        $totalEtapas = $porEtapa->keys()->max();
+
+        for ($etapa = 1; $etapa <= $totalEtapas; $etapa++) {
+            $pendientes = $porEtapa->get($etapa, collect())
+                ->reject(fn ($c) => $aprobados->contains($c->id_curso));
+
+            if ($pendientes->isNotEmpty()) {
+                return $etapa;
+            }
+        }
+
+        return null; // completó el plan completo (egresada/egresado)
+    }
+
+    /**
      * Materias de un estudiante en un cuatrimestre concreto, tengan nota o no.
      *
      * Es la pieza del historial acotada a un solo periodo, para la ficha que ve

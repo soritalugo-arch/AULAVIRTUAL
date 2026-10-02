@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Profesor;
 
 use App\Http\Controllers\Controller;
 use App\Models\Asistencia;
+use App\Models\Cuatrimestre;
 use App\Models\Inscripcion;
 use App\Services\CalificacionAsistenciaService;
 use Illuminate\Http\Request;
@@ -60,7 +61,8 @@ class AsistenciaController extends Controller
                     : true,
             ];
         });
-        return view('profesor.asistencia', compact('curso', 'cuatrimestre', 'cuatrimestres', 'fecha', 'estudiantes', 'cuatrimestreTerminado', 'horarios', 'clasesRegistradas', 'totalClases'));
+        return view('profesor.asistencia', compact('curso', 'cuatrimestre', 'cuatrimestres', 'fecha', 'estudiantes', 'cuatrimestreTerminado', 'horarios', 'clasesRegistradas', 'totalClases'))
+            ->with('puedeEditar', $cuatrimestre->estado === Cuatrimestre::ESTADO_EN_CURSO);
     }
     // guarda o actualiza la asistencia de todos los inscritos para la fecha indicada
     public function guardar(Request $request)
@@ -72,6 +74,13 @@ class AsistenciaController extends Controller
         abort_unless($curso !== null, 403);
         $cuatrimestre = $curso->cuatrimestres()->find($idCuatr);
         abort_unless($cuatrimestre !== null, 403);
+
+        // Solo se registra asistencia mientras el período está EN CURSO.
+        abort_unless(
+            $cuatrimestre->estado === Cuatrimestre::ESTADO_EN_CURSO,
+            422,
+            'Este período no está en cursado: la asistencia no se puede guardar.'
+        );
 
         $request->validate([
             'id_curso'        => 'required|exists:curso,id_curso',

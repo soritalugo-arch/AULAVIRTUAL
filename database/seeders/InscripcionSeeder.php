@@ -18,6 +18,14 @@ class InscripcionSeeder extends Seeder
 
     public static array $slotsDeEstudiante = [];
 
+    /**
+     * Cuatrimestre del plan en el que está cada estudiante (1 a 5). La usa
+     * CalificacionSeeder para aprobarle el recorrido anterior y que la
+     * matrícula sea coherente: nadie está inscrito en una materia de una etapa
+     * que todavía no le corresponde.
+     */
+    public static array $etapaDeEstudiante = [];
+
     /** Cuatrimestre al que pertenece toda la matrícula de este seed. */
     private static int $cuatrimestreId;
 
@@ -37,20 +45,36 @@ class InscripcionSeeder extends Seeder
         'Inglés Técnico',
     ];
 
+    /**
+     * Matrícula del cuatrimestre vigente, coherente con la etapa del plan:
+     * alejandro va por el 1ro (Matemática + Ofimática), luis y carlos por el
+     * 2do (Inglés + Fundamentos), andreina y diego por el 3ro (Base de Datos I
+     * + Programación II). Cada quien ve y se inscribe solo en lo suyo.
+     */
     private const MATRICULA_EXPLICITA = [
-        DatabaseSeeder::EMAIL_ESTUDIANTE => ['Base de Datos I', 'Desarrollo Web'],
+        DatabaseSeeder::EMAIL_ESTUDIANTE => ['Matemática Básica', 'Ofimática'],
+        DatabaseSeeder::EMAIL_PUNTUAL => ['Ofimática', 'Matemática Básica'],
         DatabaseSeeder::EMAIL_CONFLICTO => self::CURSOS_CONFLICTO_ESTUDIANTE,
-        DatabaseSeeder::EMAIL_INASISTENTE => ['Base de Datos I', 'Sistemas Operativos'],
-        DatabaseSeeder::EMAIL_ALERTA => ['Programación II', 'Redes de Computadoras'],
+        DatabaseSeeder::EMAIL_INASISTENTE => ['Fundamentos de Programación', 'Inglés Técnico'],
+        DatabaseSeeder::EMAIL_ALERTA => ['Base de Datos I', 'Programación II'],
         DatabaseSeeder::EMAIL_REPITIENTE => ['Base de Datos I', 'Programación II'],
-        DatabaseSeeder::EMAIL_PUNTUAL => ['Sistemas Operativos', 'Desarrollo Web'],
+    ];
+
+    /** Etapa del plan de cada estudiante fijo (Informática). */
+    private const ETAPA_DE_EMAIL = [
+        DatabaseSeeder::EMAIL_ESTUDIANTE => 1,
+        DatabaseSeeder::EMAIL_PUNTUAL => 1,
+        DatabaseSeeder::EMAIL_CONFLICTO => 2,
+        DatabaseSeeder::EMAIL_INASISTENTE => 2,
+        DatabaseSeeder::EMAIL_ALERTA => 3,
+        DatabaseSeeder::EMAIL_REPITIENTE => 3,
     ];
 
     public function run(): void
     {
         $cursos = Curso::orderBy('id_curso')->get();
         $cursosPorNombre = $cursos->keyBy('nombre');
-        $cursosPorCarrera = $this->cursosPorCarrera($cursos);
+        $cursosPorEtapa = $this->cursosPorEtapa($cursos);
         $capPorCurso = $this->capPorCurso($cursos);
 
         self::$cuatrimestreId = $this->cuatrimestreDeMatricula()->id_cuatrimestre;
@@ -64,6 +88,10 @@ class InscripcionSeeder extends Seeder
         self::$carreraDeEstudiante = $this->carreraDeEstudiante($idPorEmail, $aleatorios);
         $this->persistirCarreras();
 
+        foreach (self::ETAPA_DE_EMAIL as $email => $etapa) {
+            self::$etapaDeEstudiante[$idPorEmail[$email]] = $etapa;
+        }
+
         $filas = [];
 
         $estaConflicto = DatabaseSeeder::EMAIL_CONFLICTO;
@@ -76,13 +104,16 @@ class InscripcionSeeder extends Seeder
             }
         }
 
-        foreach ($aleatorios as $sid) {
+        foreach ($aleatorios as $i => $sid) {
             if (count(self::$enrolados[$sid] ?? []) >= 2) {
                 continue;
             }
 
             $carrera = self::$carreraDeEstudiante[$sid];
-            $candidatos = $cursosPorCarrera[$carrera]->sortBy('id_curso')->values();
+            $etapa = ($i % 3) + 1; // estudiantes genéricos en el 1ro, 2do o 3ro
+            self::$etapaDeEstudiante[$sid] = $etapa;
+
+            $candidatos = $cursosPorEtapa[$carrera][$etapa] ?? [];
 
             foreach ($candidatos as $curso) {
                 if (count(self::$enrolados[$sid] ?? []) >= 2) {
@@ -93,6 +124,7 @@ class InscripcionSeeder extends Seeder
             }
         }
 
+        // Quienes no consiguieron nada (cupos y horarios) piden la primera materia libre.
         foreach ($aleatorios as $sid) {
             if (! empty(self::$enrolados[$sid] ?? [])) {
                 continue;
@@ -124,17 +156,27 @@ class InscripcionSeeder extends Seeder
         return $vigente ?? Cuatrimestre::orderBy('fecha_inicio')->firstOrFail();
     }
 
-    private function cursosPorCarrera($cursos): array
+    /**
+     * Materias por carrera y por etapa del plan: [carrera => [etapa => Curso...]]
+     * para inscribir a cada estudiante solo en lo que le toca.
+     */
+    private function cursosPorEtapa($cursos): array
     {
         $mapa = [];
 
         foreach (CarreraSeeder::CARRERAS as $carrera) {
-            $mapa[$carrera['nombre']] = collect();
+            $mapa[$carrera['nombre']] = [];
         }
 
         foreach (array_values(CursoSeeder::CATALOGO) as $i => $item) {
             foreach ($item['carreras'] as $nombre => $etapa) {
-                $mapa[$nombre]->push($cursos[$i]);
+                $mapa[$nombre][$etapa][] = $cursos[$i];
+            }
+        }
+
+        foreach ($mapa as $carrera => $etapas) {
+            foreach ($etapas as $etapa => $cursosDeEtapa) {
+                $mapa[$carrera][$etapa] = collect($cursosDeEtapa)->sortBy('id_curso')->values()->all();
             }
         }
 

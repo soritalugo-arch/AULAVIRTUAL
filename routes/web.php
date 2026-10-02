@@ -34,6 +34,8 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/asistencia',    [DashboardController::class, 'asistencia'])->name('admin.asistencia');
     Route::get('/admin/deudas',        [DashboardController::class, 'deudas'])->name('admin.deudas');
     Route::get('/admin/plan-estudios', [DashboardController::class, 'planEstudios'])->name('admin.plan');
+    Route::get('/admin/periodo',       [DashboardController::class, 'periodo'])->name('admin.periodo');
+    Route::post('/admin/periodo/estado', [DashboardController::class, 'guardarEstadoPeriodo'])->name('admin.periodo.estado');
 });
 
 // ─── Rutas del Profesor ──────────────────────────────────────────────────────

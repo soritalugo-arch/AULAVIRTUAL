@@ -47,6 +47,11 @@ class MisNotasController extends Controller
             ];
         })->filter()->values();
         $cuatrimestreTerminado = $vigente ? $vigente->fecha_fin->lt(now()) : true;
-        return view('estudiante.notas', compact('resumen', 'cuatrimestreTerminado'));
+
+        // Momento del período: mientras la matrícula está abierta, las clases
+        // aún no comienzan y no puede haber notas nuevas del período vigente.
+        $matriculacionAbierta = $vigente?->estado === 'matriculacion';
+
+        return view('estudiante.notas', compact('resumen', 'cuatrimestreTerminado', 'matriculacionAbierta'));
     }
 }

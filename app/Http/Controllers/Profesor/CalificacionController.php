@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Profesor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Cuatrimestre;
 use App\Models\Inscripcion;
 use App\Services\CalificacionAsistenciaService;
 use Illuminate\Support\Facades\Auth;
@@ -71,7 +72,8 @@ class CalificacionController extends Controller
                 'estado'             => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje, $cuatrimestreTerminado),
             ];
         });
-        return view('profesor.notas', compact('curso', 'cuatrimestre', 'cuatrimestres', 'estudiantes', 'cuatrimestreTerminado', 'clasesRegistradas', 'totalClases'));
+        return view('profesor.notas', compact('curso', 'cuatrimestre', 'cuatrimestres', 'estudiantes', 'cuatrimestreTerminado', 'clasesRegistradas', 'totalClases'))
+            ->with('puedeEditar', $cuatrimestre->estado === Cuatrimestre::ESTADO_EN_CURSO);
     }
     // guarda o actualiza las notas enviadas en el formulario
     public function guardarNota(Request $request)
@@ -86,6 +88,15 @@ class CalificacionController extends Controller
     
         abort_unless($curso !== null, 403);
         abort_unless($curso->cuatrimestres()->whereKey($idCuatr)->exists(), 403);
+
+        // Solo se califica mientras el período está EN CURSO: durante la
+        // matrícula las notas todavía no existen y en un período cerrado ya
+        // no se pueden modificar.
+        abort_unless(
+            $curso->cuatrimestres()->find($idCuatr)?->estado === Cuatrimestre::ESTADO_EN_CURSO,
+            422,
+            'Este período no está en cursado: las notas no se pueden guardar.'
+        );
 
         $request->validate([
             'id_curso'              => 'required|exists:curso,id_curso',

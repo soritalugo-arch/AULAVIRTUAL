@@ -26,10 +26,7 @@ class PlanEstudiosController extends Controller
 
         $datos = $this->historial->historial($estudiante);
 
-        $aprobadas = collect($datos['periodos'])
-            ->flatMap(fn ($p) => $p['cursos']->all())
-            ->filter(fn ($f) => $f['estado'] === 'Aprobado')
-            ->pluck('id_curso');
+        $aprobadas = $this->historial->cursosAprobados($estudiante);
 
         $enCurso = $datos['enCurso']->pluck('id_curso');
 
