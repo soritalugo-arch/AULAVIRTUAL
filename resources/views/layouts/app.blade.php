@@ -72,6 +72,11 @@
         }
 
         .nav-user, .user { display: flex; align-items: center; gap: 13px; }
+        .user.enlace-perfil {
+            border-radius: 16px; padding: 6px 10px;
+            transition: background 0.15s ease;
+        }
+        .user.enlace-perfil:hover { background: rgba(222, 233, 255, 0.65); }
         .user-icon {
             width: 45px; height: 45px;
             display: flex; align-items: center; justify-content: center;
@@ -180,10 +185,10 @@
                 </ul>
             </div>
             <div class="nav-right">
-                <div class="user">
+                <a href="{{ route('perfil') }}" class="user enlace-perfil" title="Ver mis datos" aria-label="Mis datos">
                     <div class="user-icon"><i class="fa-solid fa-user"></i></div>
                     <span class="user-name">{{ auth()->user()->nombres }} {{ auth()->user()->apellidos }}</span>
-                </div>
+                </a>
                 <div class="nav-divider hidden sm:block"></div>
                 <form method="POST" action="{{ route('logout') }}" class="m-0 flex">
                     @csrf

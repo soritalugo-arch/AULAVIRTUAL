@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Estudiante\InscripcionController;
 use App\Http\Controllers\Estudiante\MisNotasController;
+use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\Profesor\CalificacionController;
 use App\Http\Controllers\Profesor\AsistenciaController;
 use Illuminate\Support\Facades\Route;
@@ -11,6 +12,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', fn () => auth()->user()
     ? redirect()->route(AuthController::nombreRutaHome(auth()->user()))
     : redirect()->route('login'));
+
+// "Mis datos": al alcance de cualquier rol conectado.
+Route::get('/mi-perfil', [PerfilController::class, 'show'])->name('perfil')->middleware('auth');
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLoginForm'])->name('login');
