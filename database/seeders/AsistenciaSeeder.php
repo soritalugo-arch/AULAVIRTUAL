@@ -35,7 +35,7 @@ class AsistenciaSeeder extends Seeder
         $horarios = Horario::all()->keyBy('id_curso');
         $nombresDeCurso = Curso::all()->pluck('nombre', 'id_curso');
 
-        $filas = [];
+        $lote = [];
 
         foreach (CalificacionSeeder::$paresQ1 as $sid => $cursosDelEstudiante) {
             foreach ($cursosDelEstudiante as $cid => $nota) {
@@ -43,8 +43,10 @@ class AsistenciaSeeder extends Seeder
                 $dia = self::MAPA_DIA[$horario->dia_semana];
                 $fechas = $this->fechasClases($dia);
 
+                // Inserta por lotes de 1000 para no acumular toda la asistencia
+                // del período en memoria (con 600 estudiantes son ~20 mil filas).
                 foreach ($fechas as $k => $fecha) {
-                    $filas[] = [
+                    $lote[] = [
                         'id_estudiante' => $sid,
                         'id_curso' => $cid,
                         'id_cuatrimestre' => $pasado,
@@ -53,11 +55,16 @@ class AsistenciaSeeder extends Seeder
                         'created_at' => now(),
                         'updated_at' => now(),
                     ];
+
+                    if (count($lote) >= 1000) {
+                        Asistencia::insert($lote);
+                        $lote = [];
+                    }
                 }
             }
         }
 
-        foreach (array_chunk($filas, 1000) as $lote) {
+        if ($lote) {
             Asistencia::insert($lote);
         }
     }

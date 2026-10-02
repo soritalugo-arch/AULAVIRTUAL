@@ -81,8 +81,14 @@ class CalificacionSeeder extends Seeder
         foreach ($generales as $sid) {
             $etapa = InscripcionSeeder::$etapaDeEstudiante[$sid] ?? 1;
             $carrera = InscripcionSeeder::$carreraDeEstudiante[$sid] ?? null;
+            $raspada = InscripcionSeeder::$cursoRaspadoDeEstudiante[$sid] ?? null;
 
-            if ($etapa < 2 || ! $carrera) {
+            if (! $carrera) {
+                continue;
+            }
+
+            // Sin historial previo y sin arrastre: etapa 1, todavía no tiene notas.
+            if ($etapa < 2 && ! $raspada) {
                 continue;
             }
 
@@ -91,8 +97,21 @@ class CalificacionSeeder extends Seeder
                 $cids = array_merge($cids, $materiasDeEtapa[$carrera][$e] ?? []);
             }
 
-            foreach ($cids as $cid) {
-                self::$paresQ1[$sid][$cid] = 7 + (($sid + $cid) % 3);
+            if ($raspada) {
+                // Arrastra una materia de su cuatrimestre: las demás de esa
+                // etapa las aprobó, así la ventana X-(X+1) queda coherente y
+                // solo le falta la que repite.
+                $delEtapa = $materiasDeEtapa[$carrera][$etapa] ?? [];
+                $cids = array_merge($cids, array_values(array_diff($delEtapa, [$raspada])));
+
+                foreach ($cids as $cid) {
+                    self::$paresQ1[$sid][$cid] = 7 + (($sid + $cid) % 3);
+                }
+                self::$paresQ1[$sid][$raspada] = self::NOTA_REPITIENTE_REPROBADA;
+            } else {
+                foreach ($cids as $cid) {
+                    self::$paresQ1[$sid][$cid] = 7 + (($sid + $cid) % 3);
+                }
             }
         }
 

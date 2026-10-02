@@ -26,6 +26,13 @@ class InscripcionSeeder extends Seeder
      */
     public static array $etapaDeEstudiante = [];
 
+    /**
+     * Materia que quedó reprobada en el período pasado para cada estudiante
+     * que arrastra una raspadura (id_curso). CalificacionSeeder la marca con
+     * nota reprobada y la matrícula la muestra dentro de la ventana X-(X+1).
+     */
+    public static array $cursoRaspadoDeEstudiante = [];
+
     /** Cuatrimestre al que pertenece toda la matrícula de este seed. */
     private static int $cuatrimestreId;
 
@@ -110,10 +117,48 @@ class InscripcionSeeder extends Seeder
             }
 
             $carrera = self::$carreraDeEstudiante[$sid];
-            $etapa = ($i % 3) + 1; // estudiantes genéricos en el 1ro, 2do o 3ro
+
+            // Reparto variado de historias: la mayoría en los tres primeros
+            // cuatrimestres del plan y algunos más avanzados (4to y 5to), para
+            // que el demo muestre "Vas en: X de N" en todas las etapas.
+            $r = $sid % 10;
+            $etapa = match (true) {
+                $r < 3 => 1,
+                $r < 6 => 2,
+                $r < 8 => 3,
+                $r < 9 => 4,
+                default => 5,
+            };
             self::$etapaDeEstudiante[$sid] = $etapa;
 
             $candidatos = $cursosPorEtapa[$carrera][$etapa] ?? [];
+
+            // Un tercio arrastra una materia reprobada de su cuatrimestre: la
+            // repite ahora y adelanta materias del siguiente. En la matrícula
+            // eso se ve como ventana X-(X+1), congelada hasta aprobar.
+            $raspa = ($sid % 3) === 0 && isset($candidatos[0]);
+
+            if ($raspa) {
+                $cursoRaspado = $candidatos[0];
+                self::$cursoRaspadoDeEstudiante[$sid] = $cursoRaspado->id_curso;
+
+                if (count(self::$enrolados[$sid] ?? []) < 2) {
+                    $this->registrar($sid, $cursoRaspado, $capPorCurso, $filas);
+                }
+
+                // Adelanta el cuatrimestre siguiente; si el plan no lo tiene
+                // (5to), se queda con otra materia de la misma etapa.
+                $siguientes = $cursosPorEtapa[$carrera][$etapa + 1] ?? array_slice($candidatos, 1);
+
+                foreach ($siguientes as $curso) {
+                    if (count(self::$enrolados[$sid] ?? []) >= 2) {
+                        break;
+                    }
+                    $this->registrar($sid, $curso, $capPorCurso, $filas);
+                }
+
+                continue;
+            }
 
             foreach ($candidatos as $curso) {
                 if (count(self::$enrolados[$sid] ?? []) >= 2) {

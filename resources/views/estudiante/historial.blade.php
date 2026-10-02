@@ -267,6 +267,27 @@
         font-weight: 600;
     }
 
+    .btn-boleta {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        height: 34px;
+        padding: 0 15px;
+        border-radius: 20px;
+        border: 1.5px solid #4f72b4;
+        background: white;
+        color: #4f72b4;
+        font-size: 12.5px;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+        transition: 0.2s ease;
+    }
+
+    .btn-boleta:hover {
+        background: #eaf1fb;
+    }
+
     /* ── Tabla ─────────────────────────────────────────────────────── */
 
     .fila-cabecera,
@@ -578,6 +599,12 @@
                                 · {{ $periodo['reprobados'] }} reprobado{{ $periodo['reprobados'] === 1 ? '' : 's' }}
                             @endif
                         </span>
+                        @if ($periodo['cuatrimestre']->estado === 'cerrado')
+                            <a href="{{ route('estudiante.boleta', $periodo['cuatrimestre']->id_cuatrimestre) }}" class="btn-boleta" title="Boleta imprimible de este lapso académico">
+                                <i class="fa-solid fa-print"></i>
+                                Boleta
+                            </a>
+                        @endif
                     </div>
 
                     <div class="fila-cabecera">

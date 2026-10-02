@@ -389,3 +389,80 @@ it('mis datos muestran el cuadro de carrera con el formato y los conteos', funct
         ->assertSee('Materias aprobadas')
         ->assertSee('Materias reprobadas');
 });
+
+it('el estudiante ve el botón de boleta y abre una boleta imprimible en pantalla para un lapso cerrado', function () {
+    $carrera = Carrera::create(['nombre' => 'Informática', 'duracion' => 5]);
+    $etapa1a = materiaEtapa($carrera, 'Matemática Básica', 1);
+    $etapa1b = materiaEtapa($carrera, 'Ofimática', 1);
+    $cerrado = Cuatrimestre::create([
+        'fecha_inicio' => now()->subMonths(3)->toDateString(),
+        'fecha_fin' => now()->subMonths(1)->toDateString(),
+        'estado' => 'cerrado',
+    ]);
+    ofrecerEnVigente($cerrado, $etapa1a, $etapa1b);
+
+    ['usuario' => $usuario, 'estudiante' => $estudiante] = estudianteEtapa($carrera, 'boleta.lapso@aula.edu');
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1a->id_curso,
+        'id_cuatrimestre' => $cerrado->id_cuatrimestre,
+        'nota' => 8,
+    ]);
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1b->id_curso,
+        'id_cuatrimestre' => $cerrado->id_cuatrimestre,
+        'nota' => 4,
+    ]);
+
+    $this->actingAs($usuario)
+        ->get(route('estudiante.historial'))
+        ->assertOk()
+        ->assertSee('Boleta');
+
+    $this->actingAs($usuario)
+        ->get(route('estudiante.boleta', $cerrado->id_cuatrimestre))
+        ->assertOk()
+        ->assertSee('Boleta de notas del lapso académico')
+        ->assertSee('Período cerrado')
+        ->assertSee('Matemática Básica')
+        ->assertSee('Ofimática')
+        ->assertSee('Aprobado')
+        ->assertSee('Reprobado')
+        ->assertSee('Imprimir boleta')
+        ->assertSee('Promedio del lapso');
+});
+
+it('no emite boleta para un lapso que aún no está cerrado', function () {
+    $carrera = Carrera::create(['nombre' => 'Informática', 'duracion' => 5]);
+    $etapa1a = materiaEtapa($carrera, 'Matemática Básica', 1);
+    $cuatrimestre = cuatrimestreEtapaVigente(); // matriculacion
+    ofrecerEnVigente($cuatrimestre, $etapa1a);
+
+    ['usuario' => $usuario, 'estudiante' => $estudiante] = estudianteEtapa($carrera, 'boleta.abierta@aula.edu');
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $etapa1a->id_curso,
+        'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
+        'nota' => 8,
+    ]);
+
+    $this->actingAs($usuario)
+        ->get(route('estudiante.boleta', $cuatrimestre->id_cuatrimestre))
+        ->assertNotFound();
+});
+
+it('no emite boleta por un lapso que no está en el historial del estudiante', function () {
+    $carrera = Carrera::create(['nombre' => 'Informática', 'duracion' => 5]);
+    $cerrado = Cuatrimestre::create([
+        'fecha_inicio' => now()->subMonths(3)->toDateString(),
+        'fecha_fin' => now()->subMonths(1)->toDateString(),
+        'estado' => 'cerrado',
+    ]); // sin notas de nadie en ese lapso
+
+    ['usuario' => $usuario] = estudianteEtapa($carrera, 'boleta.ajena@aula.edu');
+
+    $this->actingAs($usuario)
+        ->get(route('estudiante.boleta', $cerrado->id_cuatrimestre))
+        ->assertNotFound();
+});
