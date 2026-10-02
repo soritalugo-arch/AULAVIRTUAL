@@ -1264,7 +1264,7 @@
 
             @if ($ventana && $ventana['desde'] !== $ventana['hasta'])
                 <p class="module-description">
-                    Repites las materias que te quedaron pendientes y adelantas materias del siguiente cuatrimestre del plan.
+                    Repites las materias que te quedaron pendientes y adelantas materias del cuatrimestre siguiente.
                 </p>
             @endif
 
