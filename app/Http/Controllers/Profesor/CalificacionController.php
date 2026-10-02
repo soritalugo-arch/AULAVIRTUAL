@@ -3,9 +3,12 @@
 namespace App\Http\Controllers\Profesor;
 
 use App\Http\Controllers\Controller;
+use App\Models\Calificacion;
 use App\Models\Cuatrimestre;
+use App\Models\Estudiante;
 use App\Models\Inscripcion;
 use App\Services\CalificacionAsistenciaService;
+use App\Services\ParcialService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
@@ -69,17 +72,22 @@ class CalificacionController extends Controller
                 ->first();
             $faltas     = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
             $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr);
+            // Lo que manda es el promedio de las parciales; la nota final solo
+            // aparece si la fila todavia no tiene parciales (datos anteriores).
+            $notaEfectiva = $calificacion?->notaEfectiva();
+
             return [
                 'id'                 => $est->id_usuario,
                 'nombre'             => $est->usuario->nombres . ' ' . $est->usuario->apellidos,
-                'nota'               => $calificacion?->nota,
+                'nota'               => $notaEfectiva,
+                'parciales'          => $calificacion?->parciales() ?? [null, null, null, null],
                 'observaciones'      => $calificacion?->observaciones,
                 'clasesRegistradas'  => $clasesRegistradas,
                 'totalClases'        => $totalClases,
                 'faltas'             => $faltas,
                 'porcentajeFaltas'   => $porcentaje,
                 'alerta'             => $this->servicio->nivelAlerta($porcentaje),
-                'estado'             => $this->servicio->estadoEstudiante($calificacion?->nota, $porcentaje, $cuatrimestreTerminado),
+                'estado'             => $this->servicio->estadoEstudiante($notaEfectiva, $porcentaje, $cuatrimestreTerminado),
             ];
         });
         return view('profesor.notas', compact('curso', 'cuatrimestre', 'cuatrimestres', 'estudiantes', 'cuatrimestreTerminado', 'clasesRegistradas', 'totalClases'))
@@ -113,50 +121,113 @@ class CalificacionController extends Controller
             'id_cuatrimestre'       => 'required|exists:cuatrimestre,id_cuatrimestre',
             'notas'                 => 'required|array',
             'notas.*.id_estudiante' => 'required|exists:estudiante,id_usuario',
-            'notas.*.nota'          => 'nullable|integer|min:1|max:10',
+            // Cuatro parciales de 25 %; decimales permitidos (7.5) y vacias
+            // porque el profesor carga de a una.
+            'notas.*.parcial1'      => 'nullable|numeric|min:1|max:10',
+            'notas.*.parcial2'      => 'nullable|numeric|min:1|max:10',
+            'notas.*.parcial3'      => 'nullable|numeric|min:1|max:10',
+            'notas.*.parcial4'      => 'nullable|numeric|min:1|max:10',
             'notas.*.observaciones' => 'nullable|string|max:500',
         ]);
 
-        //  contador de segundos
+        // Espaciador entre correos: se encolan en vez de dispararse de golpe.
         $segundosRetraso = 0;
+        $notificados = 0;
 
         foreach ($request->notas as $item) {
             $idEstudiante = (int) $item['id_estudiante'];
-    
-            if (is_null($item['nota'] ?? null)) {
-                $this->servicio->quitarNota($idEstudiante, $idCurso, $idCuatr);
-                continue;
-            }
 
-            $this->servicio->guardarNota(
+            $parciales = [
+                $item['parcial1'] ?? null,
+                $item['parcial2'] ?? null,
+                $item['parcial3'] ?? null,
+                $item['parcial4'] ?? null,
+            ];
+
+            // Que parciales cambiaron de verdad: si el profesor reenvia el
+            // formulario sin tocar nada, al estudiante no se le vuelve a
+            // escribir. Solo se avisa de lo que se corrige o se agrega.
+            $anterior = Calificacion::query()
+                ->where('id_estudiante', $idEstudiante)
+                ->where('id_curso', $idCurso)
+                ->where('id_cuatrimestre', $idCuatr)
+                ->first();
+
+            $cambiadas = $this->parcialesQueCambian($anterior?->parciales() ?? [null, null, null, null], $parciales);
+
+            $calificacion = $this->servicio->guardarParciales(
                 $idEstudiante,
                 $idCurso,
                 $idCuatr,
-                (int) $item['nota'],
+                $parciales,
                 $item['observaciones'] ?? null
             );
 
-            $estudiante = \App\Models\Estudiante::with('usuario')->find($idEstudiante);
+            // Sin cambio real no hay aviso, y si el profesor borro todas las
+            // parciales tampoco: no se le puede avisar de una evaluacion que ya
+            // no existe.
+            if ($cambiadas === [] || $calificacion === null) {
+                continue;
+            }
+
+            $estudiante = Estudiante::with('usuario')->find($idEstudiante);
 
             if ($estudiante?->usuario?->email) {
-                // En lugar de send(), usamos later() con el tiempo calculado
                 Mail::to($estudiante->usuario->email)->later(
-                    now()->addSeconds($segundosRetraso), 
+                    now()->addSeconds($segundosRetraso),
                     new NotaPublicada(
-                        $estudiante->usuario->nombres, 
-                        $curso->nombre, 
-                        (int) $item['nota']
+                        $estudiante->usuario->nombres,
+                        $curso->nombre,
+                        $calificacion?->notaEfectiva() !== null
+                            ? round((float) $calificacion->notaEfectiva(), 2)
+                            : null,
+                        $cambiadas
                     )
                 );
-        
-                // Sumamos 3 segundos para el próximo correo en la iteración
-                $segundosRetraso += 15; 
+
+                $segundosRetraso += 15;
+                $notificados++;
             }
         }
-    
+
+        $mensaje = $notificados > 0
+            ? "Notas guardadas. Se avisó a {$notificados} ".($notificados === 1 ? 'estudiante' : 'estudiantes').' por email.'
+            : 'Notas guardadas.';
 
         return redirect()->route('profesor.notas', ['curso' => $idCurso, 'cuatrimestre' => $idCuatr])
-            ->with('success', 'Notas guardadas y correos enviados correctamente.');
+            ->with('success', $mensaje);
+    }
+
+    /**
+     * Etiquetas de las parciales cuyo valor cambio ("Parcial 1", ...).
+     *
+     * Compara con la misma normalizacion con la que se guardan (decimal de un
+     * lugar, vacio = null): el navegador manda las cuatro casillas siempre, las
+     * vacias como "", y sin normalizar cada reenvio pareceria un cambio. Asi,
+     * reenviar 7.5 tal cual no genera aviso, y borrar una parcial si.
+     *
+     * @param  array<int, float|string|null>  $anterior
+     * @param  array<int, float|string|null>  $nuevas
+     * @return array<int, string>
+     */
+    private function parcialesQueCambian(array $anterior, array $nuevas): array
+    {
+        $normalizar = fn ($valor) => ($valor === null || $valor === '')
+            ? null
+            : round((float) $valor, 1);
+
+        $cambiadas = [];
+
+        foreach (ParcialService::PARCIALES as $i => $columna) {
+            $antes = $normalizar($anterior[$i] ?? null);
+            $ahora = $normalizar($nuevas[$i] ?? null);
+
+            if ($antes !== $ahora) {
+                $cambiadas[] = ParcialService::ETIQUETAS[$i];
+            }
+        }
+
+        return $cambiadas;
     }
 
 }

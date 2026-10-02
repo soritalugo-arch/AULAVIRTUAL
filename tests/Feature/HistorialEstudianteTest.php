@@ -98,13 +98,25 @@ function matricular(Estudiante $estudiante, Curso $curso, Cuatrimestre $cuatrime
     ]);
 }
 
-function ponerNota(Estudiante $estudiante, Curso $curso, Cuatrimestre $cuatrimestre, int $nota, ?string $observaciones = null): void
+/**
+ * Registra una calificación como lo haría el profesor: cuatro parciales de 25 %
+ * y el promedio que sale de ellas. Si se pasan menos de cuatro, las que faltan
+ * cuentan como cero (opción A).
+ *
+ * @param  array<int, float|int|null>  $parciales
+ */
+function ponerNota(Estudiante $estudiante, Curso $curso, Cuatrimestre $cuatrimestre, int $nota, ?string $observaciones = null, array $parciales = []): void
 {
-    Calificacion::create([
+    $calculo = App\Services\ParcialService::calcularDesde(
+        $parciales ?: [$nota, $nota, $nota, $nota]
+    );
+
+    Calificacion::create($calculo + [
         'id_estudiante' => $estudiante->id_usuario,
         'id_curso' => $curso->id_curso,
         'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
-        'nota' => $nota,
+        'tiene_parciales' => true,
+        'nota' => (int) round($calculo['promedio'] ?? $nota),
         'observaciones' => $observaciones,
     ]);
 }
@@ -169,6 +181,38 @@ it('reutiliza las reglas del modulo del profesor para decir aprobado y reprobado
         ->and($estados['Curso Reprobado'])->toBe('Reprobado');
 });
 
+it('muestra el promedio de las cuatro parciales en vez del entero de la nota final', function () {
+    $estudiante = estudianteConCarrera();
+    $q1 = cerradoParaHistorial();
+    $curso = cursoParaHistorial('Curso con Parciales', $q1);
+
+    matricular($estudiante, $curso, $q1);
+    // 8, 7, 9 y 6: el promedio es 7.5, no el 8 redondeado de la nota final.
+    ponerNota($estudiante, $curso, $q1, 8, null, [8, 7, 9, 6]);
+
+    $fila = app(HistorialService::class)->historial($estudiante)['periodos']->first()['cursos']->first();
+
+    expect($fila['nota'])->toBe(7.5)
+        ->and($fila['tiene_parciales'])->toBeTrue()
+        ->and($fila['parciales'])->toBe([8.0, 7.0, 9.0, 6.0])
+        ->and($fila['estado'])->toBe('Aprobado');
+});
+
+it('las parciales a medias ya suman: el promedio sube a medida que se cargan', function () {
+    $estudiante = estudianteConCarrera();
+    $q1 = cerradoParaHistorial();
+    $curso = cursoParaHistorial('Curso a Medias', $q1);
+
+    matricular($estudiante, $curso, $q1);
+    // Solo dos parciales de 10: (10 + 10 + 0 + 0) / 4 = 5, reprobado por ahora.
+    ponerNota($estudiante, $curso, $q1, 10, null, [10, 10, null, null]);
+
+    $fila = app(HistorialService::class)->historial($estudiante)['periodos']->first()['cursos']->first();
+
+    expect($fila['nota'])->toBe(5.0)
+        ->and($fila['estado'])->toBe('Reprobado');
+});
+
 it('reprobado por inasistencia aunque la nota sea aprobatoria, igual que ve el alumno en sus notas', function () {
     $estudiante = estudianteConCarrera();
     $q1 = cerradoParaHistorial();
@@ -188,7 +232,7 @@ it('reprobado por inasistencia aunque la nota sea aprobatoria, igual que ve el a
 
     $fila = app(HistorialService::class)->historial($estudiante)['periodos']->first()['cursos']->first();
 
-    expect($fila['nota'])->toBe(9)
+    expect($fila['nota'])->toBe(9.0)
         ->and($fila['inasistencia'])->toBe(40.0)
         ->and($fila['alerta'])->toBe('peligro')
         ->and($fila['estado'])->toBe('Reprobado');
@@ -511,6 +555,42 @@ it('muestra al estudiante su historial con sus datos y el enlace al certificado'
         ->and($html)->toContain('Aprobado')
         ->and($html)->toContain('Participación constante')
         ->and($html)->toContain(route('estudiante.certificado'));
+});
+
+it('el historial del alumno muestra el desglose de las cuatro parciales', function () {
+    $estudiante = estudianteConCarrera('Contaduría');
+    $q1 = cerradoParaHistorial();
+    $curso = cursoParaHistorial('Bases de Datos', $q1);
+
+    matricular($estudiante, $curso, $q1);
+    ponerNota($estudiante, $curso, $q1, 8, null, [9, 8, 7, 6]);
+
+    $html = $this->actingAs($estudiante->usuario)->get(route('estudiante.historial'))->getContent();
+
+    // El promedio con dos decimales y, debajo, las cuatro parciales que lo forman.
+    expect($html)->toContain('7.50')
+        ->and($html)->toContain('P1: 9.0')
+        ->and($html)->toContain('P2: 8.0')
+        ->and($html)->toContain('P3: 7.0')
+        ->and($html)->toContain('P4: 6.0');
+});
+
+it('mis notas del alumno muestra sus cuatro parciales y el promedio', function () {
+    $estudiante = estudianteConCarrera('Contaduría');
+    $q1 = cerradoParaHistorial();
+    $curso = cursoParaHistorial('Bases de Datos', $q1);
+
+    matricular($estudiante, $curso, $q1);
+    ponerNota($estudiante, $curso, $q1, 8, null, [9, 8, 7, 6]);
+
+    $html = $this->actingAs($estudiante->usuario)->get(route('estudiante.notas'))->getContent();
+
+    // Una columna por parcial, el promedio ya calculado y el veredicto aprobado.
+    expect($html)->toContain('PROMEDIO')
+        ->and($html)->toContain('7.50')
+        ->and($html)->toContain('9.0')
+        ->and($html)->toContain('6.0')
+        ->and($html)->toContain('Aprobado');
 });
 
 it('dice que no hay historial en vez de mostrar una tabla vacia', function () {

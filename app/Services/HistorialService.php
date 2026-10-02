@@ -102,6 +102,12 @@ class HistorialService
                 'calificacion.id_cuatrimestre',
                 'calificacion.id_curso',
                 'calificacion.nota',
+                'calificacion.promedio',
+                'calificacion.tiene_parciales',
+                'calificacion.parcial1',
+                'calificacion.parcial2',
+                'calificacion.parcial3',
+                'calificacion.parcial4',
                 'calificacion.observaciones',
                 'curso.nombre as curso',
             ])
@@ -138,6 +144,12 @@ class HistorialService
                 'curso.nombre as curso',
             ])
             ->selectRaw('null as nota')
+            ->selectRaw('null as promedio')
+            ->selectRaw('null as tiene_parciales')
+            ->selectRaw('null as parcial1')
+            ->selectRaw('null as parcial2')
+            ->selectRaw('null as parcial3')
+            ->selectRaw('null as parcial4')
             ->selectRaw('null as observaciones')
             ->selectRaw('curso_cuatrimestre.total_clases as total_clases')
             ->selectSub($this->conteoAsistencia('inscripcion', true), 'faltas')
@@ -162,16 +174,30 @@ class HistorialService
             (int) $fila->clases_dictadas,
         );
 
+        // Con parciales manda el promedio de las cuatro: es la nota que ve el
+        // alumno y la que el sistema promedia, no un entero viejo.
+        $tieneParciales = (bool) ($fila->tiene_parciales ?? false);
+        $promedio = $tieneParciales && $fila->promedio !== null
+            ? (float) $fila->promedio
+            : ($nota !== null ? (float) $nota : null);
+
         return [
             'cuatrimestre' => $cuatrimestre,
             'id_cuatrimestre' => (int) $fila->id_cuatrimestre,
             'id_curso' => (int) $fila->id_curso,
             'curso' => $fila->curso,
-            'nota' => $nota,
+            'nota' => $promedio,
+            'tiene_parciales' => $tieneParciales,
+            'parciales' => [
+                $fila->parcial1 ?? null,
+                $fila->parcial2 ?? null,
+                $fila->parcial3 ?? null,
+                $fila->parcial4 ?? null,
+            ],
             'observaciones' => $fila->observaciones,
             'inasistencia' => $inasistencia,
             'alerta' => $this->reglas->nivelAlerta($inasistencia),
-            'estado' => $this->reglas->estadoEstudiante($nota, $inasistencia, $terminado),
+            'estado' => $this->reglas->estadoEstudiante($promedio, $inasistencia, $terminado),
         ];
     }
 

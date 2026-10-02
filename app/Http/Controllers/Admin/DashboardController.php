@@ -192,17 +192,30 @@ class DashboardController extends Controller
             ]),
             'materias' => $historial->materiasDeUnPeriodo($id, $ctx['idCuatrimestre']),
             'egresado' => $historial->esEgresado($estudiante),
-            'periodo' => [
-                'promedio' => $notasDelPeriodo->isEmpty() ? null : round($notasDelPeriodo->avg('nota'), 2),
-                'aprobadas' => $notasDelPeriodo->where('nota', '>=', 6)->count(),
-                'reprobadas' => $notasDelPeriodo->where('nota', '<', 6)->count(),
-            ],
-            'carrera' => [
-                'promedio' => $notasDeLaCarrera->isEmpty() ? null : round($notasDeLaCarrera->avg('nota'), 2),
-                'aprobadas' => $notasDeLaCarrera->where('nota', '>=', 6)->count(),
-                'reprobadas' => $notasDeLaCarrera->where('nota', '<', 6)->count(),
-            ],
+            'periodo' => $this->cifrasDe($notasDelPeriodo),
+            'carrera' => $this->cifrasDe($notasDeLaCarrera),
         ]);
+    }
+
+    /**
+     * Promedio, aprobadas y reprobadas de un conjunto de calificaciones.
+     *
+     * Cada fila aporta su nota efectiva (el promedio de sus cuatro parciales si
+     * ya las tiene, la nota final antigua si no), para que la ficha del alumno no
+     * difiera de su historial ni de lo que ve el profesor.
+     *
+     * @param  \Illuminate\Support\Collection<int, Calificacion>  $calificaciones
+     * @return array{promedio: float|null, aprobadas: int, reprobadas: int}
+     */
+    private function cifrasDe($calificaciones): array
+    {
+        $notas = $calificaciones->map(fn (Calificacion $c) => $c->notaEfectiva());
+
+        return [
+            'promedio' => $notas->isEmpty() ? null : round((float) $notas->avg(), 2),
+            'aprobadas' => $notas->filter(fn ($n) => $n !== null && $n >= 6)->count(),
+            'reprobadas' => $notas->filter(fn ($n) => $n !== null && $n < 6)->count(),
+        ];
     }
 
     /**

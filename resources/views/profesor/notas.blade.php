@@ -238,6 +238,45 @@
 
 
     /* =====================================================
+       MENSAJE DE ERROR
+    ===================================================== */
+
+    .alert-error {
+        position: relative;
+
+        z-index: 2;
+
+        margin-bottom: 22px;
+
+        padding: 13px 18px;
+
+        display: flex;
+
+        align-items: flex-start;
+
+        gap: 9px;
+
+        border-radius: 16px;
+
+        background: #ffe6ec;
+
+        border: 1px solid #ffc6d5;
+
+        color: #c31f4c;
+
+        font-size: 14px;
+
+        font-weight: 500;
+    }
+
+    .alert-error ul {
+        margin: 0;
+
+        padding-left: 18px;
+    }
+
+
+    /* =====================================================
        LEYENDA DE FALTAS
     ===================================================== */
 
@@ -344,7 +383,7 @@
 
         table-layout: fixed;
 
-        min-width: 860px;
+        min-width: 1080px;
     }
 
     /* ENCABEZADO */
@@ -375,33 +414,50 @@
 
     th:nth-child(1),
     td:nth-child(1) {
-        width: 27%;
+        width: 18%;
     }
 
     th:nth-child(2),
     td:nth-child(2) {
-        width: 14%;
+        width: 10%;
 
         text-align: center;
     }
 
     th:nth-child(3),
     td:nth-child(3) {
-        width: 14%;
+        width: 11%;
 
         text-align: center;
     }
+
+    /* Las cuatro parciales */
 
     th:nth-child(4),
-    td:nth-child(4) {
-        width: 13%;
+    td:nth-child(4),
+    th:nth-child(5),
+    td:nth-child(5),
+    th:nth-child(6),
+    td:nth-child(6),
+    th:nth-child(7),
+    td:nth-child(7) {
+        width: 8%;
 
         text-align: center;
     }
 
-    th:nth-child(5),
-    td:nth-child(5) {
-        width: 32%;
+    /* Promedio calculado */
+
+    th:nth-child(8),
+    td:nth-child(8) {
+        width: 9%;
+
+        text-align: center;
+    }
+
+    th:nth-child(9),
+    td:nth-child(9) {
+        width: 24%;
     }
 
     /* FILAS */
@@ -590,6 +646,114 @@
         box-shadow:
             0 0 0 3px rgba(86, 134, 239, 0.14),
             inset 0 1px 2px rgba(86, 122, 190, 0.05);
+    }
+
+    /* INPUT DE PARCIAL: cuatro por alumno, mas angosto que el de nota */
+
+    .parcial-input {
+        width: 100%;
+
+        max-width: 62px;
+
+        height: 34px;
+
+        padding: 0 4px;
+
+        border: 1px solid #c6d3ee;
+
+        border-radius: 11px;
+
+        background:
+            linear-gradient(
+                180deg,
+                #ffffff,
+                #f2f6ff
+            );
+
+        color: #172f55;
+
+        text-align: center;
+
+        font-size: 13px;
+
+        outline: none;
+
+        transition:
+            border-color 0.15s ease,
+            box-shadow 0.15s ease;
+    }
+
+    .parcial-input:focus {
+        border-color: #5686ef;
+
+        background: #ffffff;
+
+        box-shadow:
+            0 0 0 3px rgba(86, 134, 239, 0.14);
+    }
+
+    /* Etiqueta de la parcial, arriba del input (version movil) */
+
+    .parcial-label {
+        display: none;
+
+        font-size: 10px;
+
+        font-weight: 700;
+
+        color: #8ba0c8;
+
+        text-transform: uppercase;
+    }
+
+    /* PROMEDIO: se calcula solo, no es un campo editable */
+
+    .promedio-cell {
+        text-align: center;
+    }
+
+    .promedio {
+        display: inline-flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        min-width: 52px;
+
+        padding: 5px 8px;
+
+        border-radius: 13px;
+
+        background: #eef2fa;
+
+        color: #4a628f;
+
+        font-size: 13.5px;
+
+        font-weight: 700;
+    }
+
+    .promedio.aprobado {
+        background: #d9f9e8;
+        color: #0a9560;
+    }
+
+    .promedio.reprobado {
+        background: #ffe0e8;
+        color: #ec3e67;
+    }
+
+    /* Grupo de las cuatro parciales */
+
+    .parciales-celda {
+        display: flex;
+
+        align-items: center;
+
+        justify-content: center;
+
+        gap: 6px;
     }
 
     /* INPUT DE OBSERVACIÓN */
@@ -1088,7 +1252,11 @@
         td:nth-child(1)::before { content: "Estudiante"; align-self: start; margin-top: 4px; }
         td:nth-child(2)::before { content: "% Faltas"; }
         td:nth-child(3)::before { content: "Estado"; }
-        td:nth-child(4)::before { content: "Nota (1-10)"; }
+        td:nth-child(4)::before { content: "Parcial 1"; }
+        td:nth-child(5)::before { content: "Parcial 2"; }
+        td:nth-child(6)::before { content: "Parcial 3"; }
+        td:nth-child(7)::before { content: "Parcial 4"; }
+        td:nth-child(8)::before { content: "Promedio"; }
         
         /* Alinear el contenido (los datos) a la derecha */
         td > * {
@@ -1097,19 +1265,19 @@
         }
         
         /* La observación necesita todo el ancho por ser un input largo */
-        td:nth-child(5) {
+        td:nth-child(9) {
             display: flex;
             flex-direction: column;
             align-items: stretch;
             gap: 10px;
         }
         
-        td:nth-child(5)::before {
+        td:nth-child(9)::before {
             content: "Observación";
             position: static;
         }
         
-        td:nth-child(5) > * {
+        td:nth-child(9) > * {
             max-width: 100%;
             text-align: left;
         }
@@ -1209,6 +1377,23 @@
             </div>
         @endif
 
+        {{-- Si una parcial se sale de la escala (o falta el alumno), el profesor
+             tiene que saber qué pasó: sin esto la página se recarga en silencio
+             y parece que se guardó. --}}
+        @if($errors->any())
+            <div class="alert-error">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <div>
+                    No se pudieron guardar las notas:
+                    <ul>
+                        @foreach($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                        @endforeach
+                    </ul>
+                </div>
+            </div>
+        @endif
+
         {{-- Leyenda de faltas --}}
         <div class="legend">
 
@@ -1231,6 +1416,11 @@
 
         <p class="registro-clases">
             Se han registrado <strong>{{ $clasesRegistradas }}</strong> de <strong>{{ $totalClases }}</strong> clases programadas.
+        </p>
+
+        <p class="registro-clases" style="margin:-10px 0 18px;text-align:left">
+            Cuatro parciales de <strong>25 %</strong> cada una: el <strong>promedio</strong> se calcula solo
+            y sube a medida que cargas las notas. Una parcial sin poner cuenta como cero.
         </p>
 
         @if($estudiantes->isEmpty())
@@ -1257,7 +1447,11 @@
                             <th>ESTUDIANTE</th>
                             <th>% FALTAS</th>
                             <th>ESTADO</th>
-                            <th>NOTA (1-10)</th>
+                            <th>P1<br>(25%)</th>
+                            <th>P2<br>(25%)</th>
+                            <th>P3<br>(25%)</th>
+                            <th>P4<br>(25%)</th>
+                            <th>PROMEDIO</th>
                             <th>OBSERVACIÓN</th>
 
                         </tr>
@@ -1325,19 +1519,39 @@
 
                             </td>
 
-                            {{-- Nota --}}
-                            <td>
+                            {{-- Cuatro parciales de 25 % cada una. El promedio de la columna
+                                 siguiente se calcula solo, en el navegador mientras
+                                 escribe y otra vez al guardar: la nota que cuenta
+                                 es la del servidor. --}}
+                            @foreach (['parcial1', 'parcial2', 'parcial3', 'parcial4'] as $indice => $columna)
+                                <td>
+                                    <span class="parcial-label">Parcial {{ $indice + 1 }}</span>
+                                    <input
+                                        type="number"
+                                        name="notas[{{ $i }}][{{ $columna }}]"
+                                        value="{{ $est['parciales'][$indice] !== null ? number_format((float) $est['parciales'][$indice], 1, '.', '') : '' }}"
+                                        min="1" max="10" step="0.1"
+                                        class="parcial-input"
+                                        data-parcial
+                                        placeholder="—"
+                                        @disabled(!$puedeEditar)
+                                    >
+                                </td>
+                            @endforeach
 
-                                <input
-                                    type="number"
-                                    name="notas[{{ $i }}][nota]"
-                                    value="{{ $est['nota'] }}"
-                                    min="1" max="10"
-                                    class="form-control"
-                                    placeholder="—"
-                                    
-                                >
-
+                            {{-- Promedio automático (opción A: parcial vacía = 0) --}}
+                            <td class="promedio-cell">
+                                @php
+                                    $promedio = $est['nota'];
+                                    $clasePromedio = match (true) {
+                                        $promedio === null => '',
+                                        $promedio >= 6 => 'aprobado',
+                                        default => 'reprobado',
+                                    };
+                                @endphp
+                                <span class="promedio {{ $clasePromedio }}" data-promedio>
+                                    {{ $promedio !== null ? number_format((float) $promedio, 2) : '—' }}
+                                </span>
                             </td>
 
                             {{-- Observación --}}
@@ -1349,6 +1563,7 @@
                                     value="{{ $est['observaciones'] }}"
                                     placeholder="Observación opcional..."
                                     class="observation"
+                                    @disabled(!$puedeEditar)
                                 >
 
                             </td>
@@ -1426,6 +1641,56 @@
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape') closeAllSel();
         });
+    })();
+
+    /* =====================================================
+       PROMEDIO EN VIVO
+       Cuatro parciales de 25 %: el promedio es la media de las cuatro y
+       las que faltan cuentan como cero (opción A), el mismo cálculo que
+       hace el servidor al guardar. Es solo una ayuda visual mientras el
+       profesor escribe: al guardar manda el valor del servidor.
+       ===================================================== */
+
+    (function () {
+        var filas = document.querySelectorAll('tbody tr');
+
+        for (var f = 0; f < filas.length; f++) {
+            (function (fila) {
+                var parciales = fila.querySelectorAll('[data-parcial]');
+                var salida = fila.querySelector('[data-promedio]');
+
+                if (!parciales.length || !salida) return;
+
+                function recalcular() {
+                    var suma = 0;
+                    var hayAlgo = false;
+
+                    for (var i = 0; i < parciales.length; i++) {
+                        var valor = parseFloat(parciales[i].value);
+
+                        if (!isNaN(valor)) {
+                            suma += valor;
+                            hayAlgo = true;
+                        }
+                    }
+
+                    if (!hayAlgo) {
+                        salida.textContent = '—';
+                        salida.className = 'promedio';
+                        return;
+                    }
+
+                    var promedio = Math.round((suma / parciales.length) * 100) / 100;
+
+                    salida.textContent = promedio.toFixed(2);
+                    salida.className = 'promedio ' + (promedio >= 6 ? 'aprobado' : 'reprobado');
+                }
+
+                for (var j = 0; j < parciales.length; j++) {
+                    parciales[j].addEventListener('input', recalcular);
+                }
+            })(filas[f]);
+        }
     })();
 </script>
 

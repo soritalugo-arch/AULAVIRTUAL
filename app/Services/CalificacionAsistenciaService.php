@@ -6,6 +6,7 @@ use App\Models\Asistencia;
 use App\Models\Calificacion;
 use App\Models\Cuatrimestre;
 use App\Models\Curso;
+use App\Services\ParcialService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -43,6 +44,40 @@ class CalificacionAsistenciaService
         return Calificacion::updateOrCreate(
             ['id_estudiante' => $idEstudiante, 'id_curso' => $idCurso, 'id_cuatrimestre' => $idCuatrimestre],
             ['nota' => $nota, 'observaciones' => $observaciones]
+        );
+    }
+
+    /**
+     * Upsert de las cuatro parciales con su promedio ya calculado.
+     *
+     * El promedio no lo escribe el profesor: sale de ParcialService al vuelo, y
+     * la columna "nota" queda null porque en este flujo la definitiva es el
+     * promedio. Si el profesor borra las cuatro parciales, la fila se elimina:
+     * una calificacion sin ningun numero no es una calificacion.
+     *
+     * @param  array<int, float|null>  $parciales  [p1, p2, p3, p4]
+     */
+    public function guardarParciales(int $idEstudiante, int $idCurso, int $idCuatrimestre, array $parciales, ?string $observaciones = null): ?Calificacion
+    {
+        $valores = ParcialService::calcularDesde($parciales);
+
+        // Sin ninguna parcial cargada no queda nada que promediar: se borra la
+        // fila, igual que hacia la version de nota final vacia.
+        if ($valores['promedio'] === null) {
+            $this->quitarNota($idEstudiante, $idCurso, $idCuatrimestre);
+
+            return null;
+        }
+
+        return Calificacion::updateOrCreate(
+            ['id_estudiante' => $idEstudiante, 'id_curso' => $idCurso, 'id_cuatrimestre' => $idCuatrimestre],
+            $valores + [
+                'tiene_parciales' => true,
+                // La definitiva vive en el promedio; "nota" se deja sincronizada
+                // para que las consultas que leen esa columna sigan cuadrando.
+                'nota' => (int) round($valores['promedio']),
+                'observaciones' => $observaciones,
+            ]
         );
     }
     // upsert de asistencia por estudiante, curso, cuatrimestre y fecha
@@ -125,7 +160,10 @@ class CalificacionAsistenciaService
     }
     // reglas: >30% faltas = reprobado; sin nota = en curso; nota>=6 = aprobado.
     // Mientras el cuatrimestre esta activo el veredicto por faltas es "presunto".
-    public function estadoEstudiante(?int $nota, float $porcentajeInasistencia, bool $cuatrimestreTerminado = true): string
+    //
+    // $nota admite decimales porque con cuatro parciales lo que llega es el
+    // promedio (pueden ser 7.25), no un entero.
+    public function estadoEstudiante(int|float|null $nota, float $porcentajeInasistencia, bool $cuatrimestreTerminado = true): string
     {
         if ($porcentajeInasistencia > 30) {
             return $cuatrimestreTerminado ? 'Reprobado' : 'Reprobado (presunto)';
@@ -151,12 +189,14 @@ class CalificacionAsistenciaService
         if ($porcentaje >= 25) return 'advertencia';
         return 'ok';
     }
-    // promedio de notas del curso en el cuatrimestre; null si no hay notas
+    // promedio de notas del curso en el cuatrimestre; null si no hay notas.
+    // Es el promedio de las cuatro parciales (COALESCE) y no el entero de la
+    // columna nota, para que el alumno vea el mismo número que su profesor.
     public function promedioPorCurso(int $idCurso, int $idCuatrimestre): ?float
     {
         $promedio = Calificacion::where('id_curso', $idCurso)
             ->where('id_cuatrimestre', $idCuatrimestre)
-            ->avg('nota');
+            ->avg(DB::raw('COALESCE(promedio, nota)'));
         return $promedio !== null ? round((float) $promedio, 2) : null;
     }
 }

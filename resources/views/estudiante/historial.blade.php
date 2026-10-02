@@ -349,6 +349,17 @@
     .nota.aprobado { background: #d9f9e8; color: #079263; }
     .nota.reprobado { background: #ffe0e8; color: #d23a5f; }
 
+    /* Desglose de las cuatro parciales bajo la nota (promedio) */
+    .parciales {
+        display: block;
+        margin-top: 5px;
+        color: #8ba0c8;
+        font-size: 10.5px;
+        font-weight: 600;
+        letter-spacing: 0.2px;
+        line-height: 1.5;
+    }
+
     .pct { font-weight: 600; }
     .pct.ok { color: #0d9261; }
     .pct.advertencia { color: #c78d18; }
@@ -637,7 +648,15 @@
                                 @else
                                     <span
                                         class="nota {{ $pildora[0] === 'aprobado' ? 'aprobado' : 'reprobado' }}"
-                                    >{{ $curso['nota'] }}</span>
+                                    >{{ number_format((float) $curso['nota'], 2) }}</span>
+                                    {{-- Las cuatro parciales de 25 % de las que sale el promedio --}}
+                                    @if ($curso['tiene_parciales'] ?? false)
+                                        <small class="parciales">
+                                            @foreach ($curso['parciales'] as $i => $parcial)
+                                                P{{ $i + 1 }}: {{ $parcial !== null ? number_format((float) $parcial, 1) : '—' }}
+                                            @endforeach
+                                        </small>
+                                    @endif
                                 @endif
                             </div>
 

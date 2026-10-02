@@ -440,7 +440,7 @@
                 <div>
                     @if ($curso['nota'] !== null)
                         <span class="boleta-nota {{ $aprobado ? 'boleta-nota--aprobado' : 'boleta-nota--reprobado' }}">
-                            {{ $curso['nota'] }}
+                            {{ number_format((float) $curso['nota'], 2) }}
                         </span>
                     @else
                         <span class="boleta-nota--sin">—</span>

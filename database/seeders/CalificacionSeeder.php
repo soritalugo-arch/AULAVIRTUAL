@@ -118,11 +118,22 @@ class CalificacionSeeder extends Seeder
         $filas = [];
         foreach (self::$paresQ1 as $sid => $cursosDelEstudiante) {
             foreach ($cursosDelEstudiante as $cid => $nota) {
+                // Las cuatro parciales reparten esa misma nota: el promedio de
+                // los datos de demostracion es exactamente el que se puso, para
+                // que historial, reportes y el panel cuadren entre si.
+                $parciales = $this->parcialesQuePromedian($nota, $sid, $cid);
+
                 $filas[] = [
                     'id_estudiante' => $sid,
                     'id_curso' => $cid,
                     'id_cuatrimestre' => $pasado,
                     'nota' => $nota,
+                    'parcial1' => $parciales[0],
+                    'parcial2' => $parciales[1],
+                    'parcial3' => $parciales[2],
+                    'parcial4' => $parciales[3],
+                    'promedio' => $nota,
+                    'tiene_parciales' => true,
                     'observaciones' => $this->observacionPara($nota),
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -133,6 +144,37 @@ class CalificacionSeeder extends Seeder
         foreach (array_chunk($filas, 500) as $lote) {
             Calificacion::insert($lote);
         }
+    }
+
+    /**
+     * Cuatro parciales que promedian exactamente la nota pedida.
+     *
+     * Los desvios suman siempre cero, asi que el promedio de las cuatro da la
+     * nota que el sistema guardaba antes de existir las parciales. Cada
+     * estudiante/curso toma un patron distinto (determinista por id) para que
+     * los alumnos no salgan todos con 8,8,8,8.
+     *
+     * La amplitud se ajusta a lo que permite la escala (a 10 no se puede subir
+     * sin salirse), para que el tope no rompa la suma cero y el promedio siga
+     * dando justo la nota. Un alumno de 10 sale con 10,10,10,10.
+     *
+     * @return array{0: float, 1: float, 2: float, 3: float}
+     */
+    private function parcialesQuePromedian(int $nota, int $sid, int $cid): array
+    {
+        // Margen hasta los bordes: a 10 no se puede subir, a 1 no se puede bajar.
+        $amplitud = min(1.0, 10 - $nota, $nota - 1);
+
+        $patrones = [
+            [0.0, 0.0, 0.0, 0.0],
+            [$amplitud / 2, $amplitud / 2, -$amplitud / 2, -$amplitud / 2],
+            [$amplitud, -$amplitud / 2, -$amplitud / 2, 0.0],
+            [$amplitud / 2, -$amplitud / 2, $amplitud / 2, -$amplitud / 2],
+        ];
+
+        $desvios = $patrones[($sid + $cid) % count($patrones)];
+
+        return array_map(fn (float $desvio) => $nota + $desvio, $desvios);
     }
 
     /**
