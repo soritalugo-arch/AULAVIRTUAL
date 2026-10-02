@@ -98,8 +98,15 @@ class DashboardController extends Controller
     {
         $ctx = $this->contexto($request, $reportes);
 
+        $periodos = Cuatrimestre::orderBy('fecha_inicio')->get();
+
+        // El período en curso es el único que se puede cambiar de momento; los
+        // demás se muestran solo como referencia (pasado y próximo).
+        $vigente = $periodos->first(fn (Cuatrimestre $p) => now()->between($p->fecha_inicio, $p->fecha_fin));
+
         return view('admin.periodo', $ctx + [
-            'periodos' => Cuatrimestre::orderBy('fecha_inicio')->get(),
+            'periodos' => $periodos,
+            'vigente' => $vigente,
         ]);
     }
 

@@ -29,6 +29,12 @@ class AsistenciaController extends Controller
         if (!$cuatrimestre) {
             return back()->with('error', 'Este curso no tiene un cuatrimestre activo.');
         }
+        // Misma regla que en notas: durante la matrícula aún no se sabe quién
+        // se matriculó, así que no hay hoja de asistencia que mostrar.
+        if ($cuatrimestre->estado === Cuatrimestre::ESTADO_MATRICULA) {
+            return redirect()->route('profesor.cursos')
+                ->with('error', 'La matrícula aún está abierta: no sabes quién se matriculó. Tus estudiantes aparecerán cuando el período esté en cursado.');
+        }
         $fecha   = $request->input('fecha', now()->toDateString());
         $idCuatr = $cuatrimestre->id_cuatrimestre;
         $cuatrimestreTerminado = $cuatrimestre->fecha_fin->lt(now());

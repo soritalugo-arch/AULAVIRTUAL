@@ -5,6 +5,7 @@ use App\Models\Carrera;
 use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
+use App\Models\Horario;
 use App\Models\Inscripcion;
 use App\Models\Profesor;
 use App\Models\Rol;
@@ -179,6 +180,65 @@ it('la rectora cambia el momento del período desde su panel', function () {
         'id_cuatrimestre' => $cuatrimestre->id_cuatrimestre,
         'estado' => 'en_curso',
     ]);
+});
+
+it('el panel de la rectora muestra los tres modos con un solo botón y sin códigos Q', function () {
+    $usuario = Usuario::factory()->create();
+    $usuario->roles()->attach(rolEtapa('admin'));
+
+    Cuatrimestre::create([
+        'fecha_inicio' => now()->toDateString(),
+        'fecha_fin' => now()->addMonths(3)->toDateString(),
+    ]);
+
+    $this->actingAs($usuario)
+        ->get(route('admin.periodo'))
+        ->assertOk()
+        ->assertSee('Matrícula abierta')
+        ->assertSee('En cursado')
+        ->assertSee('Cerrado')
+        ->assertSee('Cambiar modo')
+        ->assertSee('matriculacion')
+        ->assertSee('en_curso')
+        ->assertSee('cerrado')
+        ->assertDontSee('Q01')
+        ->assertDontSee('Q02')
+        ->assertDontSee('Q03');
+});
+
+it('durante la matrícula el profesor solo ve su horario y el acceso a notas/asistencia redirige', function () {
+    $usuario = Usuario::factory()->create();
+    $usuario->roles()->attach(rolEtapa('profesor'));
+    $profesor = Profesor::factory()->create(['id_usuario' => $usuario->id_usuario]);
+
+    $cuatrimestre = cuatrimestreEtapaVigente(); // matrícula abierta
+
+    $curso = Curso::create(['nombre' => 'Programación I', 'limite_estudiantes' => 30]);
+    $profesor->cursos()->attach($curso);
+    $curso->cuatrimestres()->attach($cuatrimestre);
+    Horario::create([
+        'id_curso' => $curso->id_curso,
+        'dia_semana' => 'Lunes',
+        'hora_inicio' => '18:00:00',
+        'hora_fin' => '20:00:00',
+    ]);
+
+    $this->actingAs($usuario)
+        ->get(route('profesor.cursos'))
+        ->assertOk()
+        ->assertSee('Lunes')
+        ->assertSee('6:00 pm')
+        ->assertSee('Verás a tus estudiantes cuando el período esté en cursado')
+        ->assertDontSee('Notas')
+        ->assertDontSee('Asistencia');
+
+    $this->actingAs($usuario)
+        ->get(route('profesor.notas', $curso->id_curso))
+        ->assertRedirect(route('profesor.cursos'));
+
+    $this->actingAs($usuario)
+        ->get(route('profesor.asistencia', $curso->id_curso))
+        ->assertRedirect(route('profesor.cursos'));
 });
 
 it('profesor no puede guardar notas mientras el período está en matrícula', function () {

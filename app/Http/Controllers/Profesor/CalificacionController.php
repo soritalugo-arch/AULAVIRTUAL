@@ -21,9 +21,12 @@ class CalificacionController extends Controller
         $usuario = Auth::user();
         $profesor = $usuario->profesor;
         $cursos = $profesor->cursos()
-            ->with(['cuatrimestres' => fn($q) => $q->orderByDesc('id_cuatrimestre')])
+            ->with(['horarios', 'cuatrimestres' => fn($q) => $q->orderByDesc('id_cuatrimestre')])
             ->get();
-        return view('profesor.mis_cursos', compact('cursos'));
+        // Momento del período vigente: define qué ve el profesor (durante la
+        // matrícula solo su horario; en cursado, sus estudiantes).
+        $momento = $this->servicio->cuatrimestreVigente();
+        return view('profesor.mis_cursos', compact('cursos', 'momento'));
     }
     // tabla de notas del curso con porcentaje de faltas por estudiante
     public function notas(int $cursoId, Request $request)
@@ -43,6 +46,13 @@ class CalificacionController extends Controller
         }
         if (!$cuatrimestre) {
             return back()->with('error', 'Este curso no tiene un cuatrimestre activo.');
+        }
+        // Durante la matrícula el profesor no ve estudiantes: todavía no se
+        // sabe quién se inscribió. Cuando el período se cierra, la página de
+        // notas queda en solo lectura.
+        if ($cuatrimestre->estado === Cuatrimestre::ESTADO_MATRICULA) {
+            return redirect()->route('profesor.cursos')
+                ->with('error', 'La matrícula aún está abierta: no sabes quién se matriculó. Tus estudiantes aparecerán cuando el período esté en cursado.');
         }
         $idCuatr     = $cuatrimestre->id_cuatrimestre;
         $clasesRegistradas = $this->servicio->clasesDictadas($cursoId, $idCuatr);
