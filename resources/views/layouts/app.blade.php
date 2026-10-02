@@ -174,7 +174,7 @@
                 <ul class="nav-menu" id="mobile-menu">
                     <li class="nav-indicator" aria-hidden="true"></li>
                     <li>
-                        <a href="{{ route($dashboard) }}" class="nav-link {{ request()->routeIs($dashboard) ? 'active' : '' }}">Dashboard</a>
+                        <a href="{{ route($dashboard) }}" class="nav-link {{ request()->routeIs($dashboard) ? 'active' : '' }}">Inicio</a>
                     </li>
                     @yield('menu_extra')
                 </ul>
