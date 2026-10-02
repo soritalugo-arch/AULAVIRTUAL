@@ -1,8 +1,11 @@
 <?php
 
+use App\Models\Calificacion;
+use App\Models\Carrera;
 use App\Models\Cuatrimestre;
 use App\Models\Curso;
 use App\Models\Estudiante;
+use App\Models\Inscripcion;
 use App\Models\Rol;
 use App\Models\Usuario;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -120,4 +123,98 @@ it('muestra en su seccion los estudiantes con deuda', function () {
         ->get(route('admin.deudas', ['cuatrimestre' => $c->id_cuatrimestre]))
         ->assertOk()
         ->assertDontSee('99000002');
+});
+
+// -------------------------------- Ficha del estudiante
+
+it('requiere autenticacion y rol de admin para abrir la ficha', function () {
+    $estudiante = Estudiante::create([
+        'id_usuario' => Usuario::factory()->create()->id_usuario,
+        'cedula' => '99000009',
+        'fecha_nacimiento' => '2000-01-01',
+        'deuda' => false,
+    ]);
+
+    $ruta = route('admin.rendimiento.estudiante', ['estudiante' => $estudiante->id_usuario]);
+
+    $this->get($ruta)->assertRedirect(route('login'));
+
+    $visitante = Usuario::factory()->create();
+    $this->actingAs($visitante)->get($ruta)->assertForbidden();
+});
+
+it('muestra la ficha del estudiante con sus datos y materias del periodo', function () {
+    $admin = crearAdmin();
+    $q = Cuatrimestre::create(['fecha_inicio' => '2026-01-05', 'fecha_fin' => '2026-04-30']);
+    $carrera = Carrera::create(['nombre' => 'Informática', 'duracion' => 6]);
+    $curso = cursoConClases($q, 10);
+
+    $usuario = Usuario::factory()->create(['nombres' => 'Ana', 'apellidos' => 'Pérez']);
+    $estudiante = Estudiante::create([
+        'id_usuario' => $usuario->id_usuario,
+        'cedula' => '99000003',
+        'fecha_nacimiento' => '2000-01-01',
+        'deuda' => true,
+        'id_carrera' => $carrera->id_carrera,
+    ]);
+
+    Inscripcion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $curso->id_curso,
+        'id_cuatrimestre' => $q->id_cuatrimestre,
+        'fecha_inscripcion' => '2026-01-04',
+    ]);
+
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $curso->id_curso,
+        'id_cuatrimestre' => $q->id_cuatrimestre,
+        'nota' => 7,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.rendimiento.estudiante', [
+            'estudiante' => $estudiante->id_usuario,
+            'cuatrimestre' => $q->id_cuatrimestre,
+        ]))
+        ->assertOk()
+        ->assertSee('Ana Pérez')
+        ->assertSee('99000003')
+        ->assertSee('Informática')
+        ->assertSee($curso->nombre)
+        ->assertSee('Con deuda');
+});
+
+it('enlaza cada fila de la tabla de rendimiento con su ficha', function () {
+    $admin = crearAdmin();
+    $q = Cuatrimestre::create(['fecha_inicio' => '2026-01-05', 'fecha_fin' => '2026-04-30']);
+    $carrera = Carrera::create(['nombre' => 'Turismo', 'duracion' => 5]);
+    $curso = cursoConClases($q, 10);
+
+    $estudiante = Estudiante::create([
+        'id_usuario' => Usuario::factory()->create()->id_usuario,
+        'cedula' => '99000004',
+        'fecha_nacimiento' => '2000-01-01',
+        'deuda' => false,
+        'id_carrera' => $carrera->id_carrera,
+    ]);
+
+    Calificacion::create([
+        'id_estudiante' => $estudiante->id_usuario,
+        'id_curso' => $curso->id_curso,
+        'id_cuatrimestre' => $q->id_cuatrimestre,
+        'nota' => 6,
+    ]);
+
+    $this->actingAs($admin)
+        ->get(route('admin.rendimiento', ['cuatrimestre' => $q->id_cuatrimestre]))
+        ->assertOk()
+        ->assertSee('99000004') // la cédula ya se muestra en la tabla
+        ->assertSee(
+            route('admin.rendimiento.estudiante', [
+                'estudiante' => $estudiante->id_usuario,
+                'cuatrimestre' => $q->id_cuatrimestre,
+            ]),
+            false
+        );
 });

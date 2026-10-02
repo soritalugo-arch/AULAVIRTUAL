@@ -26,6 +26,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin',               [DashboardController::class, 'index'])->name('admin.dashboard');
     Route::get('/admin/inscripciones', [DashboardController::class, 'inscripciones'])->name('admin.inscripciones');
     Route::get('/admin/rendimiento',   [DashboardController::class, 'rendimiento'])->name('admin.rendimiento');
+    Route::get('/admin/rendimiento/estudiante/{estudiante}', [DashboardController::class, 'fichaEstudiante'])->name('admin.rendimiento.estudiante');
     Route::get('/admin/asistencia',    [DashboardController::class, 'asistencia'])->name('admin.asistencia');
     Route::get('/admin/deudas',        [DashboardController::class, 'deudas'])->name('admin.deudas');
 });

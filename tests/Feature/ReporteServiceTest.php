@@ -342,7 +342,9 @@ it('lista el rendimiento por estudiante con el nombre y la carrera', function ()
     expect($fila['promedio'])->toBe(7.0)          // (8+9+7+4)/4
         ->and($fila['aprobadas'])->toBe(3)
         ->and($fila['reprobadas'])->toBe(1)
-        ->and($fila['estudiante'])->not->toBe('');
+        ->and($fila['estudiante'])->not->toBe('')
+        ->and($fila['cedula'])->toBe('16000001')
+        ->and($fila['id'])->toBe($alumno->id_usuario);
 });
 
 it('ordena a los estudiantes de menor a mayor promedio y deja al final los que no tienen nota', function () {

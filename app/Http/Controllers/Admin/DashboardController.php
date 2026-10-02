@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Calificacion;
 use App\Models\Estudiante;
+use App\Services\HistorialService;
 use App\Services\ReporteService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -79,6 +81,43 @@ class DashboardController extends Controller
                 ->where('deuda', true)
                 ->orderBy('id_usuario')
                 ->get(),
+        ]);
+    }
+
+    /**
+     * Ficha de un estudiante desde la tabla de rendimiento: datos personales,
+     * cifras del periodo y de toda la carrera, y sus materias del periodo.
+     *
+     * La ficha entra con el mismo periodo en el que estaba la rectora, para que
+     * los numeros que vea coincidan con los de la fila en la que hizo clic.
+     */
+    public function fichaEstudiante(Request $request, ReporteService $reportes, HistorialService $historial, Estudiante $estudiante)
+    {
+        $ctx = $this->contexto($request, $reportes);
+        $id = $estudiante->id_usuario;
+
+        $notasDelPeriodo = Calificacion::where('id_estudiante', $id)
+            ->where('id_cuatrimestre', $ctx['idCuatrimestre'])
+            ->get();
+        $notasDeLaCarrera = Calificacion::where('id_estudiante', $id)->get();
+
+        return view('admin.ficha_estudiante', $ctx + [
+            'estudiante' => $estudiante->load([
+                'usuario:id_usuario,nombres,apellidos,email',
+                'carrera:id_carrera,nombre',
+            ]),
+            'materias' => $historial->materiasDeUnPeriodo($id, $ctx['idCuatrimestre']),
+            'egresado' => $historial->esEgresado($estudiante),
+            'periodo' => [
+                'promedio' => $notasDelPeriodo->isEmpty() ? null : round($notasDelPeriodo->avg('nota'), 2),
+                'aprobadas' => $notasDelPeriodo->where('nota', '>=', 6)->count(),
+                'reprobadas' => $notasDelPeriodo->where('nota', '<', 6)->count(),
+            ],
+            'carrera' => [
+                'promedio' => $notasDeLaCarrera->isEmpty() ? null : round($notasDeLaCarrera->avg('nota'), 2),
+                'aprobadas' => $notasDeLaCarrera->where('nota', '>=', 6)->count(),
+                'reprobadas' => $notasDeLaCarrera->where('nota', '<', 6)->count(),
+            ],
         ]);
     }
 

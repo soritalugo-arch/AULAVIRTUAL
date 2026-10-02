@@ -257,8 +257,10 @@ class ReporteService
                 ->orWhereHas('calificaciones', fn ($c) => $c->where('id_cuatrimestre', $id))))
             ->get()
             ->map(fn (Estudiante $e) => [
+                'id' => $e->id_usuario,
                 'estudiante' => trim(($e->usuario?->nombres ?? '').' '.($e->usuario?->apellidos ?? '')),
                 'carrera' => $e->carrera?->nombre ?? 'Sin carrera',
+                'cedula' => $e->cedula,
                 'promedio' => $e->promedio === null ? null : round((float) $e->promedio, 2),
                 'aprobadas' => (int) $e->aprobadas,
                 'reprobadas' => (int) $e->reprobadas,

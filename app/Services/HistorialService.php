@@ -290,4 +290,32 @@ class HistorialService
 
         return $cursosDeLaCarrera->diff($aprobados)->isEmpty();
     }
+
+    /**
+     * Materias de un estudiante en un cuatrimestre concreto, tengan nota o no.
+     *
+     * Es la pieza del historial acotada a un solo periodo, para la ficha que ve
+     * la rectora desde el reporte de rendimiento: junta las notas registradas
+     * con las matriculas que todavia no tienen calificacion y le aplica a cada
+     * fila el mismo veredicto del aula (nota >= 6 y sin exceso de faltas).
+     *
+     * @return Collection<int, array>
+     */
+    public function materiasDeUnPeriodo(int $idEstudiante, int $idCuatrimestre): Collection
+    {
+        $cuatrimestre = Cuatrimestre::find($idCuatrimestre);
+
+        if (! $cuatrimestre) {
+            return collect();
+        }
+
+        $terminado = $cuatrimestre->fecha_fin->lt(today());
+
+        return $this->notasRegistradas($idEstudiante)
+            ->where('id_cuatrimestre', $idCuatrimestre)
+            ->concat($this->matriculasSinNota($idEstudiante, $cuatrimestre))
+            ->map(fn ($fila) => $this->filaHistorial($fila, $cuatrimestre))
+            ->sortBy('curso')
+            ->values();
+    }
 }
