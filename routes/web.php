@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Admin\AsignacionController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Estudiante\InscripcionController;
@@ -7,10 +8,11 @@ use App\Http\Controllers\Estudiante\MisNotasController;
 use App\Http\Controllers\PerfilController;
 use App\Http\Controllers\Profesor\CalificacionController;
 use App\Http\Controllers\Profesor\AsistenciaController;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', fn () => auth()->user()
-    ? redirect()->route(AuthController::nombreRutaHome(auth()->user()))
+Route::get('/', fn () => Auth::check()
+    ? redirect()->route(AuthController::nombreRutaHome(Auth::user()))
     : redirect()->route('login'));
 
 // "Mis datos": al alcance de cualquier rol conectado.
@@ -33,7 +35,18 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/rendimiento/estudiante/{estudiante}', [DashboardController::class, 'fichaEstudiante'])->name('admin.rendimiento.estudiante');
     Route::get('/admin/asistencia',    [DashboardController::class, 'asistencia'])->name('admin.asistencia');
     Route::get('/admin/deudas',        [DashboardController::class, 'deudas'])->name('admin.deudas');
-});
+    
+    // ─── NUEVAS RUTAS DE ASIGNACIONES (AHORA PROTEGIDAS POR EL MIDDLEWARE) ───
+    Route::get('/admin/asignaciones', [AsignacionController::class, 'index'])->name('admin.asignaciones.index');
+    Route::post('/admin/asignaciones', [AsignacionController::class, 'store'])->name('admin.asignaciones.store');
+    
+    // Rutas API para las peticiones dinámicas (Fetch)
+    Route::get('/admin/api/curso/{id}/horarios', [AsignacionController::class, 'getHorariosPorCurso']);
+    Route::get('/admin/api/profesor/{id}/materias', [AsignacionController::class, 'getMateriasPorProfesor']);
+    // NUEVA RUTA PARA ELIMINAR
+    Route::post('/admin/api/asignaciones/eliminar', [AsignacionController::class, 'eliminarAsignacion']);
+    Route::get('/admin/api/profesor/{id}/horario_semanal', [AsignacionController::class, 'getHorarioSemanalProfesor']);
+    });
 
 // ─── Rutas del Profesor ──────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:profesor'])->group(function () {

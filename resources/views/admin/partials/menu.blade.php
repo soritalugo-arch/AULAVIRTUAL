@@ -13,6 +13,7 @@
                 'admin.rendimiento'   => ['Rendimiento', 'fa-chart-column'],
                 'admin.asistencia'    => ['Asistencia', 'fa-calendar-check'],
                 'admin.deudas'        => ['Deudas', 'fa-money-bill-transfer'],
+                'admin.asignaciones.index'  => ['Asignaciones', 'fa-chalkboard-user'],
             ];
         @endphp
 
