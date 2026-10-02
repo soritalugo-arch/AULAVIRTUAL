@@ -80,7 +80,7 @@
         .resumen { width: 100%; margin-top: 14px; }
 
         .resumen td {
-            width: 25%;
+            width: 16.66%;
             padding: 9px 10px;
             text-align: center;
             border: 1px solid #d9e6fb;
@@ -102,6 +102,36 @@
             font-weight: bold;
             color: #171d7d;
         }
+
+        /* ── Constancia de egresado ────────────────────────────────── */
+
+        .constancia {
+            margin-top: 14px;
+            padding: 14px 16px;
+            border: 1.5px solid #b9cdf3;
+            background-color: #f4f8ff;
+            text-align: justify;
+            page-break-inside: avoid;
+        }
+
+        .constancia b.titulo {
+            display: block;
+            text-align: left;
+            margin-bottom: 7px;
+            font-size: 11px;
+            color: #171d7d;
+            letter-spacing: 1.2px;
+            text-transform: uppercase;
+        }
+
+        .constancia p {
+            margin: 0;
+            font-size: 10px;
+            line-height: 1.6;
+            color: #19325f;
+        }
+
+        .constancia p b { color: #171d7d; }
 
         /* ── Tablas por cuatrimestre ──────────────────────────────── */
 
@@ -136,10 +166,11 @@
             border: 1px solid #d9e6fb;
         }
 
-        .tabla .c-curso { width: 46%; }
-        .tabla .c-nota { width: 10%; text-align: center; }
-        .tabla .c-inasistencia { width: 16%; text-align: center; }
-        .tabla .c-estado { width: 28%; }
+        .tabla .c-curso { width: 40%; }
+        .tabla .c-nota { width: 9%; text-align: center; }
+        .tabla .c-inasistencia { width: 13%; text-align: center; }
+        .tabla .c-estado { width: 22%; }
+        .tabla .c-obs { width: 16%; }
 
         .punto { color: #a7b7d3; }
 
@@ -239,9 +270,27 @@
                 {{ $estudiante->carrera?->nombre ?? 'No registrada' }}
             </td>
         </tr>
+        <tr>
+            <td class="etiqueta">Estatus</td>
+            <td class="valor" colspan="3">Egresado</td>
+        </tr>
     </table>
 
     @php $resumen = $datos['resumen']; @endphp
+
+    {{-- Constancia de egreso. Este certificado solo se emite para egresados,
+         así que la declaración es parte del documento, no un adorno. --}}
+    <div class="constancia">
+        <b class="titulo">Constancia de egresado</b>
+        <p>
+            Se certifica que <b>{{ $estudiante->usuario->nombres }} {{ $estudiante->usuario->apellidos }}</b>,
+            portador(a) de la cédula de identidad <b>{{ $estudiante->cedula ?: 'no registrada' }}</b>,
+            culminó satisfactoriamente el plan de estudios de la carrera
+            <b>{{ $estudiante->carrera?->nombre ?? 'su carrera' }}</b>, habiendo aprobado la
+            totalidad de las asignaturas que lo conforman. El presente documento resume su
+            historial académico completo registrado en la plataforma.
+        </p>
+    </div>
 
     {{-- Cifras de toda la carrera --}}
     <table class="resumen">
@@ -259,8 +308,16 @@
                 <span class="cifra">{{ number_format($resumen['reprobados']) }}</span>
             </td>
             <td>
-                <span class="rotulo">Cuatrimestres cursados</span>
+                <span class="rotulo">Cuatrimestres</span>
                 <span class="cifra">{{ number_format($resumen['cuatrimestres']) }}</span>
+            </td>
+            <td>
+                <span class="rotulo">Asistencia media</span>
+                <span class="cifra">{{ $resumen['inasistencia'] !== null ? number_format($resumen['inasistencia'], 1).' %' : '—' }}</span>
+            </td>
+            <td>
+                <span class="rotulo">Materias del plan</span>
+                <span class="cifra">{{ $estudiante->carrera ? $estudiante->carrera->cursos()->count() : '—' }}</span>
             </td>
         </tr>
     </table>
@@ -299,6 +356,7 @@
                             <th class="c-nota">Nota</th>
                             <th class="c-inasistencia">Inasistencia</th>
                             <th class="c-estado">Estado</th>
+                            <th class="c-obs">Observaciones</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -328,6 +386,7 @@
                                 <td class="c-estado">
                                     <span class="pill {{ $pildora[0] }}">{{ $pildora[1] }}</span>
                                 </td>
+                                <td class="c-obs">{{ $curso['observaciones'] ?: '—' }}</td>
                             </tr>
                         @endforeach
                     </tbody>

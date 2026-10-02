@@ -758,3 +758,56 @@ it('el servicio de reglas sigue calculando la inasistencia igual que antes del r
         // Sin ninguna clase registrada no se divide por cero.
         ->and($reglas->inasistenciaDesdeConteos(0, 0, 0))->toBe(0.0);
 });
+
+// ─── El certificado enriquecido del egresado ────────────────────────────────
+
+it('enriquece el certificado del egresado con la constancia, el estatus y más cifras', function () {
+    $estudiante = estudianteConCarrera('Contaduría');
+    $q1 = cerradoParaHistorial();
+
+    $curso = cursoParaHistorial('Bases de Datos', $q1);
+    matricular($estudiante, $curso, $q1);
+    ponerNota($estudiante, $curso, $q1, 8);
+    $estudiante->carrera->cursos()->attach($curso->id_curso);
+
+    $datos = app(HistorialService::class)->historial($estudiante);
+
+    expect(app(HistorialService::class)->esEgresado($estudiante, $datos))->toBeTrue();
+
+    $html = view('reportes.certificado', [
+        'estudiante' => $estudiante,
+        'datos' => $datos,
+        'emitido' => now(),
+    ])->render();
+
+    expect($html)
+        ->toContain('Constancia de egresado')
+        ->toContain('culminó satisfactoriamente')
+        ->toContain('portador(a) de la cédula')
+        ->toContain('Estatus')
+        ->toContain('>Egresado<')
+        ->toContain('Asistencia media')
+        ->toContain('Materias del plan')
+        ->toContain('Promedio general');
+});
+
+it('reparte las observaciones del profesor en las filas del certificado', function () {
+    $estudiante = estudianteConCarrera('Contaduría');
+    $q1 = cerradoParaHistorial();
+
+    $curso = cursoParaHistorial('Auditoría', $q1);
+    matricular($estudiante, $curso, $q1);
+    ponerNota($estudiante, $curso, $q1, 8, 'Muy buen desempeño en la materia.');
+
+    $datos = app(HistorialService::class)->historial($estudiante);
+
+    $html = view('reportes.certificado', [
+        'estudiante' => $estudiante,
+        'datos' => $datos,
+        'emitido' => now(),
+    ])->render();
+
+    expect($html)
+        ->toContain('Observaciones')
+        ->toContain('Muy buen desempeño en la materia.');
+});
