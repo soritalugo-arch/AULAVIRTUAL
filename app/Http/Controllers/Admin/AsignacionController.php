@@ -17,21 +17,29 @@ class AsignacionController extends Controller
             ? ($cuatrimestres->firstWhere('id_cuatrimestre', $request->integer('cuatrimestre'))?->id_cuatrimestre ?? abort(404))
             : $this->cuatrimestrePorDefecto($cuatrimestres);
 
-        // 2. Tu lógica original de asignaciones
-        $cursos = DB::table('curso')->get();
+        // 2. Modificado: Cursos verificando si tienen profesor
+        $cursos = DB::table('curso')
+            ->leftJoin('curso_profesor', 'curso.id_curso', '=', 'curso_profesor.curso_id')
+            ->select('curso.id_curso', 'curso.nombre', DB::raw('COUNT(curso_profesor.profesor_id) as asignado'))
+            ->groupBy('curso.id_curso', 'curso.nombre')
+            ->orderBy('curso.nombre', 'asc') // Orden alfabético para mejor vista
+            ->get();
         
+        // 3. Modificado: Profesores verificando cuántas materias tienen
         $profesores = DB::table('profesor')
             ->join('usuario', 'profesor.id_usuario', '=', 'usuario.id_usuario')
-            ->select('profesor.id_usuario', 'usuario.nombres', 'usuario.apellidos')
+            ->leftJoin('curso_profesor', 'profesor.id_usuario', '=', 'curso_profesor.profesor_id')
+            ->select('profesor.id_usuario', 'usuario.nombres', 'usuario.apellidos', DB::raw('COUNT(curso_profesor.curso_id) as cant_materias'))
+            ->groupBy('profesor.id_usuario', 'usuario.nombres', 'usuario.apellidos')
+            ->orderBy('usuario.nombres', 'asc') // Orden alfabético
             ->get(); 
         
-        // 3. Enviar todo a la vista
+        // 4. Enviar todo a la vista
         return view('admin.Asignacion_prof', compact('cuatrimestres', 'idCuatrimestre', 'cursos', 'profesores'));
     }
 
     public function store(Request $request)
     {
-        
         $request->validate([
             'curso_id'    => 'required|exists:curso,id_curso',
             'profesor_id' => 'required|exists:profesor,id_usuario',
@@ -40,24 +48,16 @@ class AsignacionController extends Controller
         $cursoId = $request->curso_id;
         $profesorId = $request->profesor_id;
 
-        // 1. Verificamos si ya está asignado a ese mismo curso
-        $yaAsignado = DB::table('curso_profesor')
-            ->where('curso_id', $cursoId)
-            ->where('profesor_id', $profesorId)
-            ->exists();
-
-        if ($yaAsignado) {
-            return back()->withErrors(['error_horario' => 'El profesor ya está asignado a este curso.'])->withInput();
-        }
-
-        // 2. Obtenemos los bloques de horario del curso que queremos asignar
+        // 1. Validamos que el curso tenga horarios
         $horariosNuevoCurso = DB::table('horario')->where('id_curso', $cursoId)->get();
 
         if ($horariosNuevoCurso->isEmpty()) {
-            return back()->withErrors(['error_horario' => 'El curso seleccionado aún no tiene horarios definidos en la base de datos.'])->withInput();
+            return back()->withErrors([
+                'error_horario' => 'El curso seleccionado aún no tiene horarios definidos en la base de datos.'
+            ])->withInput();
         }
 
-        // 3. Validamos cada bloque de horario contra los cursos que ya dicta el profesor
+        // 2. Validamos cada bloque de horario contra los cursos que YA dicta el NUEVO profesor
         foreach ($horariosNuevoCurso as $horarioNuevo) {
             $choque = DB::table('curso_profesor')
                 ->join('horario', 'curso_profesor.curso_id', '=', 'horario.id_curso')
@@ -69,23 +69,30 @@ class AsignacionController extends Controller
                 ->select('curso.nombre', 'horario.hora_inicio', 'horario.hora_fin', 'horario.dia_semana')
                 ->first();
 
-            // Si encuentra un choque en cualquier día, bloquea la asignación
+            // Si encuentra un choque en cualquier día para el NUEVO profesor, bloquea
             if ($choque) {
                 return back()->withErrors([
-                    'error_horario' => "Choque detectado el día {$choque->dia_semana}. El profesor ya dicta el curso '{$choque->nombre}' en el horario de {$choque->hora_inicio} a {$choque->hora_fin}."
+                    'error_horario' => "Choque detectado el día {$choque->dia_semana}. El nuevo profesor ya dicta el curso '{$choque->nombre}' en el horario de {$choque->hora_inicio} a {$choque->hora_fin}."
                 ])->withInput();
             }
         }
 
-        // 4. Si pasa todas las validaciones, guardamos en la tabla pivote
-        DB::table('curso_profesor')->insert([
-            'curso_id' => $cursoId,
-            'profesor_id' => $profesorId,
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+        // 3. Si pasa la validación (no hay choques), reasignamos usando una Transacción
+        DB::transaction(function () use ($cursoId, $profesorId) {
+            // A. Eliminamos CUALQUIER asignación previa que tenga este curso (desvincula al profe viejo)
+            DB::table('curso_profesor')->where('curso_id', $cursoId)->delete();
 
-        return redirect()->back()->with('success', 'Profesor asignado correctamente al curso.');} 
+            // B. Insertamos al nuevo profesor
+            DB::table('curso_profesor')->insert([
+                'curso_id' => $cursoId,
+                'profesor_id' => $profesorId,
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        });
+
+        return redirect()->back()->with('success', 'Profesor asignado correctamente. Si la materia pertenecía a otro docente, ha sido reasignada con éxito.');
+    }
 
     /**
      * Método auxiliar para calcular el cuatrimestre actual si no hay ninguno en la URL
@@ -101,28 +108,30 @@ class AsignacionController extends Controller
         return ($vigente ?? $empezado ?? $cuatrimestres->first())->id_cuatrimestre;
     }
 
-    /**
-     * Obtiene los horarios de un curso específico
-     */
-    /**
-     * Obtiene los horarios de un curso específico
+   /**
+     * Obtiene los horarios y el profesor actual de un curso específico
      */
     public function getHorariosPorCurso($id)
     {
-        // Buscamos directamente en la tabla horario usando el id del curso
+        // Buscamos los horarios
         $horarios = DB::table('horario')->where('id_curso', $id)->get();
+        
+        // Buscamos al profesor que actualmente tiene asignado este curso
+        $profesorActual = DB::table('curso_profesor')
+            ->join('usuario', 'curso_profesor.profesor_id', '=', 'usuario.id_usuario')
+            ->where('curso_profesor.curso_id', $id)
+            ->select('usuario.nombres', 'usuario.apellidos')
+            ->first();
 
-        if ($horarios->isEmpty()) {
-            return response()->json([]);
-        }
-
-        // Formateamos la respuesta para devolver un array simple al frontend
-        // Ajusto 'dia_semana' basado en cómo lo llamaste en el método store()
         $horariosFormateados = $horarios->map(function($horario) {
             return 'Día ' . $horario->dia_semana . ': ' . $horario->hora_inicio . ' - ' . $horario->hora_fin;
         });
 
-        return response()->json($horariosFormateados);
+        // Devolvemos ambos datos en formato JSON
+        return response()->json([
+            'horarios' => $horariosFormateados,
+            'profesor_actual' => $profesorActual
+        ]);
     }
 
     /**

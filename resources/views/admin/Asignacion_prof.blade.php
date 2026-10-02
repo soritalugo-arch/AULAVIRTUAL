@@ -41,12 +41,12 @@
                         Unidad Curricular / Curso
                     </label>
                     <div class="relative">
-                        <select name="curso_id" id="curso_id" required
+                        <select name="curso_id" id="curso_id" autocomplete="off" required
                                 class="w-full border border-[#dce7fa] rounded-xl bg-[#f7f9ff] text-[#24356e] text-sm font-semibold pl-4 pr-10 py-3 outline-none focus:border-[#4c5bc3] appearance-none cursor-pointer">
                             <option value="" disabled selected>Seleccione un curso...</option>
-                            @foreach($cursos as $curso)
+                           @foreach($cursos as $curso)
                                 <option value="{{ $curso->id_curso }}" {{ old('curso_id') == $curso->id_curso ? 'selected' : '' }}>
-                                    {{ $curso->nombre }}
+                                    {{ $curso->asignado == 0 ? '🔴 ' : '' }}{{ $curso->nombre }} {{ $curso->asignado == 0 ? '(Sin docente asignado)' : '' }}
                                 </option>
                             @endforeach
                         </select>
@@ -55,6 +55,11 @@
 
                     {{-- Panel dinámico de Horarios del Curso --}}
                     <div id="panel_horarios" class="hidden mt-4 p-4 bg-[#f8fbff] border border-[#dce7fa] rounded-xl flex-grow">
+                        
+                        {{-- NUEVO: Información del Profesor Actual --}}
+                        <div id="info_profesor_actual" class="mb-3 pb-3 border-b border-[#dce7fa] text-sm text-[#24356e]">
+                        </div>
+
                         <h4 class="text-[11px] font-bold tracking-wide uppercase text-[#5a6f9c] mb-2 flex items-center gap-2">
                             <i class="fa-regular fa-clock text-[#6382dc]"></i> Horario Establecido
                         </h4>
@@ -70,12 +75,12 @@
                         Profesor a Asignar
                     </label>
                     <div class="relative">
-                        <select name="profesor_id" id="profesor_id" required
+                        <select name="profesor_id" id="profesor_id" autocomplete="off" required
                                 class="w-full border border-[#dce7fa] rounded-xl bg-[#f7f9ff] text-[#24356e] text-sm font-semibold pl-4 pr-10 py-3 outline-none focus:border-[#4c5bc3] appearance-none cursor-pointer">
                             <option value="" disabled selected>Seleccione un docente...</option>
                             @foreach($profesores as $profesor)
                                 <option value="{{ $profesor->id_usuario }}" {{ old('profesor_id') == $profesor->id_usuario ? 'selected' : '' }}>
-                                    {{ $profesor->nombres }} {{$profesor->apellidos }}
+                                    {{ $profesor->cant_materias == 0 ? '🟢 ' : '' }}{{ $profesor->nombres }} {{ $profesor->apellidos }} {{ $profesor->cant_materias == 0 ? '(Disponible - Sin materias)' : '' }}
                                 </option>
                             @endforeach
                         </select>
@@ -140,7 +145,7 @@
         const panelMaterias = document.getElementById('panel_materias');
         const listaMaterias = document.getElementById('lista_materias');
 
-        // Escuchar el cambio en el selector de cursos
+       // Escuchar el cambio en el selector de cursos
         selectCurso.addEventListener('change', function() {
             const cursoId = this.value;
             if(cursoId) {
@@ -148,9 +153,18 @@
                     .then(response => response.json())
                     .then(data => {
                         listaHorarios.innerHTML = ''; 
+                        const infoProfesor = document.getElementById('info_profesor_actual');
                         
-                        if(data.length > 0) {
-                            data.forEach(horario => {
+                        // 1. Mostrar el profesor actual
+                        if (data.profesor_actual) {
+                            infoProfesor.innerHTML = `<i class="fa-solid fa-user-tie text-[#6382dc] mr-2"></i> <strong>Docente actual:</strong> ${data.profesor_actual.nombres} ${data.profesor_actual.apellidos}`;
+                        } else {
+                            infoProfesor.innerHTML = `<i class="fa-solid fa-circle-info text-[#0a9560] mr-2"></i> <strong>Docente actual:</strong> Sin asignar`;
+                        }
+
+                        // 2. Mostrar los horarios
+                        if(data.horarios.length > 0) {
+                            data.horarios.forEach(horario => {
                                 listaHorarios.innerHTML += `<li>${horario}</li>`;
                             });
                         } else {
