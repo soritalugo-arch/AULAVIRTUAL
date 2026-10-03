@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Services;
 
@@ -16,27 +16,42 @@ class CalificacionAsistenciaService
         0 => 'Domingo',
         1 => 'Lunes',
         2 => 'Martes',
-        3 => 'Miércoles',
+        3 => 'MiÃ©rcoles',
         4 => 'Jueves',
         5 => 'Viernes',
-        6 => 'Sábado',
+        6 => 'SÃ¡bado',
     ];
 
-    // cuatrimestre cuyo rango de fechas incluye la fecha actual
-    public function cuatrimestreVigente(): ?Cuatrimestre
+    /**
+     * El perÃ­odo que estÃ¡ pasando: el Ãºnico con el que seDa matrÃ­cula, notas y
+     * asistencia. Lo decide el estado (matrÃ­cula o en cursado) y no el rango de
+     * fechas, para que en la pausa entre dos perÃ­odos, cuando ningÃºn rango
+     * contiene el dÃ­a de hoy, el sistema no se quede sin perÃ­odo.
+     */
+    public function cuatrimestrePresente(): ?Cuatrimestre
     {
-        return Cuatrimestre::where('fecha_inicio', '<=', now())
-            ->where('fecha_fin', '>=', now())
-            ->orderByDesc('fecha_inicio')
-            ->first();
+        return Cuatrimestre::cuatrimestrePresente();
     }
-    // cuatrimestre cuyo rango de fechas incluye la fecha actual
+
+    /**
+     * El perÃ­odo en el que ya corren clases.
+     *
+     * Si el presente sigue en matrÃ­cula todavÃ­a no hay clases, asÃ­ que se cae al
+     * Ãºltimo perÃ­odo que ya empezÃ³, que es el que hay que mostrar como
+     * referencia de lo que se estÃ¡ cursando.
+     */
     public function cuatrimestreEnCurso(): ?Cuatrimestre
     {
-        return $this->cuatrimestreVigente()
-            ?? Cuatrimestre::where('fecha_inicio', '<=', now())
-                ->orderByDesc('fecha_inicio')
-                ->first();
+        $presente = $this->cuatrimestrePresente();
+
+        if ($presente && $presente->estado === Cuatrimestre::ESTADO_EN_CURSO) {
+            return $presente;
+        }
+
+        return Cuatrimestre::whereIn('estado', Cuatrimestre::estadosPresentes())
+            ->orderByDesc('fecha_inicio')
+            ->first()
+            ?? Cuatrimestre::orderByDesc('fecha_inicio')->first();
     }
     // upsert de nota por estudiante, curso y cuatrimestre
     public function guardarNota(int $idEstudiante, int $idCurso, int $idCuatrimestre, int $nota, ?string $observaciones): Calificacion
@@ -97,7 +112,7 @@ class CalificacionAsistenciaService
             ->count('fecha');
     }
     // total de clases programadas para el curso y cuatrimestre (columna de la pivot);
-    // null si no está definido
+    // null si no estÃ¡ definido
     public function totalClasesProgramadas(int $idCurso, int $idCuatrimestre): ?int
     {
         $total = DB::table('curso_cuatrimestre')
@@ -110,7 +125,7 @@ class CalificacionAsistenciaService
     /**
      * Porcentaje de inasistencia del estudiante en el curso.
      *
-     * @param  bool  $cuatrimestreTerminado  si el período ya pasó su fecha de
+     * @param  bool  $cuatrimestreTerminado  si el perÃ­odo ya pasÃ³ su fecha de
      *                                         fin, el denominador pasa a ser el
      *                                         total de clases programadas.
      */
@@ -127,17 +142,17 @@ class CalificacionAsistenciaService
     /**
      * Porcentaje de inasistencia a partir de conteos ya resueltos.
      *
-     * El denominador depende de si el período sigue abierto:
+     * El denominador depende de si el perÃ­odo sigue abierto:
      *
-     *  - Mientras el cuatrimestre está en curso se divide entre las clases
-     *    DICTADAS. El alumno no puede faltar a una clase que todavía no se dio,
-     *    así que mientras quedan clases por delante el porcentaje no se
+     *  - Mientras el cuatrimestre estÃ¡ en curso se divide entre las clases
+     *    DICTADAS. El alumno no puede faltar a una clase que todavÃ­a no se dio,
+     *    asÃ­ que mientras quedan clases por delante el porcentaje no se
      *    subestima ni se infla.
-     *  - Una vez terminado el período se divide entre el total PROGRAMADO: ya
-     *    no hay clases pendientes y el número final es el de la materia.
+     *  - Una vez terminado el perÃ­odo se divide entre el total PROGRAMADO: ya
+     *    no hay clases pendientes y el nÃºmero final es el de la materia.
      *
      * Si falta uno de los dos totales (una materia sin horario cargado, o que
-     * todavía no empezó) se usa el otro. Si no hay ninguno, 0.
+     * todavÃ­a no empezÃ³) se usa el otro. Si no hay ninguno, 0.
      *
      * Es la misma regla que porcentajeInasistencia(), pero sin las consultas por
      * curso. El historial del estudiante trae faltas y clases de todos sus
@@ -145,8 +160,8 @@ class CalificacionAsistenciaService
      * exactamente lo mismo que el modulo del profesor. Si la regla del
      * denominador cambia, cambia en un solo lugar.
      *
-     * @param  int  $faltas  cantidad de clases a las que faltó
-     * @param  int  $programadas  total_clases de la pivot, 0 si no está definido
+     * @param  int  $faltas  cantidad de clases a las que faltÃ³
+     * @param  int  $programadas  total_clases de la pivot, 0 si no estÃ¡ definido
      * @param  int  $dictadas  fechas distintas con asistencia registrada
      */
     public function inasistenciaDesdeConteos(int $faltas, int $programadas, int $dictadas, bool $cuatrimestreTerminado = true): float
@@ -211,7 +226,7 @@ class CalificacionAsistenciaService
     }
     // promedio de notas del curso en el cuatrimestre; null si no hay notas.
     // Es el promedio de las cuatro parciales (COALESCE) y no el entero de la
-    // columna nota, para que el alumno vea el mismo número que su profesor.
+    // columna nota, para que el alumno vea el mismo nÃºmero que su profesor.
     public function promedioPorCurso(int $idCurso, int $idCuatrimestre): ?float
     {
         $promedio = Calificacion::where('id_curso', $idCurso)

@@ -40,8 +40,8 @@ class InscripcionService
             // comportamiento anterior (todas sus materias son inscribibles).
             $this->validarEtapaDelPlan($estudiante, $curso);
 
-            // 2. La asignatura debe ofrecerse en el cuatrimestre vigente
-            $cuatrimestre = $this->cuatrimestreVigente();
+            // 2. La asignatura debe ofrecerse en el período que está presente
+            $cuatrimestre = $this->cuatrimestrePresente();
 
             if (! $cuatrimestre || ! $curso->cuatrimestres()->whereKey($cuatrimestre->id_cuatrimestre)->exists()) {
                 throw new Exception('La asignatura no está disponible en el cuatrimestre vigente.');
@@ -122,10 +122,10 @@ class InscripcionService
                 return;
             }
 
-            // Solo se desinscribe la matrícula del periodo vigente: una fila
+            // Solo se desinscribe la matrícula del período presente: una fila
             // histórica de otro cuatrimestre es un curso ya cursado, no algo
             // que se pueda quitar con este botón.
-            $cuatrimestre = $this->cuatrimestreVigente();
+            $cuatrimestre = $this->cuatrimestrePresente();
 
             if (! $cuatrimestre) {
                 return;
@@ -171,7 +171,7 @@ class InscripcionService
             return;
         }
 
-        $cuatrimestre = $this->cuatrimestreVigente();
+        $cuatrimestre = $this->cuatrimestrePresente();
 
         if (! $cuatrimestre) {
             return;
@@ -218,7 +218,7 @@ class InscripcionService
      */
     public function quitarDeListaEspera(Estudiante $estudiante, Curso $curso): bool
     {
-        $cuatrimestre = $this->cuatrimestreVigente();
+        $cuatrimestre = $this->cuatrimestrePresente();
 
         if ($cuatrimestre && $cuatrimestre->estado !== Cuatrimestre::ESTADO_MATRICULA) {
             throw new Exception('La matrícula para este período está cerrada.');
@@ -319,14 +319,15 @@ class InscripcionService
     }
 
     /**
-     * Cuatrimestre cuyo rango de fechas incluye el día de hoy.
+     * Período con el que se matricula: el que está presente.
+     *
+     * Va por estado y no por rango de fechas porque en la pausa entre dos
+     * períodos no hay ningún rango que contenga hoy, y sin período presente
+     * nadie podría inscribirse ni retirarse.
      */
-    private function cuatrimestreVigente(): ?Cuatrimestre
+    private function cuatrimestrePresente(): ?Cuatrimestre
     {
-        return Cuatrimestre::where('fecha_inicio', '<=', now())
-            ->where('fecha_fin', '>=', now())
-            ->orderByDesc('fecha_inicio')
-            ->first();
+        return Cuatrimestre::cuatrimestrePresente();
     }
 
     /**

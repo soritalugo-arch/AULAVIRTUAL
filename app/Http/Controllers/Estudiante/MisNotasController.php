@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\Estudiante;
 
@@ -13,7 +13,7 @@ class MisNotasController extends Controller
     public function index()
     {
         $estudiante    = auth()->user()->estudiante;
-        $vigente       = $this->servicio->cuatrimestreVigente();
+        $vigente       = $this->servicio->cuatrimestrePresente();
         $inscripciones = Inscripcion::where('id_estudiante', $estudiante->id_usuario)
             ->with('curso.cuatrimestres', 'curso.calificaciones')
             ->get();
@@ -30,7 +30,7 @@ class MisNotasController extends Controller
                 ->where('id_estudiante', $estudiante->id_usuario)
                 ->where('id_cuatrimestre', $idCuatr)
                 ->first();
-            // Mientras el período sigue abierto el porcentaje sale de las clases
+            // Mientras el perÃ­odo sigue abierto el porcentaje sale de las clases
             // dictadas; una vez terminado, del total programado.
             $porcentaje = $this->servicio->porcentajeInasistencia($estudiante->id_usuario, $curso->id_curso, $idCuatr, $cuatrimestreTerminado);
             $clasesRegistradas = $this->servicio->clasesDictadas($curso->id_curso, $idCuatr);
@@ -55,8 +55,8 @@ class MisNotasController extends Controller
         })->filter()->values();
         $cuatrimestreTerminado = $vigente ? $vigente->fecha_fin->lt(now()) : true;
 
-        // Momento del período: mientras la matrícula está abierta, las clases
-        // aún no comienzan y no puede haber notas nuevas del período vigente.
+        // Momento del perÃ­odo: mientras la matrÃ­cula estÃ¡ abierta, las clases
+        // aÃºn no comienzan y no puede haber notas nuevas del perÃ­odo vigente.
         $matriculacionAbierta = $vigente?->estado === 'matriculacion';
 
         return view('estudiante.notas', compact('resumen', 'cuatrimestreTerminado', 'matriculacionAbierta'));

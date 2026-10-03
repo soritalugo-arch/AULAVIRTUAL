@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 
 namespace App\Http\Controllers\Profesor;
 
@@ -21,7 +21,7 @@ class AsistenciaController extends Controller
         if ($request->filled('cuatrimestre')) {
             $cuatrimestre = $curso->cuatrimestres()->find($request->integer('cuatrimestre')) ?? abort(404);
         } else {
-            $vigente = $this->servicio->cuatrimestreVigente();
+            $vigente = $this->servicio->cuatrimestrePresente();
             $cuatrimestre = $cuatrimestres->contains('id_cuatrimestre', $vigente?->id_cuatrimestre)
                 ? $vigente
                 : $cuatrimestres->first();
@@ -29,11 +29,11 @@ class AsistenciaController extends Controller
         if (!$cuatrimestre) {
             return back()->with('error', 'Este curso no tiene un cuatrimestre activo.');
         }
-        // Misma regla que en notas: durante la matrícula aún no se sabe quién
-        // se matriculó, así que no hay hoja de asistencia que mostrar.
+        // Misma regla que en notas: durante la matrÃ­cula aÃºn no se sabe quiÃ©n
+        // se matriculÃ³, asÃ­ que no hay hoja de asistencia que mostrar.
         if ($cuatrimestre->estado === Cuatrimestre::ESTADO_MATRICULA) {
             return redirect()->route('profesor.cursos')
-                ->with('error', 'La matrícula aún está abierta: no sabes quién se matriculó. Tus estudiantes aparecerán cuando el período esté en cursado.');
+                ->with('error', 'La matrÃ­cula aÃºn estÃ¡ abierta: no sabes quiÃ©n se matriculÃ³. Tus estudiantes aparecerÃ¡n cuando el perÃ­odo estÃ© en cursado.');
         }
         $fecha   = $request->input('fecha', now()->toDateString());
         $idCuatr = $cuatrimestre->id_cuatrimestre;
@@ -52,7 +52,7 @@ class AsistenciaController extends Controller
         $estudiantes = $inscripciones->map(function ($ins) use ($cursoId, $idCuatr, $clasesRegistradas, $totalClases, $asistenciasHoy, $cuatrimestreTerminado) {
             $est        = $ins->estudiante;
             $faltas     = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
-            // Mientras el período sigue abierto el porcentaje sale de las clases
+            // Mientras el perÃ­odo sigue abierto el porcentaje sale de las clases
             // dictadas; una vez terminado, del total programado.
             $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr, $cuatrimestreTerminado);
             return [
@@ -83,11 +83,11 @@ class AsistenciaController extends Controller
         $cuatrimestre = $curso->cuatrimestres()->find($idCuatr);
         abort_unless($cuatrimestre !== null, 403);
 
-        // Solo se registra asistencia mientras el período está EN CURSO.
+        // Solo se registra asistencia mientras el perÃ­odo estÃ¡ EN CURSO.
         abort_unless(
             $cuatrimestre->estado === Cuatrimestre::ESTADO_EN_CURSO,
             422,
-            'Este período no está en cursado: la asistencia no se puede guardar.'
+            'Este perÃ­odo no estÃ¡ en cursado: la asistencia no se puede guardar.'
         );
 
         $request->validate([
@@ -101,12 +101,12 @@ class AsistenciaController extends Controller
         abort_unless(
             $fecha->between($cuatrimestre->fecha_inicio, $cuatrimestre->fecha_fin),
             422,
-            'La fecha está fuera del período de la materia.'
+            'La fecha estÃ¡ fuera del perÃ­odo de la materia.'
         );
         abort_unless(
             $this->servicio->esDiaDeClase($curso, $fecha),
             422,
-            'La fecha no corresponde a un día de clase del curso.'
+            'La fecha no corresponde a un dÃ­a de clase del curso.'
         );
 
         $inscripciones = Inscripcion::where('id_curso', $idCurso)->get();
