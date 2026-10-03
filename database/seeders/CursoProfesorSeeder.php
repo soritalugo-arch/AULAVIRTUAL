@@ -24,11 +24,6 @@ class CursoProfesorSeeder extends Seeder
         $slotsPorProfesor = array_fill_keys($genericos, []);
 
         foreach ($cursos as $curso) {
-            if (in_array($curso->nombre, DatabaseSeeder::CURSOS_CONFLICTO, true)) {
-                $profesorDeCurso[$curso->id_curso] = $demo;
-                continue;
-            }
-
             $slot = HorarioSeeder::slotDe($curso);
 
             $candidatos = array_values(array_filter(
