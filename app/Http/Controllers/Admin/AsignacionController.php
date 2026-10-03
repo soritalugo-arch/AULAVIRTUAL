@@ -35,7 +35,7 @@ class AsignacionController extends Controller
             ->get(); 
         
         // 4. Enviar todo a la vista
-        return view('admin.Asignacion_prof', compact('cuatrimestres', 'idCuatrimestre', 'cursos', 'profesores'));
+        return view('admin.asignacion-prof', compact('cuatrimestres', 'idCuatrimestre', 'cursos', 'profesores'));
     }
 
     public function store(Request $request)

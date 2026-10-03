@@ -26,7 +26,7 @@
 
            @if(request()->routeIs(['admin.dashboard', 'admin.inscripciones', 'admin.rendimiento', 'admin.rendimiento.estudiante', 'admin.asistencia']))
             <form method="GET" class="flex flex-wrap items-center gap-3 bg-white/95 border border-[#e0e8f5] rounded-2xl shadow-[0_8px_25px_rgba(70,100,160,0.08)] px-4 sm:px-5 py-3 w-full lg:w-auto">   <label for="cuatrimestre" class="text-sm font-semibold text-[#5a6f9c] whitespace-nowrap">Cuatrimestre</label>
-                <select name="cuatrimestre" id="cuatrimestre" onchange="this.form.submit()"
+                <select name="cuatrimestre" id="cuatrimestre" data-auto-submit
                         class="flex-grow lg:flex-grow-0 appearance-none border border-[#dce7fa] rounded-xl bg-[#f7f9ff] text-[#24356e] text-sm font-semibold px-4 py-2.5 pr-10 cursor-pointer outline-none focus:border-[#4c5bc3]"
                         style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%235a6f9c' d='M1 1l5 5 5-5'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 14px center; background-size: 11px;">
                     @foreach ($cuatrimestres as $c)

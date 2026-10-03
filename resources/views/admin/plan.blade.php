@@ -24,7 +24,7 @@
 
             <form method="GET" class="flex flex-wrap items-center gap-3 lg:ml-auto">
                 <label for="carrera" class="text-sm font-semibold text-[#5a6f9c] whitespace-nowrap">Carrera</label>
-                <select name="carrera" id="carrera" onchange="this.form.submit()"
+                <select name="carrera" id="carrera" data-auto-submit
                         class="appearance-none border border-[#dce7fa] rounded-xl bg-[#f7f9ff] text-[#24356e] text-sm font-semibold px-4 py-2.5 pr-10 cursor-pointer outline-none focus:border-[#4c5bc3]"
                         style="background-image: url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath fill='%235a6f9c' d='M1 1l5 5 5-5'/%3E%3C/svg%3E&quot;); background-repeat: no-repeat; background-position: right 14px center; background-size: 11px;">
                     @foreach ($carreras as $c)

@@ -34,7 +34,7 @@ class DashboardController extends Controller
             $reportes->asistenciaPorCurso($ctx['idCuatrimestre'])
         )->filter(fn ($f) => $f['alerta'] === 'peligro')->count();
 
-        return view('admin.inicio', $ctx + [
+        return view('admin.dashboard', $ctx + [
             'kpis' => $reportes->kpis($ctx['idCuatrimestre']),
             'deudoresCount' => Estudiante::where('deuda', true)->count(),
             'cursosEnRiesgo' => $cursosEnRiesgo,
@@ -190,7 +190,7 @@ class DashboardController extends Controller
             ->get();
         $notasDeLaCarrera = Calificacion::where('id_estudiante', $id)->get();
 
-        return view('admin.ficha_estudiante', $ctx + [
+        return view('admin.ficha-estudiante', $ctx + [
             'estudiante' => $estudiante->load([
                 'usuario:id_usuario,nombres,apellidos,email',
                 'carrera:id_carrera,nombre',
@@ -287,7 +287,7 @@ class DashboardController extends Controller
         $ctx = $this->contexto($request, $reportes);
 
        
-        return view('admin.periodo_crear', $ctx);
+        return view('admin.periodo-crear', $ctx);
     }
 
     /**

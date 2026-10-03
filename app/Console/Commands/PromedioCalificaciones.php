@@ -24,7 +24,7 @@ class PromedioCalificaciones extends Command
         $idCuatrimestre = $this->option('cuatrimestre') ? (int) $this->option('cuatrimestre') : null;
         // resolver cuatrimestre
         if (!$idCuatrimestre) {
-            $cuatrimestre = $this->servicio->cuatrimestreVigente();
+            $cuatrimestre = $this->servicio->cuatrimestrePresente();
             if (!$cuatrimestre) {
                 $this->error('no hay cuatrimestres vigentes registrados.');
                 return Command::FAILURE;

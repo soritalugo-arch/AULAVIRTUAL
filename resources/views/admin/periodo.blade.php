@@ -111,8 +111,9 @@
                         <span id="leyendaNuevoPeriodo" class="text-[12px] text-[#7a8db5] hidden sm:block">
                             Cierra el período actual para habilitar esta opción.
                         </span>
-                        {{-- Asegúrate de crear la ruta 'admin.periodo.crear' en tu web.php --}}
-                        <button type="button" onclick="let pin = prompt('Ingrese la clave de seguridad para apertura:'); if(pin) window.location.href='{{ route('admin.periodo.crear') }}?clave=' + pin;" id="btnCrearPeriodo" disabled
+                        {{-- El JS pide la clave y arma la url con data-crear-periodo --}}
+                        <button type="button" id="btnCrearPeriodo" disabled
+                                data-crear-periodo="{{ route('admin.periodo.crear') }}" data-clave-requerida
                                 class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0a9560] text-white text-sm font-bold shadow-sm transition-all opacity-40 cursor-not-allowed">
                             <i class="fa-solid fa-calendar-plus"></i>
                             Crear Nuevo Período
@@ -127,7 +128,7 @@
                 No hay un período en curso hoy.
             </p>
             {{-- Botón activo si no hay periodo vigente --}}
-            <button type="button" onclick="window.location.href='{{ route('admin.periodo.crear') ?? '#' }}'" 
+            <button type="button" data-crear-periodo="{{ route('admin.periodo.crear') }}"
                     class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0a9560] hover:bg-[#08774d] text-white text-sm font-bold shadow-[0_6px_15px_rgba(10,149,96,0.25)] transition-all">
                 <i class="fa-solid fa-calendar-plus"></i>
                 Crear Nuevo Período
@@ -138,46 +139,5 @@
 @endsection
 
 @push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const radiosEstados = document.querySelectorAll('.radio-estado-periodo');
-        const btnCrearPeriodo = document.getElementById('btnCrearPeriodo');
-        const leyendaNuevoPeriodo = document.getElementById('leyendaNuevoPeriodo');
-
-        function evaluarEstado() {
-            if(!btnCrearPeriodo) return;
-            
-            // Buscar cuál radio button está seleccionado actualmente
-            let estadoSeleccionado = '';
-            radiosEstados.forEach(radio => {
-                if(radio.checked) {
-                    estadoSeleccionado = radio.value;
-                }
-            });
-            
-            // Si el estado seleccionado es 'cerrado'
-            if (estadoSeleccionado === 'cerrado') {
-                btnCrearPeriodo.disabled = false;
-                btnCrearPeriodo.classList.remove('opacity-40', 'cursor-not-allowed');
-                btnCrearPeriodo.classList.add('hover:bg-[#08774d]', 'shadow-[0_6px_15px_rgba(10,149,96,0.25)]');
-                if(leyendaNuevoPeriodo) leyendaNuevoPeriodo.textContent = "Listo para apertura.";
-                if(leyendaNuevoPeriodo) leyendaNuevoPeriodo.classList.add('text-[#0a9560]');
-            } else {
-                btnCrearPeriodo.disabled = true;
-                btnCrearPeriodo.classList.add('opacity-40', 'cursor-not-allowed');
-                btnCrearPeriodo.classList.remove('hover:bg-[#08774d]', 'shadow-[0_6px_15px_rgba(10,149,96,0.25)]');
-                if(leyendaNuevoPeriodo) leyendaNuevoPeriodo.textContent = "Cierra el período actual para habilitar esta opción.";
-                if(leyendaNuevoPeriodo) leyendaNuevoPeriodo.classList.remove('text-[#0a9560]');
-            }
-        }
-
-        // Agregar el listener a cada radio button
-        radiosEstados.forEach(radio => {
-            radio.addEventListener('change', evaluarEstado);
-        });
-
-        // Ejecutar al cargar la página
-        evaluarEstado();
-    });
-</script>
+    @vite('resources/js/admin/periodo.js')
 @endpush

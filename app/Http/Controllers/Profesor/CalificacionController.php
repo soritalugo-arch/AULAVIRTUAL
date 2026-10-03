@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 
 namespace App\Http\Controllers\Profesor;
 
@@ -26,10 +26,10 @@ class CalificacionController extends Controller
         $cursos = $profesor->cursos()
             ->with(['horarios', 'cuatrimestres' => fn($q) => $q->orderByDesc('id_cuatrimestre')])
             ->get();
-        // Momento del perÃ­odo presente: define quÃ© ve el profesor (durante la
-        // matrÃ­cula solo su horario; en cursado, sus estudiantes).
+        // Momento del período vigente: define qué ve el profesor (durante la
+        // matrícula solo su horario; en cursado, sus estudiantes).
         $momento = $this->servicio->cuatrimestrePresente();
-        return view('profesor.mis_cursos', compact('cursos', 'momento'));
+        return view('profesor.mis-cursos', compact('cursos', 'momento'));
     }
     // tabla de notas del curso con porcentaje de faltas por estudiante
     public function notas(int $cursoId, Request $request)
@@ -50,12 +50,12 @@ class CalificacionController extends Controller
         if (!$cuatrimestre) {
             return back()->with('error', 'Este curso no tiene un cuatrimestre activo.');
         }
-        // Durante la matrÃ­cula el profesor no ve estudiantes: todavÃ­a no se
-        // sabe quiÃ©n se inscribiÃ³. Cuando el perÃ­odo se cierra, la pÃ¡gina de
+        // Durante la matrícula el profesor no ve estudiantes: todavía no se
+        // sabe quién se inscribió. Cuando el período se cierra, la página de
         // notas queda en solo lectura.
         if ($cuatrimestre->estado === Cuatrimestre::ESTADO_MATRICULA) {
             return redirect()->route('profesor.cursos')
-                ->with('error', 'La matrÃ­cula aÃºn estÃ¡ abierta: no sabes quiÃ©n se matriculÃ³. Tus estudiantes aparecerÃ¡n cuando el perÃ­odo estÃ© en cursado.');
+                ->with('error', 'La matrícula aún está abierta: no sabes quién se matriculó. Tus estudiantes aparecerán cuando el período esté en cursado.');
         }
         $idCuatr     = $cuatrimestre->id_cuatrimestre;
         $clasesRegistradas = $this->servicio->clasesDictadas($cursoId, $idCuatr);
@@ -71,7 +71,7 @@ class CalificacionController extends Controller
                 ->where('id_cuatrimestre', $idCuatr)
                 ->first();
             $faltas     = $this->servicio->faltasEstudiante($est->id_usuario, $cursoId, $idCuatr);
-            // Mientras el perÃ­odo sigue abierto el porcentaje sale de las clases
+            // Mientras el período sigue abierto el porcentaje sale de las clases
             // dictadas; una vez terminado, del total programado.
             $porcentaje = $this->servicio->porcentajeInasistencia($est->id_usuario, $cursoId, $idCuatr, $cuatrimestreTerminado);
             // Lo que manda es el promedio de las parciales; la nota final solo
@@ -112,13 +112,13 @@ class CalificacionController extends Controller
         abort_unless($curso !== null, 403);
         abort_unless($curso->cuatrimestres()->whereKey($idCuatr)->exists(), 403);
 
-        // Solo se califica mientras el perÃ­odo estÃ¡ EN CURSO: durante la
-        // matrÃ­cula las notas todavÃ­a no existen y en un perÃ­odo cerrado ya
+        // Solo se califica mientras el período está EN CURSO: durante la
+        // matrícula las notas todavía no existen y en un período cerrado ya
         // no se pueden modificar.
         abort_unless(
             $curso->cuatrimestres()->find($idCuatr)?->estado === Cuatrimestre::ESTADO_EN_CURSO,
             422,
-            'Este perÃ­odo no estÃ¡ en cursado: las notas no se pueden guardar.'
+            'Este período no está en cursado: las notas no se pueden guardar.'
         );
 
         $request->validate([
@@ -198,7 +198,7 @@ class CalificacionController extends Controller
         }
 
         $mensaje = $notificados > 0
-            ? "Notas guardadas. Se avisÃ³ a {$notificados} ".($notificados === 1 ? 'estudiante' : 'estudiantes').' por email.'
+            ? "Notas guardadas. Se avisó a {$notificados} ".($notificados === 1 ? 'estudiante' : 'estudiantes').' por email.'
             : 'Notas guardadas.';
 
         return redirect()->route('profesor.notas', ['curso' => $idCurso, 'cuatrimestre' => $idCuatr])
