@@ -81,7 +81,7 @@
                             <label class="relative block cursor-pointer select-none">
                                 <input type="radio" name="estado" value="{{ $valor }}"
                                        @checked($vigente->estado === $valor)
-                                       class="peer sr-only">
+                                       class="peer sr-only radio-estado-periodo">
                                 <span class="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#2f55c4] text-white text-xs flex items-center justify-center opacity-0 peer-checked:opacity-100 transition-opacity">
                                     <i class="fa-solid fa-check"></i>
                                 </span>
@@ -99,47 +99,85 @@
                     </div>
                 </fieldset>
 
-                <div class="mt-5">
+                <div class="mt-5 flex flex-wrap gap-4 items-center justify-between border-t border-[#eef3fb] pt-5">
                     <button type="submit"
                             class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#4c5bc3] to-[#6e94ee] text-white text-sm font-bold shadow-[0_6px_15px_rgba(76,91,195,0.25)] hover:opacity-95 transition-opacity">
                         <i class="fa-solid fa-arrows-rotate"></i>
                         Cambiar modo
                     </button>
+                    
+                    {{-- NUEVO: Botón para Crear Período (Integrado estéticamente) --}}
+                    <div class="flex flex-col sm:flex-row items-center gap-3">
+                        <span id="leyendaNuevoPeriodo" class="text-[12px] text-[#7a8db5] hidden sm:block">
+                            Cierra el período actual para habilitar esta opción.
+                        </span>
+                        {{-- Asegúrate de crear la ruta 'admin.periodo.crear' en tu web.php --}}
+                        <button type="button" onclick="let pin = prompt('Ingrese la clave de seguridad para apertura:'); if(pin) window.location.href='{{ route('admin.periodo.crear') }}?clave=' + pin;" id="btnCrearPeriodo" disabled
+                                class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0a9560] text-white text-sm font-bold shadow-sm transition-all opacity-40 cursor-not-allowed">
+                            <i class="fa-solid fa-calendar-plus"></i>
+                            Crear Nuevo Período
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
     @else
         <div class="bg-white border border-[#e0e8f5] rounded-[24px] shadow-[0_8px_25px_rgba(70,100,160,0.08)] p-5 sm:p-7 mb-6">
-            <p class="text-sm text-[#7a8db5]">
-                No hay un período en curso hoy. Los cuatrimestres del sistema se listan abajo, solo de referencia.
+            <p class="text-sm text-[#7a8db5] mb-4">
+                No hay un período en curso hoy.
             </p>
-        </div>
-    @endif
-
-    {{-- Los demás períodos: pasado y próximo, solo de referencia (lectura) --}}
-    @if ($periodos->where('id_cuatrimestre', '!=', $vigente?->id_cuatrimestre)->isNotEmpty())
-        <div class="bg-white border border-[#e0e8f5] rounded-[24px] shadow-[0_8px_25px_rgba(70,100,160,0.08)] p-5 sm:p-7">
-            <h3 class="text-base font-['Georgia'] font-bold text-[#171c7c] mb-4">Otros períodos</h3>
-
-            <div class="space-y-3">
-                @foreach ($periodos as $periodo)
-                    @if ($vigente && $periodo->id_cuatrimestre === $vigente->id_cuatrimestre)
-                        @continue
-                    @endif
-
-                    <div class="flex flex-wrap items-center justify-between gap-3 border border-[#e0e8f5] rounded-2xl px-4 py-3">
-                        <div class="flex items-center gap-3 text-sm font-semibold text-[#24356e]">
-                            <i class="fa-regular fa-calendar text-[#7a8db5]"></i>
-                            {{ $tituloPeriodo($periodo) }}
-                        </div>
-                        <span class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1 rounded-full border {{ $estados[$periodo->estado][2] ?? 'bg-[#eef1f6] text-[#66748f] border-[#dce2ec]' }}">
-                            <i class="fa-solid {{ $estados[$periodo->estado][1] ?? 'fa-circle-info' }}"></i>
-                            {{ $estados[$periodo->estado][0] ?? $periodo->estado }}
-                        </span>
-                    </div>
-                @endforeach
-            </div>
+            {{-- Botón activo si no hay periodo vigente --}}
+            <button type="button" onclick="window.location.href='{{ route('admin.periodo.crear') ?? '#' }}'" 
+                    class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#0a9560] hover:bg-[#08774d] text-white text-sm font-bold shadow-[0_6px_15px_rgba(10,149,96,0.25)] transition-all">
+                <i class="fa-solid fa-calendar-plus"></i>
+                Crear Nuevo Período
+            </button>
         </div>
     @endif
 
 @endsection
+
+@push('scripts')
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const radiosEstados = document.querySelectorAll('.radio-estado-periodo');
+        const btnCrearPeriodo = document.getElementById('btnCrearPeriodo');
+        const leyendaNuevoPeriodo = document.getElementById('leyendaNuevoPeriodo');
+
+        function evaluarEstado() {
+            if(!btnCrearPeriodo) return;
+            
+            // Buscar cuál radio button está seleccionado actualmente
+            let estadoSeleccionado = '';
+            radiosEstados.forEach(radio => {
+                if(radio.checked) {
+                    estadoSeleccionado = radio.value;
+                }
+            });
+            
+            // Si el estado seleccionado es 'cerrado'
+            if (estadoSeleccionado === 'cerrado') {
+                btnCrearPeriodo.disabled = false;
+                btnCrearPeriodo.classList.remove('opacity-40', 'cursor-not-allowed');
+                btnCrearPeriodo.classList.add('hover:bg-[#08774d]', 'shadow-[0_6px_15px_rgba(10,149,96,0.25)]');
+                if(leyendaNuevoPeriodo) leyendaNuevoPeriodo.textContent = "Listo para apertura.";
+                if(leyendaNuevoPeriodo) leyendaNuevoPeriodo.classList.add('text-[#0a9560]');
+            } else {
+                btnCrearPeriodo.disabled = true;
+                btnCrearPeriodo.classList.add('opacity-40', 'cursor-not-allowed');
+                btnCrearPeriodo.classList.remove('hover:bg-[#08774d]', 'shadow-[0_6px_15px_rgba(10,149,96,0.25)]');
+                if(leyendaNuevoPeriodo) leyendaNuevoPeriodo.textContent = "Cierra el período actual para habilitar esta opción.";
+                if(leyendaNuevoPeriodo) leyendaNuevoPeriodo.classList.remove('text-[#0a9560]');
+            }
+        }
+
+        // Agregar el listener a cada radio button
+        radiosEstados.forEach(radio => {
+            radio.addEventListener('change', evaluarEstado);
+        });
+
+        // Ejecutar al cargar la página
+        evaluarEstado();
+    });
+</script>
+@endpush

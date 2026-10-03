@@ -256,4 +256,44 @@ class DashboardController extends Controller
 
         return ($vigente ?? $empezado ?? $cuatrimestres->first())->id_cuatrimestre;
     }
+
+    /**
+     * Muestra el formulario para crear un nuevo período académico.
+     * Requiere una clave de autorización temporal por URL.
+     */
+    public function crearPeriodo(Request $request, ReporteService $reportes)
+    {
+        // CLAVE DE PRUEBA: 
+        $claveMaestra = '12345'; 
+
+        if ($request->query('clave') !== $claveMaestra) {
+            return redirect()->route('admin.periodo')
+                ->with('error', 'Acceso denegado: Clave de autorización incorrecta.');
+        }
+
+        $ctx = $this->contexto($request, $reportes);
+
+       
+        return view('admin.periodo_crear', $ctx);
+    }
+
+    /**
+     * Guarda el nuevo período en la base de datos tras enviar el formulario.
+     */
+    public function guardarNuevoPeriodo(Request $request)
+    {
+        $data = $request->validate([
+            'fecha_inicio' => 'required|date',
+            'fecha_fin'    => 'required|date|after:fecha_inicio',
+        ]);
+
+        Cuatrimestre::create([
+            'fecha_inicio' => $data['fecha_inicio'],
+            'fecha_fin'    => $data['fecha_fin'],
+            'estado'       => 'matriculacion', // Arranca por defecto en matrícula abierta
+        ]);
+
+        return redirect()->route('admin.periodo')
+            ->with('success', 'El nuevo período académico ha sido creado exitosamente.');
+    }
 }

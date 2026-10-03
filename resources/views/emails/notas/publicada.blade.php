@@ -10,7 +10,7 @@ Tu profesor registró una evaluación nueva en el sistema.
 @endif
 
 @if ($calificacion !== null)
-**Promedio actual (4 parciales de 25 %):** {{ number_format($calificacion, 2) }} / 10
+**Promedio actual : {{ number_format($calificacion, 2) }} / 10
 @endif
 
 <x-mail::button :url="route('estudiante.notas')">

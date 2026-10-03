@@ -38,17 +38,24 @@ class InscripcionController extends Controller
             ->where('fecha_fin', '>=', now())
             ->first();
 
-        // Ventana de cuatrimestres del plan que le tocan en esta inscripción:
-        // un solo cuatrimestre (X) cuando no arrastra materias raspadas, o dos
-        // (X-Y) cuando repite lo pendiente y adelanta el siguiente. Quien
-        // completó el plan (null) no tiene materias que inscribir.
+        // Ventana de cuatrimestres del plan que le tocan en esta inscripción
         $ventana = $this->historial->ventanaEtapas($estudiante);
 
         $totalEtapas = $ventana['totalEtapas'] ?? null;
         $formato = $ventana['formato'] ?? null;
 
-        // Oferta académica: solo las materias de la ventana de cuatrimestres del
-        // plan y del cuatrimestre vigente, por la carrera del estudiante
+       // NUEVO: 1. Obtener los IDs de los cursos que el estudiante ya cursó y aprobó
+        // Buscamos en las calificaciones del estudiante donde la nota o el promedio sea aprobatorio (>= 10)
+        $cursosAprobadosIds = $estudiante->calificaciones()
+            ->where(function($query) {
+                // Si usa el sistema antiguo (nota directa)
+                $query->where('nota', '>=', 6)
+                      // O si usa el sistema nuevo (tiene parciales y promedio calculado)
+                      ->orWhere('promedio', '>=', 6);
+            })
+            ->pluck('id_curso')
+            ->toArray();
+        // Oferta académica
         $cursos = $carrera && $cuatrimestreVigente && $ventana
             ? Curso::with(['horarios', 'profesores'])
                 ->withCount('inscripciones')
@@ -56,6 +63,8 @@ class InscripcionController extends Controller
                     ->whereKey($carrera->id_carrera)
                     ->whereIn('curso_carrera.etapa', $ventana['etapas']))
                 ->whereHas('cuatrimestres', fn ($q) => $q->whereKey($cuatrimestreVigente->id_cuatrimestre))
+                // NUEVO: 2. Excluir de la oferta los cursos que ya aprobó
+                ->whereNotIn('id_curso', $cursosAprobadosIds) 
                 ->get()
             : collect();
 

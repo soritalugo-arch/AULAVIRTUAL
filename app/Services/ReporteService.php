@@ -485,10 +485,13 @@ class ReporteService
     }
 
     /**
-     * Cuatrimestres ordenados del mas reciente al mas antiguo.
+     * Cuatrimestres ordenados del más reciente al más antiguo.
+     * Solo incluye períodos que ya iniciaron o inician hoy (oculta los futuros).
      */
     public function cuatrimestres()
     {
-        return Cuatrimestre::orderByDesc('fecha_inicio')->get();
+        return Cuatrimestre::where('fecha_inicio', '<=', now())
+            ->orderByDesc('fecha_inicio')
+            ->get();
     }
 }

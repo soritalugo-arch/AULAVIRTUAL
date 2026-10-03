@@ -50,7 +50,10 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/plan-estudios', [DashboardController::class, 'planEstudios'])->name('admin.plan');
     Route::get('/admin/periodo',       [DashboardController::class, 'periodo'])->name('admin.periodo');
     Route::post('/admin/periodo/estado', [DashboardController::class, 'guardarEstadoPeriodo'])->name('admin.periodo.estado');
-});
+    // NUEVAS RUTAS: Crear nuevo período
+    Route::get('/admin/periodo/crear', [DashboardController::class, 'crearPeriodo'])->name('admin.periodo.crear');
+    Route::post('/admin/periodo/guardar', [DashboardController::class, 'guardarNuevoPeriodo'])->name('admin.periodo.guardar');
+    });
 
 // ─── Rutas del Profesor ──────────────────────────────────────────────────────
 Route::middleware(['auth', 'role:profesor'])->group(function () {

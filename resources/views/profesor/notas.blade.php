@@ -446,18 +446,19 @@
         text-align: center;
     }
 
-    /* Promedio calculado */
-
+    /* Acumulado (8) y Promedio (9) */
     th:nth-child(8),
-    td:nth-child(8) {
+    td:nth-child(8),
+    th:nth-child(9),
+    td:nth-child(9) {
         width: 9%;
-
         text-align: center;
     }
 
-    th:nth-child(9),
-    td:nth-child(9) {
-        width: 24%;
+    /* Observación (10) */
+    th:nth-child(10),
+    td:nth-child(10) {
+        width: 11%; /* Ajustado para que el total de las columnas sume 100% exacto */
     }
 
     /* FILAS */
@@ -1416,33 +1417,58 @@
         td:nth-child(5)::before { content: "Parcial 2"; }
         td:nth-child(6)::before { content: "Parcial 3"; }
         td:nth-child(7)::before { content: "Parcial 4"; }
-        td:nth-child(8)::before { content: "Promedio"; }
-        
+        td:nth-child(8)::before { content: "Acumulado"; }
+        td:nth-child(9)::before { content: "Promedio"; }
         /* Alinear el contenido (los datos) a la derecha */
         td > * {
             grid-column: 2;
             justify-self: end;
         }
         
-        /* La observación necesita todo el ancho por ser un input largo */
-        td:nth-child(9) {
-            display: flex;
-            flex-direction: column;
-            align-items: stretch;
-            gap: 10px;
-        }
-        
-        td:nth-child(9)::before {
-            content: "Observación";
-            position: static;
-        }
-        
-        td:nth-child(9) > * {
-            max-width: 100%;
-            text-align: left;
-        }
+        /* Contenedor de la celda para manejar el espacio */
+    .observaciones-cell {
+        min-width: 200px; /* Asegura un ancho mínimo aceptable en PC */
+        width: 25%; /* Toma una buena porción de la tabla */
+        vertical-align: top; /* Mantiene el textarea arriba si las otras columnas crecen */
+        padding: 8px !important;
     }
 
+    /* El contenedor del textarea */
+    .observacion-wrapper {
+            position: relative;
+        width: 100%;
+    }
+
+    /* El área de texto */
+    .input-observacion {
+        width: 100%;
+        min-height: 40px;
+        padding: 8px 12px;
+        border: 1px solid #e0e7ff; /* Un borde sutil azul claro, similar al estilo de tus botones */
+        border-radius: 8px; /* Bordes redondeados */
+        background-color: #f8fafc; /* Fondo un poco más gris/azul para diferenciarlo */
+        font-size: 0.85rem;
+        color: #334155;
+        resize: none; /* Evitamos que el usuario cambie el tamaño manualmente, el JS lo hace */
+        overflow: hidden; /* Oculta la barra de desplazamiento si el JS falla */
+        transition: border-color 0.2s, background-color 0.2s;
+        box-sizing: border-box;
+    }
+
+    /* Efecto al hacer clic en el textarea */
+    .input-observacion:focus {
+        outline: none;
+        border-color: #93c5fd; /* Azul más fuerte al seleccionar */
+        background-color: #ffffff; /* Fondo blanco al escribir */
+        box-shadow: 0 0 0 2px rgba(147, 197, 253, 0.2); /* Sombra exterior suave */
+    }
+
+    /* Ajustes para pantallas pequeñas (Móviles/Tablets) */
+    @media (max-width: 768px) { 
+        .observaciones-cell {
+           min-width: 150px;
+        }
+    }
     @media (max-width: 600px) {
         .cursos-wrap {
             width: 100%; 
@@ -1654,31 +1680,57 @@
 
                     <tbody>
 
-                        @foreach($estudiantes as $i => $est)
+                        
+                     @foreach($estudiantes as $i => $est)
 
-                        @php
-                            $claseFila   = match($est['alerta']) {
-                                'peligro'     => 'row-peligro',
-                                'advertencia' => 'row-advertencia',
-                                default       => '',
-                            };
-                            $claseFaltas = match($est['alerta']) {
-                                'peligro'     => 'danger',
-                                'advertencia' => 'warning',
-                                default       => '',
-                            };
-                            $claseCasillaFaltas = match ($est['alerta']) {
-                                'peligro'     => 'peligro',
-                                'advertencia' => 'advertencia',
-                                default       => '',
-                            };
-                            $claseEstado = match($est['estado']) {
-                                'Aprobado'  => 'ok',
-                                'Reprobado' => 'fail',
-                                'Reprobado (presunto)' => 'presunto',
-                                default     => '',
-                            };
-                        @endphp
+                      @php
+                        $estadoAcademicoReal = is_array($est) ? ($est['estado'] ?? 'en_curso') : ($est->estado ?? 'en_curso');
+                        $estadoAcademicoReal = strtolower($estadoAcademicoReal);
+    
+                        $promedio = $est['nota'] !== null ? (float) $est['nota'] : null;
+                        $parcialesLlenas = count(array_filter($est['parciales'], fn($p) => $p !== null && $p !== ''));
+
+                        if ($est['alerta'] === 'peligro') {
+                            $estadoAcademicoReal = 'reprobado';
+                        } elseif ($promedio !== null) {
+                            if ($promedio >= 6) {
+                                $estadoAcademicoReal = 'aprobado';
+                            } elseif ($parcialesLlenas === 4 && $promedio < 6) {
+                                $estadoAcademicoReal = 'reprobado';
+                            }
+                        }
+
+                        $claseEstado = match($estadoAcademicoReal) {
+                            'aprobado'  => 'ok',
+                            'reprobado' => 'fail',
+                            default     => 'presunto',
+                        };
+
+                        $textoEstado = match($estadoAcademicoReal) {
+                            'aprobado'  => 'Aprobado',
+                            'reprobado' => 'Reprobado',
+                            default     => 'En curso',
+                        };
+
+                        // --- SOLUCIÓN A LOS ERRORES DE VARIABLES INDEFINIDAS ---
+    
+                        // Variable para la fila
+                        $claseFila = ''; 
+    
+                        // Variables para los colores de las inasistencias
+                        $claseCasillaFaltas = ''; 
+                        $claseFaltas = 'ok'; // Por defecto verde para 0%
+                        $porcentaje = $est['porcentajeFaltas'] ?? 0;
+
+                        // Lógica basada en tu comentario (25% amarillo, 30% rojo)
+                        if ($est['alerta'] === 'peligro' || $porcentaje > 30) {
+                            $claseCasillaFaltas = 'alerta-roja';   // Reemplaza con tu clase CSS original si es diferente
+                            $claseFaltas = 'fail';                 // Reemplaza con tu clase CSS original si es diferente
+                        } elseif ($est['alerta'] === 'advertencia' || $porcentaje >= 25) {
+                            $claseCasillaFaltas = 'alerta-amarilla'; // Reemplaza con tu clase CSS original si es diferente
+                            $claseFaltas = 'warn';                   // Reemplaza con tu clase CSS original si es diferente
+                        }
+                     @endphp
 
                         <input type="hidden" name="notas[{{ $i }}][id_estudiante]" value="{{ $est['id'] }}">
 
@@ -1714,13 +1766,11 @@
 
                             </td>
 
-                            {{-- Estado --}}
+                           {{-- Estado --}}
                             <td>
-
-                                <span class="status {{ $claseEstado }}">
-                                    {{ $est['estado'] }}
-                                </span>
-
+                                <span class="status {{ $claseEstado }}" data-estado>
+                                    {{ $textoEstado }}
+                                    </span>
                             </td>
 
                             {{-- Cuatro parciales de 25 puntos cada una. El acumulado y el promedio de
@@ -1758,31 +1808,31 @@
                                 };
                             @endphp
 
-                            <td class="promedio-cell">
-                                <span class="promedio {{ $claseNota }}" data-acumulado>
-                                    {{ $acumulado !== null ? number_format($acumulado, 2) : '—' }}
-                                </span>
-                            </td>
+                            {{-- Casilla de Acumulado --}}
+<td class="acumulado-cell" data-label="Acumulado">
+    <span class="acumulado {{ $claseNota ?? '' }}" data-acumulado>
+        {{ isset($acumulado) && $acumulado !== null ? number_format($acumulado, 2) : '—' }}
+    </span>
+</td>
 
-                            <td class="promedio-cell">
-                                <span class="promedio {{ $claseNota }}" data-promedio>
-                                    {{ $promedio !== null ? number_format((float) $promedio, 2) : '—' }}
-                                </span>
-                            </td>
+{{-- Casilla de Promedio --}}
+<td class="promedio-cell" data-label="Promedio">
+    <span class="promedio {{ $claseNota ?? '' }}" data-promedio>
+        {{ isset($promedio) && $promedio !== null ? number_format((float) $promedio, 2) : '—' }}
+    </span>
+</td>
 
-                            {{-- Observación --}}
-                            <td>
-
-                                <input
-                                    type="text"
-                                    name="notas[{{ $i }}][observaciones]"
-                                    value="{{ $est['observaciones'] }}"
-                                    placeholder="Observación opcional..."
-                                    class="observation"
-                                    @disabled(!$puedeEditar)
-                                >
-
-                            </td>
+                            {{-- Celda de Observaciones --}}
+                                <td class="observaciones-cell">
+                                    <div class="observacion-wrapper">
+                                        <textarea 
+                                            name="notas[{{ $i }}][observaciones]" 
+                                            class="input-observacion" 
+                                            placeholder="Añadir nota..." 
+                                            rows="1" 
+                                            oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'">{{ $est['observaciones'] ?? '' }}</textarea>
+                                    </div>
+                                </td>
 
                         </tr>
 
@@ -1878,59 +1928,92 @@
        ===================================================== */
 
     (function () {
-        var filas = document.querySelectorAll('tbody tr[data-nombre]');
+        // Seleccionamos todas las filas de la tabla de estudiantes
+var filas = document.querySelectorAll('tbody tr'); // Ajusta este selector si tus filas tienen una clase específica, ej: '.fila-estudiante'
 
-        for (var f = 0; f < filas.length; f++) {
-            (function (fila) {
-                var parciales = fila.querySelectorAll('[data-parcial]');
-                var salidaAcumulado = fila.querySelector('[data-acumulado]');
-                var salidaPromedio = fila.querySelector('[data-promedio]');
+filas.forEach(function(fila) {
+    // 1. Capturar los elementos de la fila actual
+    var parciales = fila.querySelectorAll('input[type="number"]'); // Las cajas de texto de las notas
+    var salidaAcumulado = fila.querySelector('[data-acumulado]');
+    var salidaPromedio = fila.querySelector('[data-promedio]');
+    var salidaEstado = fila.querySelector('[data-estado]'); 
 
-                if (!parciales.length || !salidaAcumulado || !salidaPromedio) return;
+    // Si la fila no tiene estos elementos, la saltamos
+    if (!parciales.length || !salidaAcumulado || !salidaPromedio) return;
 
-                function pintar(salida, texto, aprobado) {
-                    salida.textContent = texto;
-                    salida.className = 'promedio ' + (aprobado ? 'aprobado' : 'reprobado');
-                }
+    // 2. Función auxiliar para pintar colores en los promedios
+    function pintar(salida, texto, aprobado) {
+        salida.textContent = texto;
+        salida.className = 'promedio ' + (aprobado ? 'aprobado' : 'reprobado');
+    }
 
-                function recalcular() {
-                    var suma = 0;
-                    var hayAlgo = false;
+    // 3. Función principal que recalcula todo para esta fila
+    function recalcular() {
+        var suma = 0;
+        var hayAlgo = false;
+        var ingresadas = 0; 
 
-                    for (var i = 0; i < parciales.length; i++) {
-                        var valor = parseFloat(parciales[i].value);
+        // Sumar los valores de los inputs
+        for (var i = 0; i < parciales.length; i++) {
+            var valor = parseFloat(parciales[i].value);
 
-                        if (!isNaN(valor)) {
-                            suma += valor;
-                            hayAlgo = true;
-                        }
-                    }
-
-                    if (!hayAlgo) {
-                        salidaAcumulado.textContent = '—';
-                        salidaAcumulado.className = 'promedio';
-                        salidaPromedio.textContent = '—';
-                        salidaPromedio.className = 'promedio';
-                        fila.setAttribute('data-promedio', '-1');
-                        return;
-                    }
-
-                    var acumulado = Math.round(suma * 100) / 100;
-                    var promedio  = Math.round((acumulado / 10) * 100) / 100;
-                    var aprueba   = promedio >= 6;
-
-                    pintar(salidaAcumulado, acumulado.toFixed(2), aprueba);
-                    pintar(salidaPromedio, promedio.toFixed(2), aprueba);
-
-                    /* El orden por promedio tiene que ver el número nuevo. */
-                    fila.setAttribute('data-promedio', promedio.toFixed(2));
-                }
-
-                for (var j = 0; j < parciales.length; j++) {
-                    parciales[j].addEventListener('input', recalcular);
-                }
-            })(filas[f]);
+            if (!isNaN(valor)) {
+                suma += valor;
+                hayAlgo = true;
+                ingresadas++; 
+            }
         }
+
+        // Si borraron todas las notas, devolver al estado por defecto
+        if (!hayAlgo) {
+            salidaAcumulado.textContent = '—';
+            salidaAcumulado.className = 'promedio';
+            salidaPromedio.textContent = '—';
+            salidaPromedio.className = 'promedio';
+            fila.setAttribute('data-promedio', '-1');
+            
+            if (salidaEstado) {
+                salidaEstado.textContent = 'En curso';
+                salidaEstado.className = 'status presunto';
+            }
+            return;
+        }
+
+        // Calcular puntaje final
+        var acumulado = Math.round(suma * 100) / 100;
+        var promedio  = Math.round((acumulado / 10) * 100) / 100;
+        var aprueba   = promedio >= 6; // Verifica si aprueba (6.00 o más)
+
+        // Actualizar textos en pantalla del acumulado y promedio
+        pintar(salidaAcumulado, acumulado.toFixed(2), aprueba);
+        pintar(salidaPromedio, promedio.toFixed(2), aprueba);
+        fila.setAttribute('data-promedio', promedio.toFixed(2));
+
+        // Actualizar la pastilla de estado visualmente en tiempo real
+        if (salidaEstado) {
+            var esPeligro = fila.querySelector('.nombre-warn.peligro'); // Evalúa límite de faltas
+
+            if (esPeligro) {
+                salidaEstado.textContent = 'Reprobado';
+                salidaEstado.className = 'status fail';
+            } else if (promedio >= 6) {
+                salidaEstado.textContent = 'Aprobado';
+                salidaEstado.className = 'status ok';
+            } else if (ingresadas === 4 && promedio < 6) { // Si ya llenó las 4 notas y no llega a 6
+                salidaEstado.textContent = 'Reprobado';
+                salidaEstado.className = 'status fail';
+            } else {
+                salidaEstado.textContent = 'En curso';
+                salidaEstado.className = 'status presunto';
+            }
+        }
+    }
+
+    // 4. Asignar el evento 'input' a cada caja de texto para que reaccione al escribir
+    parciales.forEach(function(input) {
+        input.addEventListener('input', recalcular);
+    });
+});
     })();
 
     /* =====================================================
