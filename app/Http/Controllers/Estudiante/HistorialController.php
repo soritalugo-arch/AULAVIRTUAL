@@ -52,7 +52,7 @@ class HistorialController extends Controller
             fn (array $p) => $p['cuatrimestre']->id_cuatrimestre === $cuatrimestre->id_cuatrimestre
         );
 
-        if (! $periodo || $cuatrimestre->estado !== Cuatrimestre::ESTADO_CERRADO) {
+        if (! $periodo || $cuatrimestre->estado !== Cuatrimestre::ESTADO_FINALIZADO) {
             abort(404, 'No hay una boleta emitida para ese lapso.');
         }
 
