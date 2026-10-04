@@ -11,7 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::create('inscripcion', function (Blueprint $table) {
+            $table->id('id_inscripcion');
+            $table->foreignId('id_estudiante')->constrained('estudiante', 'id_usuario')->onDelete('cascade');
+            $table->foreignId('id_curso')->constrained('curso', 'id_curso')->onDelete('cascade');
+            $table->date('fecha_inscripcion');
+            $table->timestamps();
+        });
     }
 
     /**

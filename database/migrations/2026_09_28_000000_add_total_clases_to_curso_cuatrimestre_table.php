@@ -11,7 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::table('curso_cuatrimestre', function (Blueprint $table) {
+            $table->unsignedInteger('total_clases')
+                ->nullable()
+                ->after('cuatrimestre_id');
+        });
     }
 
     /**
@@ -19,6 +23,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        //
+        Schema::table('curso_cuatrimestre', function (Blueprint $table) {
+            $table->dropColumn('total_clases');
+        });
     }
 };

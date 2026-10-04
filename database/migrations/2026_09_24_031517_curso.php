@@ -11,7 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        //
+        Schema::create('curso', function (Blueprint $table) {
+            $table->id('id_curso');
+            $table->string('nombre');
+            $table->integer('limite_estudiantes');
+            $table->timestamps();
+        });
     }
 
     /**
